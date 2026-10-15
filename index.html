@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AveLoop — Visual Code Execution</title>
+<!--
+  AveLoop prototype — single-file deliverable.
+  Attributions: Night Owl theme values (MIT, Sarah Drasner / sdras/night-owl-vscode-theme);
+  CodeMirror 6 + Lezer (MIT); Material Symbols (Apache 2.0). No Python Tutor code reused
+  (behavioral reimplementation only). Trace below is predefined/symbolic: illustrative
+  addresses, simulated execution. See TECHNICAL_RESEARCH.md.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+<style>
+/* ============ 1. Theme tokens: original Night Owl (--owl-*) vs AveLoop semantics (--ave-*) ============ */
+:root{
+  --owl-bg:#011627; --owl-bg-deep:#010e1a; --owl-tab:#0b2942; --owl-tab-inactive:#01111d;
+  --owl-fg:#d6deeb; --owl-muted:#5f7e97; --owl-soft:#89a4bb;
+  --owl-keyword:#c792ea; --owl-string:#ecc48d; --owl-number:#F78C6C; --owl-func:#82AAFF;
+  --owl-var:#c5e478; --owl-op:#7fdbca; --owl-type:#ffcb8b; --owl-comment:#637777;
+  --owl-linenr:#4b6479; --owl-line-active:#C5E4FD; --owl-sel:#1d3b53;
+  --owl-linehl:#28707d29; --owl-cursor:#80a4c2; --owl-error:#EF5350; --owl-warn:#b39554;
+  --owl-border:#262A39; --owl-contrast:#122d42; --owl-btn:#7e57c2; --owl-focus:#82AAFF;
+  --owl-input:#0b253a;
+  --ave-exec-line:rgba(127,219,202,.10); --ave-exec-bar:#7fdbca;
+  --ave-changed:rgba(255,203,139,.13); --ave-changed-edge:#ffcb8b;
+  --ave-ptr:#7fdbca; --ave-ptr2:#ffcb8b; --ave-freed:#EF5350; --ave-ok:#c5e478;
+  --ave-radius:8px; --ave-radius-s:6px;
+  --font-ui:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --font-mono:"Cascadia Code","JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--owl-bg-deep);color:var(--owl-fg);font-family:var(--font-ui);
+  font-size:13.5px;line-height:1.45;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+::selection{background:var(--owl-sel)}
+:focus{outline:none}
+:focus-visible{outline:2px solid var(--owl-focus);outline-offset:1px;border-radius:4px}
+.skip{position:absolute;left:-999px;top:0;background:var(--owl-tab);color:var(--owl-fg);padding:8px 12px;z-index:99}
+.skip:focus{left:8px;top:8px}
+/* Material Symbols base */
+.ms{font-family:"Material Symbols Outlined";font-weight:normal;font-style:normal;line-height:1;
+  letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;direction:ltr;
+  font-size:20px;font-variation-settings:"FILL" 0,"wght" 400,"GRAD" 0,"opsz" 24;
+  -webkit-font-smoothing:antialiased;user-select:none}
+/* ============ 2. Header ============ */
+.topbar{height:48px;flex:0 0 48px;display:flex;align-items:center;gap:12px;padding:0 12px;
+  background:var(--owl-bg);border-bottom:1px solid var(--owl-border)}
+.brand{display:flex;align-items:center;gap:9px;min-width:0}
+.brand-mark{width:26px;height:26px;border-radius:7px;background:var(--owl-tab);
+  border:1px solid var(--owl-contrast);display:grid;place-items:center;color:var(--ave-ptr)}
+.brand-mark .ms{font-size:17px}
+.brand-name{font-weight:650;font-size:14.5px;letter-spacing:.1px;white-space:nowrap}
+.brand-sub{font-size:11.5px;color:var(--owl-muted);white-space:nowrap}
+.badge{font-size:10.5px;font-weight:700;letter-spacing:.7px;padding:3px 8px;border-radius:20px;
+  border:1px solid var(--owl-contrast);white-space:nowrap}
+.badge.sim{color:var(--owl-type);border-color:#4a3a1e;background:rgba(255,203,139,.07)}
+.badge.stale{color:#fff;background:var(--owl-error);border-color:var(--owl-error);display:none}
+.badge.stale.on{display:inline-block}
+.topbar .sp{flex:1}
+/* M3-guided buttons on Night Owl tokens */
+.btn{font:inherit;font-size:12.5px;font-weight:600;color:var(--owl-fg);background:transparent;
+  border:1px solid transparent;border-radius:var(--ave-radius-s);padding:7px 12px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:7px;position:relative}
+.btn .ms{font-size:18px}
+.btn:hover{background:rgba(130,170,255,.08)}
+.btn:active{background:rgba(130,170,255,.14)}
+.btn.filled{background:var(--owl-btn);color:#fff}
+.btn.filled:hover{background:#8b63d3}.btn.filled:active{background:#7553b8}
+.iconbtn{width:36px;height:36px;border-radius:50%;border:0;background:transparent;color:var(--owl-soft);
+  cursor:pointer;display:inline-grid;place-items:center;position:relative;flex:0 0 auto}
+.iconbtn:hover{background:rgba(130,170,255,.08);color:var(--owl-fg)}
+.iconbtn:active{background:rgba(130,170,255,.16)}
+.iconbtn:disabled{color:#3d4f61;cursor:default;background:transparent}
+.iconbtn .ms{font-size:21px}
+/* ============ 3. Workspace grid ============ */
+.workspace{flex:1;min-height:0;display:grid;gap:1px;background:var(--owl-border);
+  grid-template-columns:minmax(330px,5fr) minmax(380px,6.2fr) minmax(250px,3.1fr);
+  grid-template-rows:minmax(0,1fr)}
+.pane{background:var(--owl-bg);min-height:0;min-width:0;display:flex;flex-direction:column;overflow:hidden}
+.pane-h{flex:0 0 34px;display:flex;align-items:center;gap:8px;padding:0 10px;
+  border-bottom:1px solid var(--owl-border);color:var(--owl-muted);font-size:11.5px;
+  font-weight:700;letter-spacing:.8px;text-transform:uppercase}
+.pane-h .ms{font-size:17px}
+.pane-h .right{margin-left:auto;display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0}
+/* Editor pane */
+.filetab{display:flex;align-items:center;gap:8px;background:var(--owl-tab);color:var(--owl-fg);
+  font-family:var(--font-mono);font-size:12.5px;padding:7px 12px;border-bottom:1px solid var(--owl-border)}
+.filetab .dot{width:7px;height:7px;border-radius:50%;background:var(--ave-ok);display:none}
+.filetab.dirty .dot{display:inline-block;background:var(--owl-warn)}
+.execline-chip{margin-left:auto;font-size:11.5px;color:var(--ave-ptr);background:var(--ave-exec-line);
+  border:1px solid rgba(127,219,202,.35);border-radius:5px;padding:2px 8px;font-family:var(--font-mono);white-space:nowrap}
+#editor{flex:1;min-height:0;min-width:0;overflow:auto}
+#editor .cm-editor{height:100%}
+.cm-editor{background:var(--owl-bg)!important;color:var(--owl-fg)!important;font-family:var(--font-mono)!important;font-size:13px}
+.cm-gutters{background:var(--owl-bg)!important;border-right:1px solid var(--owl-border)!important;color:var(--owl-linenr)!important}
+.cm-activeLineGutter{background:var(--owl-tab)!important;color:var(--owl-line-active)!important}
+.cm-activeLine{background:var(--owl-linehl)!important}
+.cm-cursor{border-left-color:var(--owl-cursor)!important}
+.cm-selectionBackground{background:var(--owl-sel)!important}
+.exec-line{background:var(--ave-exec-line)!important;box-shadow:inset 3px 0 0 var(--ave-exec-bar)}
+#fallback{flex:1;min-height:0;display:none;width:100%;background:var(--owl-bg);color:var(--owl-fg);
+  border:0;font-family:var(--font-mono);font-size:13px;padding:10px 12px;resize:none;line-height:1.6;white-space:pre}
+.stalebar{display:none;align-items:center;gap:8px;background:rgba(239,83,80,.1);
+  border-bottom:1px solid rgba(239,83,80,.5);color:#ffb4b0;font-size:12px;padding:6px 12px}
+.stalebar.on{display:flex}
+/* Viz pane */
+.legend{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.chip{font-size:11px;font-weight:600;color:var(--owl-soft);border:1px solid var(--owl-contrast);
+  padding:2px 8px;border-radius:20px;display:inline-flex;align-items:center;gap:5px;text-transform:none;letter-spacing:0}
+.chip i{width:8px;height:8px;border-radius:2px;display:inline-block}
+#stage{flex:1;min-height:0;min-width:0;overflow:auto;position:relative}
+#stageContent{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;
+  padding:16px 18px 26px;min-height:100%;min-width:0}
+#arrows{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.region-h{font-size:11px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:var(--owl-muted);
+  margin:2px 0 8px;display:flex;align-items:center;gap:6px}
+.region-h .ms{font-size:16px}
+.frame{border:1px solid var(--owl-contrast);border-radius:var(--ave-radius);margin-bottom:12px;
+  background:rgba(11,41,66,.35);overflow:hidden}
+.frame.active{border-color:rgba(127,219,202,.45)}
+.frame-h{background:rgba(11,41,66,.7);padding:6px 10px;font-family:var(--font-mono);font-size:12px;
+  color:var(--owl-fg);display:flex;gap:8px;align-items:center;border-bottom:1px solid var(--owl-contrast)}
+.frame-h .fname{color:var(--owl-func);font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.frame-h .retired{margin-left:auto;font-size:10.5px;color:var(--owl-muted);font-family:var(--font-ui);flex:0 0 auto}
+.varrow{display:flex;align-items:center;gap:8px;padding:5px 10px;border-bottom:1px solid rgba(38,42,57,.6);font-family:var(--font-mono);font-size:12.5px;flex-wrap:wrap}
+.varrow:last-child{border-bottom:0}
+.varrow .vn{color:var(--owl-var);min-width:44px}
+.varrow .vt{color:var(--owl-muted);font-size:11px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:0 1 auto}
+.varrow .vv{color:var(--owl-fg);margin-left:auto;text-align:right;word-break:break-word}
+.varrow.changed{background:var(--ave-changed);box-shadow:inset 3px 0 0 var(--ave-changed-edge)}
+.varrow .tag{font-size:10px;font-weight:700;letter-spacing:.5px;border-radius:4px;padding:1px 6px;font-family:var(--font-ui)}
+.tag.null{color:#ffb4b0;border:1px solid rgba(239,83,80,.6)}
+.tag.uninit{color:var(--owl-soft);border:1px dashed var(--owl-muted)}
+.tag.freed{color:#ffb4b0;border:1px solid var(--owl-error);background:rgba(239,83,80,.12)}
+.cells{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
+.cell{min-width:30px;text-align:center;padding:3px 5px;border:1px solid var(--owl-contrast);
+  border-radius:5px;background:var(--owl-bg-deep);font-size:12px}
+.cell.idx{border-color:rgba(127,219,202,.4)}
+.cell.uninit{color:var(--owl-muted);border-style:dashed}
+.cell .ci{display:block;font-size:9px;color:var(--owl-muted)}
+.cell.changed{background:var(--ave-changed);border-color:var(--ave-changed-edge)}
+.heapobj{border:1px solid var(--owl-contrast);border-radius:var(--ave-radius);margin-bottom:12px;overflow:hidden;background:rgba(126,87,194,.05)}
+.heapobj.freed{opacity:.85;border-color:rgba(239,83,80,.55)}
+.heap-h{padding:6px 10px;font-family:var(--font-mono);font-size:11.5px;color:var(--owl-soft);
+  border-bottom:1px solid var(--owl-contrast);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.heap-h>*{min-width:0}
+.heap-h .addr{color:var(--owl-muted);margin-left:auto;white-space:nowrap}
+.heap-cells{display:flex;gap:4px;padding:8px 10px;flex-wrap:wrap}
+.empty-note{color:var(--owl-muted);font-size:12px;padding:8px 2px;font-style:italic}
+.addr-note{font-size:10.5px;color:var(--owl-muted)}
+/* Inspector */
+.tabs{flex:0 0 40px;display:flex;border-bottom:1px solid var(--owl-border);padding:0 4px}
+.tab{flex:1;border:0;background:transparent;color:var(--owl-muted);font:inherit;font-size:12px;font-weight:600;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;border-bottom:2px solid transparent;border-radius:0}
+.tab .ms{font-size:16px}
+.tab[aria-selected="true"]{color:var(--owl-fg);border-bottom-color:var(--owl-btn)}
+.tab:hover{color:var(--owl-fg);background:rgba(130,170,255,.05)}
+.insp-body{flex:1;min-height:0;overflow:auto;padding:10px 12px;font-size:12.5px}
+.insp-body h4{margin:10px 0 4px;font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:var(--owl-muted)}
+.insp-body h4:first-child{margin-top:0}
+.kv{font-family:var(--font-mono);font-size:12px;padding:3px 0;border-bottom:1px dotted rgba(38,42,57,.9);display:flex;gap:8px}
+.kv .k{color:var(--owl-var)}.kv .v{margin-left:auto;text-align:right;color:var(--owl-fg);word-break:break-word}
+.kv .v.dim{color:var(--owl-muted)}
+.trace-ev{width:100%;text-align:left;font:inherit;font-size:12px;color:var(--owl-soft);background:transparent;
+  border:0;border-left:3px solid transparent;padding:6px 8px;cursor:pointer;display:flex;gap:8px;border-radius:0}
+.trace-ev .n{font-family:var(--font-mono);color:var(--owl-muted);min-width:22px}
+.trace-ev:hover{background:rgba(130,170,255,.07);color:var(--owl-fg)}
+.trace-ev.cur{border-left-color:var(--ave-ptr);background:var(--ave-exec-line);color:var(--owl-fg)}
+.trace-ev.done .n{color:var(--ave-ok)}
+/* ============ 4. Transport / console / status ============ */
+.transport{flex:0 0 auto;display:flex;align-items:center;gap:4px;padding:6px 12px;background:var(--owl-bg);
+  border-top:1px solid var(--owl-border);flex-wrap:wrap}
+.tsep{width:1px;height:24px;background:var(--owl-border);margin:0 6px}
+#playBtn{background:var(--owl-btn);color:#fff;border-radius:50%}
+#playBtn:hover{background:#8b63d3}
+.timeline{flex:1;display:flex;align-items:center;gap:10px;min-width:200px;margin:0 8px}
+input[type="range"]{-webkit-appearance:none;appearance:none;flex:1;height:4px;border-radius:2px;background:#234d70;cursor:pointer}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--owl-func);border:2px solid var(--owl-bg)}
+input[type="range"]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:var(--owl-func);border:2px solid var(--owl-bg)}
+.stepread{font-family:var(--font-mono);font-size:12px;color:var(--owl-soft);white-space:nowrap;min-width:86px;text-align:right}
+.eventread{font-size:12px;color:var(--owl-type);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:280px}
+select.speed{font:inherit;font-size:12px;background:var(--owl-input);color:var(--owl-fg);
+  border:1px solid var(--owl-muted);border-radius:var(--ave-radius-s);padding:6px}
+.console{flex:0 0 auto;background:var(--owl-bg);border-top:1px solid var(--owl-border);display:flex;flex-direction:column;max-height:150px}
+.console.collapsed .cbody{display:none}
+.chead{display:flex;align-items:center;gap:8px;padding:5px 12px;color:var(--owl-muted);font-size:11px;
+  font-weight:700;letter-spacing:.8px;text-transform:uppercase;cursor:pointer;border:0;background:transparent;font-family:var(--font-ui);width:100%;text-align:left}
+.chead .ms{font-size:17px}
+.chead:hover{color:var(--owl-fg)}
+.cbody{padding:2px 12px 10px;overflow:auto}
+.cbody pre{margin:0;font-family:var(--font-mono);font-size:12.5px;color:var(--owl-ok,#c5e478);white-space:pre-wrap}
+.cbody pre .dim{color:var(--owl-muted);font-style:italic}
+.statusbar{flex:0 0 26px;display:flex;align-items:center;gap:14px;padding:0 12px;background:var(--owl-bg);
+  border-top:1px solid var(--owl-border);font-size:11.5px;color:var(--owl-muted);font-family:var(--font-mono);overflow:hidden;white-space:nowrap}
+.statusbar .ok{color:var(--ave-ok)}
+.statusbar .grow{flex:1}
+@media (max-width:1100px){
+  .workspace{grid-template-columns:1fr 1fr;grid-template-rows:minmax(280px,1fr) minmax(220px,.8fr);overflow:auto}
+  body{overflow:auto;height:auto;min-height:100vh}
+  .workspace{flex:none}
+  #stageContent{grid-template-columns:1fr 1fr}
+}
+@media (max-width:760px){
+  .workspace{grid-template-columns:1fr;grid-template-rows:none}
+  .brand-sub{display:none}.eventread{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+}
+</style>
+<script type="importmap">
+{"imports":{
+  "@codemirror/state":"https://esm.sh/@codemirror/state@6.5.2",
+  "@codemirror/view":"https://esm.sh/@codemirror/view@6.36.4?external=@codemirror/state",
+  "@codemirror/language":"https://esm.sh/@codemirror/language@6.11.0?external=@codemirror/state,@codemirror/view,@lezer/common,@lezer/highlight",
+  "@codemirror/commands":"https://esm.sh/@codemirror/commands@6.8.0?external=@codemirror/state,@codemirror/view,@codemirror/language,@lezer/common",
+  "@codemirror/lang-cpp":"https://esm.sh/@codemirror/lang-cpp@6.0.2?external=@codemirror/state,@codemirror/view,@codemirror/language,@lezer/common,@lezer/highlight,@lezer/lr,@lezer/cpp",
+  "@lezer/common":"https://esm.sh/@lezer/common@1.2.2",
+  "@lezer/highlight":"https://esm.sh/@lezer/highlight@1.2.2?external=@lezer/common",
+  "@lezer/lr":"https://esm.sh/@lezer/lr@1.4.2?external=@lezer/common",
+  "@lezer/cpp":"https://esm.sh/@lezer/cpp@1.0.0?external=@lezer/common,@lezer/lr,@lezer/highlight"
+}}
+</script>
+</head>
+<body>
+<a class="skip" href="#transport">Skip to playback controls</a>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark" aria-hidden="true"><span class="ms">loop</span></span>
+    <span class="brand-name">AveLoop</span>
+    <span class="brand-sub">Visual Code Execution</span>
+  </div>
+  <span class="badge sim" title="Predefined symbolic trace — not a real C toolchain">SIMULATED TRACE</span>
+  <span class="badge stale" id="staleBadge" role="status">EDITED — TRACE STALE</span>
+  <span class="sp"></span>
+  <button class="btn" id="resetSrc" title="Restore the original demo source"><span class="ms">restart_alt</span>Reset demo</button>
+</header>
+
+<main class="workspace">
+  <!-- Editor pane -->
+  <section class="pane" aria-label="Code editor">
+    <div class="pane-h"><span class="ms">code</span>Editor<span class="right addr-note">C · tabs preserved</span></div>
+    <div class="filetab" id="filetab"><span>main.c</span><span class="dot" aria-hidden="true"></span><span class="execline-chip" id="execChip">line 11</span></div>
+    <div id="editor" aria-label="C source editor"></div>
+    <textarea id="fallback" aria-label="C source fallback editor" spellcheck="false"></textarea>
+    <div class="stalebar" id="stalebar" role="status"><span class="ms">warning</span><span>Source edited — the trace below may no longer match. Reset the demo to restore sync.</span></div>
+  </section>
+
+  <!-- Visualization pane -->
+  <section class="pane" aria-label="Execution visualization">
+    <div class="pane-h"><span class="ms">account_tree</span>Stack &amp; memory
+      <span class="right legend">
+        <span class="chip"><i style="background:var(--ave-ptr)"></i>pointer</span>
+        <span class="chip"><i style="background:var(--ave-changed-edge)"></i>changed</span>
+        <span class="chip addr-note">addrs illustrative</span>
+      </span>
+    </div>
+    <div id="stage">
+      <div id="stageContent">
+        <svg id="arrows" aria-hidden="true"><defs>
+          <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#7fdbca"></path>
+          </marker>
+        </defs><g id="arrowLayer"></g></svg>
+        <div id="stackCol"><div class="region-h"><span class="ms">layers</span>Stack</div><div id="frames"></div></div>
+        <div id="heapCol"><div class="region-h"><span class="ms">memory</span>Heap</div><div id="heap"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Inspector -->
+  <aside class="pane" aria-label="Inspector">
+    <div class="tabs" role="tablist" aria-label="Inspector views">
+      <button class="tab" role="tab" aria-selected="true" data-tab="vars" id="tab-vars"><span class="ms">data_object</span>Vars</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="stack" id="tab-stack"><span class="ms">layers</span>Stack</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="heap" id="tab-heap"><span class="ms">memory</span>Heap</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="trace" id="tab-trace"><span class="ms">account_tree</span>Trace</button>
+    </div>
+    <div class="insp-body" id="inspBody" role="tabpanel" aria-labelledby="tab-vars"></div>
+  </aside>
+</main>
+
+<!-- Transport -->
+<div class="transport" id="transport" role="toolbar" aria-label="Execution playback">
+  <button class="iconbtn" id="firstBtn" title="First step (Home)" aria-label="First step"><span class="ms">first_page</span></button>
+  <button class="iconbtn" id="prevBtn" title="Previous step (←)" aria-label="Previous step"><span class="ms">skip_previous</span></button>
+  <button class="iconbtn" id="playBtn" title="Play / pause (Space)" aria-label="Play" aria-pressed="false"><span class="ms">play_arrow</span></button>
+  <button class="iconbtn" id="nextBtn" title="Next step (→)" aria-label="Next step"><span class="ms">skip_next</span></button>
+  <button class="iconbtn" id="lastBtn" title="Last step (End)" aria-label="Last step"><span class="ms">last_page</span></button>
+  <span class="tsep"></span>
+  <div class="timeline">
+    <input type="range" id="scrub" min="0" max="16" value="0" step="1" aria-label="Execution step">
+    <span class="stepread" id="stepRead">0 / 16</span>
+    <span class="eventread" id="eventRead"></span>
+  </div>
+  <span class="tsep"></span>
+  <select class="speed" id="speed" aria-label="Playback speed">
+    <option value="1600">0.5×</option><option value="900" selected>1×</option>
+    <option value="450">2×</option><option value="220">4×</option>
+  </select>
+  <button class="iconbtn" id="consoleBtn" title="Toggle console (C)" aria-label="Toggle console" aria-expanded="true"><span class="ms">terminal</span></button>
+</div>
+
+<!-- Console -->
+<section class="console" id="consolePane" aria-label="Console">
+  <button class="chead" id="consoleHead" aria-expanded="true"><span class="ms">terminal</span>Console · output at selected step<span style="margin-left:auto" class="ms" id="consoleChevron">unfold_less</span></button>
+  <div class="cbody"><pre id="consoleOut"></pre></div>
+</section>
+
+<footer class="statusbar" aria-label="Status">
+  <span>C</span><span class="ok">simulated</span><span id="cursorPos">Ln 1, Col 1</span>
+  <span class="grow"></span><span>tabs preserved</span><span>addrs illustrative</span><span id="stepStat">step 0/16</span>
+</footer>
+
+<script>
+/* ================= 5. Authoritative execution-state model =================
+   One TRACE; every pane renders from TRACE.steps[sel]. Stable ids (f-main,
+   v-p, h-r, arr:1). Pointer relations live on vars as `ref`; arrows derive
+   from them — never stored separately, never stale. Strict JSON so tooling
+   can validate consistency. */
+const SOURCE = `#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct { int x; int y; } Point;
+
+int add(int a, int b) {
+  int s = a + b;
+  return s;
+}
+
+int main(void) {
+  int arr[4] = {30, 10, 20, 5};
+  int *p = &arr[0];
+  int *q = NULL;
+  q = &arr[2];
+  p = p + 1;
+  int *alias = p;
+  int *r = malloc(sizeof(int));
+  *r = add(*p, *q);
+  Point pt = {3, 7};
+  Point *ppt = &pt;
+  free(r);
+  r = NULL;
+  printf("%d %d %d\\n", *p, *q, ppt->x + ppt->y);
+  return 0;
+}`;
+
+const STEPS = [
+{"line":11,"event":"enter main — frame created","out":"","frames":[{"id":"f-main","f":"main","vars":[{"n":"arr","t":"int[4]","k":"array","cells":["?","?","?","?"],"addr":"0xA100"}]}],"heap":[]},
+{"line":12,"event":"arr initialized","out":"","frames":[{"id":"f-main","f":"main","vars":[{"n":"arr","t":"int[4]","k":"array","cells":["30","10","20","5"],"addr":"0xA100"}]}],"heap":[]},
+{"line":13,"event":"p = &arr[0] — first arrow","out":"","frames":[{"id":"f-main","f":"main","vars":[{"n":"arr","t":"int[4]","k":"array","cells":["30","10","20","5"],"addr":"0xA100"},{"n":"p","t":"int *","k":"ptr","v":"&arr[0]","ref":"arr:0"}]}],"heap":[]},
+{"line":14,"event":"q = NULL — no arrow","out":"","frames":[{"id":"f-main","f":"main","vars":[{"n":"arr","t":"int[4]","k":"array","cells":["30","10","20","5"],"addr":"0xA100"},{"n":"p","t":"int *","k":"ptr","v":"&arr[0]","ref":"arr:0"},{"n":"q","t":"int *","k":"ptr","v":"NULL","ref":null,"null":true}]}],"heap":[]},
+{"line":15,"event":"q = &arr[2] — interior target","out":"","frames":[{"id":"f-main","f":"main","vars":[{"n":"arr","t":"int[4]","k":"array","cells":["30","10","20","5"],"addr":"0xA100"},{"n":"p","t":"int *","k":"ptr","v":"&arr[0]","ref":"arr:0"},{"n":"q","t":"int *","k":"ptr","v":"&arr[2]","ref":"arr:2"}]}],"heap":[]},
+{"line":16,"event":"p = p + 1 → &arr[1] (arithmetic)","out":"","frames":[{"id":"f-main","f":"main","vars":[{"n":"arr","t":"int[4]","k":"array","cells":["30","10","20","5"],"addr":"0xA100"},{"n":"p","t":"int *","k":"ptr","v":"&arr[1]","ref":"arr:1"},{"n":"q","t":"int *","k":"ptr","v":"&arr[2]","ref":"arr:2"}]}],"heap":[]},
+{"line":17,"event":"alias = p — two arrows, one target","out":"","frames":[{"id":"f-main","f":"main","vars":[{"n":"arr","t":"int[4]","k":"array","cells":["30","10","20","5"],"addr":"0xA100"},{"n":"p","t":"int *","k":"ptr","v":"&arr[1]","ref":"arr:1"},{"n":"q","t":"int *","k":"ptr","v":"&arr[2]","ref":"arr:2"},{"n":"alias","t":"int *","k":"ptr","v":"&arr[1]","ref":"arr:1"}]}],"heap":[]},
+{"line":18,"event":"r = malloc — heap block, uninitialized","out":"","frames":[{"id":"f-main","f":"main","vars":[{"n":"arr","t":"int[4]","k":"array","cells":["30","10","20","5"],"addr":"0xA100"},{"n":"p","t":"int *","k":"ptr","v":"&arr[1]","ref":"arr:1"},{"n":"q","t":"int *","k":"ptr","v":"&arr[2]","ref":"arr:2"},{"n":"alias","t":"int *","k":"ptr","v":"&arr[1]","ref":"arr:1"},{"n":"r","t":"int *","k":"ptr","v":"0xB200","ref":"h-r:0"}]}],"heap":[{"id":"h-r","label":"malloc(sizeof(int))","addr":"0xB200","cells":["?"],"state":"live"}]},
+{"line":6,"event":"call add(*p, *q) = add(10, 20)","out":"","frames":[{"id":"f-main","f":"main","vars":[{"n":"arr","t":"int[4]","k":"array","cells":["30","10","20","5"],"addr":"0xA100"},{"n":"p","t":"int *","k":"ptr","v":"&arr[1]","ref":"arr:1"},{"n":"q","t":"int *","k":"ptr","v":"&arr[2]","ref":"arr:2"},{"n":"alias","t":"int *","k":"ptr","v":"&arr[1]","ref":"arr:1"},{"n":"r","t":"int *","k":"ptr","v":"0xB200","ref":"h-r:0"}]},{"id":"f-add","f":"add","vars":[{"n":"a","t":"int","k":"int","v":"10"},{"n":"b","t":"int","k":"int","v":"20"},{"n":"s","t":"int","k":"int","v":"?","uninit":true}]}],"heap":[{"id":"h-r","label":"malloc(sizeof(int))","addr":"0xB200","cells":["?"],"state":"live"}]},
+{"line":7,"event":"s = a + b → 30","out":"","frames":[{"id":"f-main","f":"main","vars":[{"n":"arr","t":"int[4]","k":"array","cells":["30","10","20","5"],"addr":"0xA100"},{"n":"p","t":"int *","k":"ptr","v":"&arr[1]","ref":"arr:1"},{"n":"q","t":"int *","k":"ptr","v":"&arr[2]","ref":"arr:2"},{"n":"alias","t":"int *","k":"ptr","v":"&arr[1]","ref":"arr:1"},{"n":"r","t":"int *","k":"ptr","v":"0xB200","ref":"h-r:0"}]},{"id":"f-add","f":"add","vars":[{"n":"a","t":"int","k":"int","v":"10"},{"n":"b","t":"int","k":"int","v":"20"},{"n":"s","t":"int","k":"int","v":"30"}]}],"heap":[{"id":"h-r","label":"malloc(sizeof(int))","addr":"0xB200","cells":["?"],"state":"live"}]},
+{"line":8,"event":"return s — *r = 30, frame popped","out":"","frames":[{"id":"f-main","f":"main","vars":[{"n":"arr","t":"int[4]","k":"array","cells":["30","10","20","5"],"addr":"0xA100"},{"n":"p","t":"int *","k":"ptr","v":"&arr[1]","ref":"arr:1"},{"n":"q","t":"int *","k":"ptr","v":"&arr[2]","ref":"arr:2"},{"n":"alias","t":"int *","k":"ptr","v":"&arr[1]","ref":"arr:1"},{"n":"r","t":"int *","k":"ptr","v":"0xB200","ref":"h-r:0"}]}],"heap":[{"id":"h-r","label":"malloc(sizeof(int))","addr":"0xB200","cells":["30"],"state":"live"}]},
+{"line":20,"event":"pt = {3, 7}","out":"","frames":[{"id":"f-main","f":"main","vars":[{"n":"arr","t":"int[4]","k":"array","cells":["30","10","20","5"],"addr":"0xA100"},{"n":"p","t":"int *","k":"ptr","v":"&arr[1]","ref":"arr:1"},{"n":"q","t":"int *","k":"ptr","v":"&arr[2]","ref":"arr:2"},{"n":"alias","t":"int *","k":"ptr","v":"&arr[1]","ref":"arr:1"},{"n":"r","t":"int *","k":"ptr","v":"0xB200","ref":"h-r:0"},{"n":"pt","t":"Point","k":"struct","fields":[["x","3"],["y","7"]]}]}],"heap":[{"id":"h-r","label":"malloc(sizeof(int))","addr":"0xB200","cells":["30"],"state":"live"}]},
+{"line":21,"event":"ppt = &pt — struct pointer","out":"","frames":[{"id":"f-main","f":"main","vars":[{"n":"arr","t":"int[4]","k":"array","cells":["30","10","20","5"],"addr":"0xA100"},{"n":"p","t":"int *","k":"ptr","v":"&arr[1]","ref":"arr:1"},{"n":"q","t":"int *","k":"ptr","v":"&arr[2]","ref":"arr:2"},{"n":"alias","t":"int *","k":"ptr","v":"&arr[1]","ref":"arr:1"},{"n":"r","t":"int *","k":"ptr","v":"0xB200","ref":"h-r:0"},{"n":"pt","t":"Point","k":"struct","fields":[["x","3"],["y","7"]]},{"n":"ppt","t":"Point *","k":"ptr","v":"&pt","ref":"pt"}]}],"heap":[{"id":"h-r","label":"malloc(sizeof(int))","addr":"0xB200","cells":["30"],"state":"live"}]},
+{"line":22,"event":"free(r) — block freed, arrow removed","out":"","frames":[{"id":"f-main","f":"main","vars":[{"n":"arr","t":"int[4]","k":"array","cells":["30","10","20","5"],"addr":"0xA100"},{"n":"p","t":"int *","k":"ptr","v":"&arr[1]","ref":"arr:1"},{"n":"q","t":"int *","k":"ptr","v":"&arr[2]","ref":"arr:2"},{"n":"alias","t":"int *","k":"ptr","v":"&arr[1]","ref":"arr:1"},{"n":"r","t":"int *","k":"ptr","v":"0xB200","ref":null,"freed":true},{"n":"pt","t":"Point","k":"struct","fields":[["x","3"],["y","7"]]},{"n":"ppt","t":"Point *","k":"ptr","v":"&pt","ref":"pt"}]}],"heap":[{"id":"h-r","label":"malloc(sizeof(int))","addr":"0xB200","cells":["30"],"state":"freed"}]},
+{"line":23,"event":"r = NULL","out":"","frames":[{"id":"f-main","f":"main","vars":[{"n":"arr","t":"int[4]","k":"array","cells":["30","10","20","5"],"addr":"0xA100"},{"n":"p","t":"int *","k":"ptr","v":"&arr[1]","ref":"arr:1"},{"n":"q","t":"int *","k":"ptr","v":"&arr[2]","ref":"arr:2"},{"n":"alias","t":"int *","k":"ptr","v":"&arr[1]","ref":"arr:1"},{"n":"r","t":"int *","k":"ptr","v":"NULL","ref":null,"null":true},{"n":"pt","t":"Point","k":"struct","fields":[["x","3"],["y","7"]]},{"n":"ppt","t":"Point *","k":"ptr","v":"&pt","ref":"pt"}]}],"heap":[{"id":"h-r","label":"malloc(sizeof(int))","addr":"0xB200","cells":["30"],"state":"freed"}]},
+{"line":24,"event":"printf → 10 20 10","out":"10 20 10\n","frames":[{"id":"f-main","f":"main","vars":[{"n":"arr","t":"int[4]","k":"array","cells":["30","10","20","5"],"addr":"0xA100"},{"n":"p","t":"int *","k":"ptr","v":"&arr[1]","ref":"arr:1"},{"n":"q","t":"int *","k":"ptr","v":"&arr[2]","ref":"arr:2"},{"n":"alias","t":"int *","k":"ptr","v":"&arr[1]","ref":"arr:1"},{"n":"r","t":"int *","k":"ptr","v":"NULL","ref":null,"null":true},{"n":"pt","t":"Point","k":"struct","fields":[["x","3"],["y","7"]]},{"n":"ppt","t":"Point *","k":"ptr","v":"&pt","ref":"pt"}]}],"heap":[{"id":"h-r","label":"malloc(sizeof(int))","addr":"0xB200","cells":["30"],"state":"freed"}]},
+{"line":25,"event":"return 0 — program done","out":"10 20 10\n","frames":[{"id":"f-main","f":"main","vars":[{"n":"arr","t":"int[4]","k":"array","cells":["30","10","20","5"],"addr":"0xA100"},{"n":"p","t":"int *","k":"ptr","v":"&arr[1]","ref":"arr:1"},{"n":"q","t":"int *","k":"ptr","v":"&arr[2]","ref":"arr:2"},{"n":"alias","t":"int *","k":"ptr","v":"&arr[1]","ref":"arr:1"},{"n":"r","t":"int *","k":"ptr","v":"NULL","ref":null,"null":true},{"n":"pt","t":"Point","k":"struct","fields":[["x","3"],["y","7"]]},{"n":"ppt","t":"Point *","k":"ptr","v":"&pt","ref":"pt"}]}],"heap":[{"id":"h-r","label":"malloc(sizeof(int))","addr":"0xB200","cells":["30"],"state":"freed"}]}
+];
+
+/* ================= App state ================= */
+let sel = 0, playing = false, timer = null, activeTab = "vars";
+const $ = id => document.getElementById(id);
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---- change detection vs previous step (drives .changed) ---- */
+function sigOf(v){return JSON.stringify([v.n,v.k,v.v||null,v.cells||null,v.fields||null,v.ref||null,!!v.null,!!v.freed,!!v.uninit]);}
+function changedSet(step){
+  const s = new Set(); if(step===0) return s;
+  const prev = {}, cur = {};
+  for(const f of STEPS[step-1].frames) for(const v of f.vars) prev[f.id+":"+v.n]=sigOf(v);
+  for(const f of STEPS[step].frames) for(const v of f.vars){cur[f.id+":"+v.n]=sigOf(v); if(prev[f.id+":"+v.n]!==cur[f.id+":"+v.n]) s.add(f.id+":"+v.n);}
+  const ph = {}, ch = {};
+  for(const h of STEPS[step-1].heap) ph[h.id]=JSON.stringify([h.cells,h.state]);
+  for(const h of STEPS[step].heap){ch[h.id]=JSON.stringify([h.cells,h.state]); if(ph[h.id]!==ch[h.id]) s.add("heap:"+h.id);}
+  return s;
+}
+
+/* ================= Render: everything derives from STEPS[sel] ================= */
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+function renderStack(step, changed){
+  const host = $("frames"); host.innerHTML = "";
+  const st = STEPS[step];
+  if(!st.frames.length){host.innerHTML = '<div class="empty-note">No frames — program finished.</div>';return;}
+  st.frames.forEach((f,fi)=>{
+    const d = document.createElement("div");
+    d.className = "frame"+(fi===st.frames.length-1?" active":"");
+    const h = document.createElement("div"); h.className="frame-h";
+    h.innerHTML = '<span class="fname">'+esc(f.f)+'</span><span class="addr-note">'+esc(f.id)+'</span>'+
+      (fi<st.frames.length-1?'<span class="retired">caller</span>':'<span class="retired">active</span>');
+    d.appendChild(h);
+    for(const v of f.vars){
+      const row = document.createElement("div");
+      const isCh = changed.has(f.id+":"+v.n);
+      row.className = "varrow"+(isCh?" changed":"");
+      if(v.k==="ptr"&&v.ref){row.setAttribute("data-ptr-src",f.id+":"+v.n);}
+      if(v.n==="pt"){row.setAttribute("data-ptr-target","pt");}
+      let right = "";
+      if(v.k==="array"){
+        right = '<span class="cells">'+v.cells.map((c,i)=>{
+          const un = c==="?"; const cellCh = isCh&&!un;
+          return '<span class="cell'+(un?" uninit":"")+(cellCh?" changed":"")+'" title="'+esc(v.n+"["+i+"]")+'" data-ptr-target="'+esc(v.n+":"+i)+'">'+(un?'<span class="tag uninit">?</span>':esc(c))+'<span class="ci">'+i+'</span></span>';
+        }).join("")+'</span>';
+      }else if(v.k==="struct"){
+        right = '<span class="cells">'+v.fields.map(f2=>'<span class="cell">'+esc(f2[1])+'<span class="ci">.'+esc(f2[0])+'</span></span>').join("")+'</span>';
+      }else if(v.k==="ptr"){
+        if(v.null) right = '<span class="vv"><span class="tag null">NULL</span></span>';
+        else if(v.freed) right = '<span class="vv">'+esc(v.v)+' <span class="tag freed">FREED</span></span>';
+        else if(v.uninit) right = '<span class="vv"><span class="tag uninit">?</span></span>';
+        else right = '<span class="vv">'+esc(v.v)+'</span>';
+      }else{
+        right = v.uninit?'<span class="vv"><span class="tag uninit">?</span></span>':'<span class="vv">'+esc(v.v)+'</span>';
+      }
+      row.innerHTML = '<span class="vn">'+esc(v.n)+'</span><span class="vt">'+esc(v.t)+'</span>'+right;
+      d.appendChild(row);
+    }
+    host.appendChild(d);
+  });
+}
+
+function renderHeap(step, changed){
+  const host = $("heap"); host.innerHTML = "";
+  const st = STEPS[step];
+  if(!st.heap.length){host.innerHTML = '<div class="empty-note">No heap allocations at this step.</div>';return;}
+  for(const h of st.heap){
+    const d = document.createElement("div");
+    d.className = "heapobj"+(h.state==="freed"?" freed":"");
+    const cells = h.cells.map((c,i)=>{
+      const un = c==="?";
+      return '<span class="cell'+(un?" uninit":"")+(changed.has("heap:"+h.id)?" changed":"")+'" data-ptr-target="'+esc(h.id+":"+i)+'">'+(un?'<span class="tag uninit">?</span>':esc(c))+'<span class="ci">'+esc(h.addr)+'+'+(i*4)+'</span></span>';
+    }).join("");
+    d.innerHTML = '<div class="heap-h"><span>'+esc(h.label)+'</span><span class="addr">'+esc(h.addr)+'</span>'+
+      (h.state==="freed"?'<span class="tag freed">FREED — do not use</span>':'<span class="tag" style="color:var(--ave-ok);border:1px solid rgba(197,228,120,.5)">LIVE</span>')+'</div>'+
+      '<div class="heap-cells">'+cells+'</div>';
+    host.appendChild(d);
+  }
+}
+
+function pointersOf(step){
+  const out = [];
+  for(const f of STEPS[step].frames) for(const v of f.vars)
+    if(v.k==="ptr"&&v.ref) out.push({src:f.id+":"+v.n, dst:v.ref, name:v.n});
+  return out;
+}
+
+function renderInspector(step){
+  const host = $("inspBody"); const st = STEPS[step]; host.innerHTML = "";
+  host.setAttribute("aria-labelledby","tab-"+activeTab);
+  if(activeTab==="vars"){
+    for(const f of st.frames){
+      const h = document.createElement("h4"); h.textContent = f.f+"()"; host.appendChild(h);
+      for(const v of f.vars){
+        const kv = document.createElement("div"); kv.className="kv";
+        let val;
+        if(v.k==="array") val = "[ "+v.cells.join(", ")+" ]";
+        else if(v.k==="struct") val = "{ "+v.fields.map(x=>"."+x[0]+"="+x[1]).join(", ")+" }";
+        else if(v.null) val = "NULL";
+        else val = v.uninit?"? (uninit)":v.v+(v.ref?"  → "+v.ref:"");
+        kv.innerHTML = '<span class="k">'+esc(v.n)+'</span><span class="v'+(v.uninit||v.null?" dim":"")+'">'+esc(val)+'</span>';
+        host.appendChild(kv);
+      }
+    }
+  }else if(activeTab==="stack"){
+    st.frames.forEach((f,i)=>{
+      const h=document.createElement("h4");h.textContent=(i===st.frames.length-1?"> ":"  ")+f.f+"() — "+f.id;host.appendChild(h);
+      const d=document.createElement("div");d.className="kv";
+      d.innerHTML='<span class="k">vars</span><span class="v">'+esc(f.vars.map(v=>v.n).join(", ")||"(none)")+'</span>';host.appendChild(d);
+    });
+    if(step>=8&&step<=9){const p=document.createElement("p");p.style.color="var(--owl-muted)";p.textContent="add() was called with copies a=10, b=20 (pass by value).";host.appendChild(p);}
+  }else if(activeTab==="heap"){
+    if(!st.heap.length) host.innerHTML='<p style="color:var(--owl-muted)">No live or freed blocks tracked at this step.</p>';
+    for(const h of st.heap){
+      const d=document.createElement("div");d.className="kv";
+      d.innerHTML='<span class="k">'+esc(h.id)+'</span><span class="v'+(h.state==="freed"?" dim":"")+'">'+esc(h.label+" @ "+h.addr+" ["+h.state+"]")+'</span>';
+      host.appendChild(d);
+    }
+  }else{
+    STEPS.forEach((s,i)=>{
+      const b=document.createElement("button");
+      b.className="trace-ev"+(i===step?" cur":i<step?" done":"");
+      b.innerHTML='<span class="n">'+i+'</span><span>L'+s.line+' · '+esc(s.event)+'</span>';
+      b.addEventListener("click",()=>go(i));
+      host.appendChild(b);
+    });
+  }
+}
+
+function renderConsole(step){
+  const out = STEPS[step].out;
+  $("consoleOut").innerHTML = out===""?'<span class="dim">— no output yet at this step —</span>':esc(out);
+}
+
+function renderTransport(step){
+  $("scrub").value = step;
+  $("stepRead").textContent = step+" / "+(STEPS.length-1);
+  $("stepStat").textContent = "step "+step+"/"+(STEPS.length-1);
+  $("eventRead").textContent = "L"+STEPS[step].line+" · "+STEPS[step].event;
+  $("execChip").textContent = "line "+STEPS[step].line;
+  $("prevBtn").disabled = $("firstBtn").disabled = step===0;
+  $("nextBtn").disabled = $("lastBtn").disabled = step===STEPS.length-1;
+}
+
+/* ================= SVG arrows from live geometry ================= */
+let arrowQueued = false;
+function scheduleArrows(){
+  if(arrowQueued) return; arrowQueued = true;
+  requestAnimationFrame(()=>{arrowQueued=false; drawArrows();});
+}
+function drawArrows(){
+  const layer = $("arrowLayer"), svg = $("arrows"), content = $("stageContent");
+  const ptrs = pointersOf(sel);
+  const sRect = svg.getBoundingClientRect();
+  // Recompute paths (cheap for this size); skip only when identical
+  layer.innerHTML = "";
+  const NS = "http://www.w3.org/2000/svg";
+  ptrs.forEach((p,idx)=>{
+    const src = content.querySelector('[data-ptr-src="'+CSS.escape(p.src)+'"]');
+    const dst = content.querySelector('[data-ptr-target="'+CSS.escape(p.dst)+'"]');
+    if(!src||!dst) return; // target gone (freed/nulled) → no stale arrow
+    const a = src.getBoundingClientRect(), b = dst.getBoundingClientRect();
+    const x1 = a.right - sRect.left, y1 = a.top + a.height/2 - sRect.top;
+    // Target on the left of the source (e.g. ppt -> pt row): anchor to its
+    // value side (right edge) so the arrow stays a short local loop.
+    const bLeft = b.left - sRect.left, bRight = b.right - sRect.left;
+    const leftward = bLeft < x1 - 4 && (bRight - x1) < (x1 - bLeft);
+    const x2 = leftward ? bRight : bLeft, y2 = b.top + b.height/2 - sRect.top;
+    // Spread curves sharing a target so overlapping arrows stay distinguishable.
+    const spread = (idx%3)*14;
+    const mx = Math.max(x1+40+spread, (x1+x2)/2+spread);
+    const path = document.createElementNS(NS,"path");
+    path.setAttribute("d","M"+x1+","+y1+" C"+mx+","+y1+" "+(x2-40-spread)+","+y2+" "+(x2-3)+","+y2);
+    path.setAttribute("fill","none");
+    path.setAttribute("stroke", idx%2? "var(--ave-ptr2)" : "var(--ave-ptr)");
+    path.setAttribute("stroke-width","1.8");
+    path.setAttribute("marker-end","url(#ah)");
+    const title = document.createElementNS(NS,"title");
+    title.textContent = p.name+" → "+p.dst; path.appendChild(title);
+    layer.appendChild(path);
+  });
+}
+
+/* ================= Step selection: single source of truth ================= */
+function go(i){
+  sel = Math.max(0, Math.min(STEPS.length-1, i));
+  const changed = changedSet(sel);
+  renderStack(sel, changed); renderHeap(sel, changed);
+  renderInspector(sel); renderConsole(sel); renderTransport(sel);
+  setExecLine(STEPS[sel].line);
+  scheduleArrows();
+}
+function playPause(){
+  if(playing){stopPlay();return;}
+  if(sel===STEPS.length-1) go(0);
+  playing = true;
+  $("playBtn").innerHTML = '<span class="ms">pause</span>';
+  $("playBtn").setAttribute("aria-label","Pause");$("playBtn").setAttribute("aria-pressed","true");
+  const tick = ()=>{ if(sel>=STEPS.length-1){stopPlay();return;} go(sel+1); };
+  timer = setInterval(tick, parseInt($("speed").value,10));
+}
+function stopPlay(){
+  playing = false; if(timer){clearInterval(timer);timer=null;}
+  $("playBtn").innerHTML = '<span class="ms">play_arrow</span>';
+  $("playBtn").setAttribute("aria-label","Play");$("playBtn").setAttribute("aria-pressed","false");
+}
+
+/* ================= Editor (CodeMirror 6 w/ Night Owl; textarea fallback) ================= */
+let cmView = null, pristine = SOURCE;
+function currentDoc(){ return cmView ? cmView.state.doc.toString() : $("fallback").value; }
+function markStale(){
+  const dirty = currentDoc() !== pristine;
+  $("stalebar").classList.toggle("on",dirty);
+  $("staleBadge").classList.toggle("on",dirty);
+  $("filetab").classList.toggle("dirty",dirty);
+}
+function setExecLine(n){ /* set by CM extension below; fallback: chip only */ if(!cmView) return; cmExecLine(n); }
+let cmExecLine = ()=>{};
+async function initEditor(){
+  try{
+    const S = await import("@codemirror/state");
+    const V = await import("@codemirror/view");
+    const Cmd = await import("@codemirror/commands");
+    const Lang = await import("@codemirror/language");
+    const Cpp = await import("@codemirror/lang-cpp");
+    const HL = await import("@lezer/highlight");
+    const {EditorState, StateField, StateEffect, RangeSet} = S;
+    const {EditorView, lineNumbers, highlightActiveLine, highlightActiveLineGutter,
+      keymap, drawSelection, Decoration} = V;
+    const {defaultKeymap, indentWithTab, history, historyKeymap} = Cmd;
+    const {syntaxHighlighting, HighlightStyle} = Lang;
+    const {cpp} = Cpp, {tags} = HL;
+    const owlHL = HighlightStyle.define([
+      {tag:tags.comment, color:"#637777", fontStyle:"italic"},
+      {tag:tags.keyword, color:"#c792ea", fontStyle:"italic"},
+      {tag:[tags.controlKeyword, tags.operatorKeyword], color:"#c792ea"},
+      {tag:tags.string, color:"#ecc48d"},
+      {tag:[tags.number, tags.bool], color:"#F78C6C"},
+      {tag:[tags.typeName, tags.className], color:"#ffcb8b"},
+      {tag:[tags.function(tags.variableName), tags.function(tags.name)], color:"#82AAFF"},
+      {tag:tags.variableName, color:"#d6deeb"},
+      {tag:[tags.operator, tags.arithmeticOperator, tags.logicOperator], color:"#7fdbca"},
+      {tag:tags.punctuation, color:"#d6deeb"},
+      {tag:tags.invalid, color:"#ffffff", backgroundColor:"#ff2c83"}
+    ]);
+    const execDeco = Decoration.line({class:"exec-line"});
+    const setLineEffect = StateEffect.define();
+    const execState = StateField.define({
+      create(){return 11;},
+      update(v,tr){ for(const e of tr.effects) if(e.is(setLineEffect)) return e.value; return v; },
+      provide:f=>EditorView.decorations.compute([f], state=>{
+        const n = state.field(f);
+        if(n<1||n>state.doc.lines) return RangeSet.empty;
+        const line = state.doc.line(n);
+        return RangeSet.of([execDeco.range(line.from)]);
+      })
+    });
+    cmExecLine = n=>{ if(cmView) cmView.dispatch({effects:setLineEffect.of(n)}); };
+    const curTheme = EditorView.theme({
+      "&": {backgroundColor:"#011627", color:"#d6deeb"},
+      ".cm-content": {caretColor:"#80a4c2", fontFamily:"var(--font-mono)"},
+      ".cm-gutters": {backgroundColor:"#011627", color:"#4b6479", borderRight:"1px solid #262A39"},
+      ".cm-activeLineGutter": {backgroundColor:"#0b2942", color:"#C5E4FD"},
+      ".cm-activeLine": {backgroundColor:"#28707d29"}
+    }, {dark:true});
+    cmView = new EditorView({
+      parent: $("editor"),
+      state: EditorState.create({
+        doc: SOURCE,
+        extensions: [lineNumbers(), highlightActiveLine(), highlightActiveLineGutter(),
+          history(), drawSelection(),
+          keymap.of([indentWithTab, ...defaultKeymap, ...historyKeymap]),
+          cpp(), syntaxHighlighting(owlHL), curTheme, execState,
+          EditorView.updateListener.of(u=>{
+            if(u.docChanged) markStale();
+            if(u.selectionSet){ const p = u.state.selection.main.head;
+              const ln = u.state.doc.lineAt(p); $("cursorPos").textContent = "Ln "+ln.number+", Col "+(p-ln.from+1); }
+          }),
+          EditorView.lineWrapping]
+      })
+    });
+  }catch(e){
+    // Offline/CDN failure: plain textarea preserves exact text incl. tabs
+    window.__editorError = String((e && e.message) || e);
+    const fb = $("fallback"); fb.style.display="block"; fb.value = SOURCE;
+    $("editor").style.display="none";
+    fb.addEventListener("input", markStale);
+  }
+}
+
+/* ================= Wiring ================= */
+$("prevBtn").addEventListener("click",()=>{stopPlay();go(sel-1);});
+$("nextBtn").addEventListener("click",()=>{stopPlay();go(sel+1);});
+$("firstBtn").addEventListener("click",()=>{stopPlay();go(0);});
+$("lastBtn").addEventListener("click",()=>{stopPlay();go(STEPS.length-1);});
+$("playBtn").addEventListener("click",playPause);
+$("scrub").addEventListener("input",e=>{stopPlay();go(parseInt(e.target.value,10));});
+$("speed").addEventListener("change",()=>{ if(playing){stopPlay();playPause();} });
+$("resetSrc").addEventListener("click",()=>{
+  pristine = SOURCE;
+  if(cmView){ const tr = cmView.state.update({changes:{from:0,to:cmView.state.doc.length,insert:SOURCE}}); cmView.dispatch(tr); }
+  else $("fallback").value = SOURCE;
+  markStale(); stopPlay(); go(0);
+});
+document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
+  activeTab = t.dataset.tab;
+  document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected",x===t?"true":"false"));
+  renderInspector(sel); scheduleArrows();
+}));
+function toggleConsole(force){
+  const c = $("consolePane");
+  const show = force!==undefined?force:c.classList.contains("collapsed");
+  c.classList.toggle("collapsed",!show);
+  $("consoleChevron").textContent = show?"unfold_less":"unfold_more";
+  $("consoleHead").setAttribute("aria-expanded",show);
+  $("consoleBtn").setAttribute("aria-expanded",show);
+  scheduleArrows();
+}
+$("consoleHead").addEventListener("click",()=>toggleConsole());
+$("consoleBtn").addEventListener("click",()=>toggleConsole());
+document.addEventListener("keydown",e=>{
+  const tag = (e.target.tagName||"").toLowerCase();
+  const inField = tag==="input"||tag==="textarea"||tag==="select"||e.target.isContentEditable||(cmView&&cmView.hasFocus&&e.target.closest&&e.target.closest(".cm-editor"));
+  if(inField) { if(e.key==="Escape") e.target.blur(); return; }
+  if(e.key==="ArrowRight"){stopPlay();go(sel+1);e.preventDefault();}
+  else if(e.key==="ArrowLeft"){stopPlay();go(sel-1);e.preventDefault();}
+  else if(e.key==="Home"){stopPlay();go(0);e.preventDefault();}
+  else if(e.key==="End"){stopPlay();go(STEPS.length-1);e.preventDefault();}
+  else if(e.key===" "){playPause();e.preventDefault();}
+  else if(e.key==="c"||e.key==="C"){toggleConsole();}
+});
+new ResizeObserver(scheduleArrows).observe($("stageContent"));
+new ResizeObserver(scheduleArrows).observe($("stage"));
+window.addEventListener("resize",scheduleArrows);
+
+/* ================= Boot ================= */
+(async function(){
+  $("scrub").max = STEPS.length-1;
+  await initEditor();
+  go(0);
+})();
+</script>
+</body>
+</html>
