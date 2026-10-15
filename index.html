@@ -7,7 +7,8 @@
 <!--
   AveLoop prototype — single-file deliverable.
   Attributions: Night Owl theme values (MIT, Sarah Drasner / sdras/night-owl-vscode-theme);
-  CodeMirror 6 + Lezer (MIT); Material Symbols (Apache 2.0). No Python Tutor code reused
+  CodeMirror 6 + Lezer (MIT); perfect-arrows (MIT); Material Web slider (Apache-2.0);
+  Material Symbols (Apache 2.0). No Python Tutor code reused
   (behavioral reimplementation only). Trace below is predefined/symbolic: illustrative
   addresses, simulated execution. See TECHNICAL_RESEARCH.md.
 -->
@@ -54,10 +55,8 @@ body{margin:0;background:var(--owl-bg-deep);color:var(--owl-fg);font-family:var(
   border:1px solid var(--owl-contrast);display:grid;place-items:center;color:var(--ave-ptr)}
 .brand-mark .ms{font-size:17px}
 .brand-name{font-weight:650;font-size:14.5px;letter-spacing:.1px;white-space:nowrap}
-.brand-sub{font-size:11.5px;color:var(--owl-muted);white-space:nowrap}
 .badge{font-size:10.5px;font-weight:700;letter-spacing:.7px;padding:3px 8px;border-radius:20px;
   border:1px solid var(--owl-contrast);white-space:nowrap}
-.badge.sim{color:var(--owl-type);border-color:#4a3a1e;background:rgba(255,203,139,.07)}
 .badge.stale{color:#fff;background:var(--owl-error);border-color:var(--owl-error);display:none}
 .badge.stale.on{display:inline-block}
 .topbar .sp{flex:1}
@@ -101,7 +100,10 @@ body{margin:0;background:var(--owl-bg-deep);color:var(--owl-fg);font-family:var(
 .cm-activeLine{background:var(--owl-linehl)!important}
 .cm-cursor{border-left-color:var(--owl-cursor)!important}
 .cm-selectionBackground{background:var(--owl-sel)!important}
-.exec-line{background:var(--ave-exec-line)!important;box-shadow:inset 3px 0 0 var(--ave-exec-bar)}
+.exec-line{background:rgba(127,219,202,.13)!important}
+.cm-exec-gutter{width:15px}
+.exec-gutter-arrow{display:block;width:0;height:0;border-top:5px solid transparent;
+  border-bottom:5px solid transparent;border-left:7px solid #7fdbca;margin:6px 0 0 4px}
 #fallback{flex:1;min-height:0;display:none;width:100%;background:var(--owl-bg);color:var(--owl-fg);
   border:0;font-family:var(--font-mono);font-size:13px;padding:10px 12px;resize:none;line-height:1.6;white-space:pre}
 .stalebar{display:none;align-items:center;gap:8px;background:rgba(239,83,80,.1);
@@ -116,6 +118,12 @@ body{margin:0;background:var(--owl-bg-deep);color:var(--owl-fg);font-family:var(
 #stageContent{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;
   padding:16px 18px 26px;min-height:100%;min-width:0}
 #arrows{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+/* One pre-designed arrow: teal, rounded 2.5px stroke, open chevron head.
+   Orange appears ONLY on hover. */
+#arrowLayer path{pointer-events:none;fill:none;stroke:var(--ave-ptr);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+#arrowLayer path.wire{pointer-events:stroke}
+#arrowLayer path.wire:hover,#arrowLayer path.wire.hot{stroke:var(--ave-ptr2);stroke-width:3;marker-end:url(#ahHot)}
+#arrowLayer path.hit{pointer-events:stroke;stroke:transparent;stroke-width:14px}
 .region-h{font-size:11px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:var(--owl-muted);
   margin:2px 0 8px;display:flex;align-items:center;gap:6px}
 .region-h .ms{font-size:16px}
@@ -137,6 +145,9 @@ body{margin:0;background:var(--owl-bg-deep);color:var(--owl-fg);font-family:var(
 .tag.uninit{color:var(--owl-soft);border:1px dashed var(--owl-muted)}
 .tag.freed{color:#ffb4b0;border:1px solid var(--owl-error);background:rgba(239,83,80,.12)}
 .cells{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
+.ptr-origin{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ave-ptr);
+  margin-left:8px;vertical-align:1px;flex:0 0 auto;transition:background .12s}
+.ptr-origin.hot{background:var(--ave-ptr2)}
 .cell{min-width:30px;text-align:center;padding:3px 5px;border:1px solid var(--owl-contrast);
   border-radius:5px;background:var(--owl-bg-deep);font-size:12px}
 .cell.idx{border-color:rgba(127,219,202,.4)}
@@ -178,9 +189,58 @@ body{margin:0;background:var(--owl-bg-deep);color:var(--owl-fg);font-family:var(
 #playBtn{background:var(--owl-btn);color:#fff;border-radius:50%}
 #playBtn:hover{background:#8b63d3}
 .timeline{flex:1;display:flex;align-items:center;gap:10px;min-width:200px;margin:0 8px}
-input[type="range"]{-webkit-appearance:none;appearance:none;flex:1;height:4px;border-radius:2px;background:#234d70;cursor:pointer}
-input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--owl-func);border:2px solid var(--owl-bg)}
-input[type="range"]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:var(--owl-func);border:2px solid var(--owl-bg)}
+/* Official Material Web slider, themed with documented component tokens
+   (docs/components/slider.md) onto the Night Owl palette. */
+md-slider{
+  flex:1;min-width:160px;
+  --md-slider-active-track-color:#7e57c2;
+  --md-slider-inactive-track-color:#22384e;
+  --md-slider-active-track-height:16px;
+  --md-slider-inactive-track-height:16px;
+  --md-slider-handle-color:#7e57c2;
+  --md-slider-handle-width:4px;
+  --md-slider-handle-height:30px;
+  --md-slider-handle-shape:2px;
+  --md-slider-hover-handle-color:#8b63d3;
+  --md-slider-pressed-handle-color:#8b63d3;
+  --md-slider-focus-handle-color:#82AAFF;
+  --md-slider-hover-state-layer-color:#82AAFF;
+  --md-slider-pressed-state-layer-color:#82AAFF;
+  --md-slider-label-container-color:#d6deeb;
+  --md-slider-label-text-color:#011627;
+  --md-slider-with-tick-marks-active-container-color:#ffffff;
+  --md-slider-with-tick-marks-inactive-container-color:#7e57c2;
+}
+md-slider[hidden]{display:none}
+.mslider.hide{display:none}
+/* M3 discrete slider (native build): two-tone track with handle gap,
+   vertical bar handle that narrows when pressed, end stop indicator,
+   tick stops, value bubble on drag/focus, full keyboard + ARIA. */
+.mslider{position:relative;flex:1;min-width:160px;height:44px;touch-action:none;
+  user-select:none;-webkit-user-select:none;cursor:pointer;border-radius:8px}
+.mtrack{position:absolute;left:0;right:0;top:50%;height:14px;transform:translateY(-50%);display:flex}
+.mtrack-on{background:var(--owl-btn);border-radius:7px 0 0 7px;flex:0 0 auto;width:max(0px,calc(var(--p)*100% - 6px))}
+.mgap{flex:0 0 12px}
+.mtrack-off{background:#22384e;border-radius:0 7px 7px 0;flex:1 1 auto;min-width:0}
+.mstop{position:absolute;right:2px;top:50%;width:4px;height:4px;border-radius:50%;
+  background:var(--ave-ptr);transform:translateY(-50%)}
+.mticks{position:absolute;left:0;right:0;top:0;bottom:0;pointer-events:none}
+.mtick{position:absolute;top:50%;width:3px;height:3px;border-radius:50%;
+  transform:translate(-50%,-50%);background:var(--owl-btn)}
+.mtick.on{background:#ffffff}
+@media (max-width:760px){.mtick:not(.end){display:none}}
+.mhandle{position:absolute;left:calc(var(--p)*100%);top:50%;width:4px;height:28px;border-radius:2px;
+  background:var(--owl-btn);transform:translate(-50%,-50%);transition:width .12s,background .12s}
+.mslider:hover .mhandle{background:#8b63d3}
+.mslider.dragging{cursor:grabbing}
+.mslider.dragging .mhandle{width:2px}
+.mslider:focus-visible{outline:none}
+.mslider:focus-visible .mhandle{box-shadow:0 0 0 2px var(--owl-bg),0 0 0 4px var(--owl-focus)}
+.mvalue{position:absolute;left:clamp(28px,calc(var(--p)*100%),calc(100% - 28px));
+  bottom:calc(50% + 20px);transform:translateX(-50%);background:var(--owl-fg);color:var(--owl-bg);
+  font-family:var(--font-mono);font-size:12px;font-weight:700;border-radius:8px;padding:3px 10px;
+  opacity:0;transition:opacity .12s;pointer-events:none;white-space:nowrap}
+.mslider.dragging .mvalue,.mslider:focus-visible .mvalue{opacity:1}
 .stepread{font-family:var(--font-mono);font-size:12px;color:var(--owl-soft);white-space:nowrap;min-width:86px;text-align:right}
 .eventread{font-size:12px;color:var(--owl-type);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:280px}
 select.speed{font:inherit;font-size:12px;background:var(--owl-input);color:var(--owl-fg);
@@ -191,8 +251,11 @@ select.speed{font:inherit;font-size:12px;background:var(--owl-input);color:var(-
   font-weight:700;letter-spacing:.8px;text-transform:uppercase;cursor:pointer;border:0;background:transparent;font-family:var(--font-ui);width:100%;text-align:left}
 .chead .ms{font-size:17px}
 .chead:hover{color:var(--owl-fg)}
+.conchip{margin-left:auto;font-family:var(--font-mono);font-size:11px;font-weight:400;
+  color:var(--owl-soft);border:1px solid var(--owl-contrast);border-radius:5px;
+  padding:1px 8px;text-transform:none;letter-spacing:0}
 .cbody{padding:2px 12px 10px;overflow:auto}
-.cbody pre{margin:0;font-family:var(--font-mono);font-size:12.5px;color:var(--owl-ok,#c5e478);white-space:pre-wrap}
+.cbody pre{margin:0;font-family:var(--font-mono);font-size:12.5px;color:var(--ave-ok);white-space:pre-wrap}
 .cbody pre .dim{color:var(--owl-muted);font-style:italic}
 .statusbar{flex:0 0 26px;display:flex;align-items:center;gap:14px;padding:0 12px;background:var(--owl-bg);
   border-top:1px solid var(--owl-border);font-size:11.5px;color:var(--owl-muted);font-family:var(--font-mono);overflow:hidden;white-space:nowrap}
@@ -222,7 +285,9 @@ select.speed{font:inherit;font-size:12px;background:var(--owl-input);color:var(-
   "@lezer/common":"https://esm.sh/@lezer/common@1.2.2",
   "@lezer/highlight":"https://esm.sh/@lezer/highlight@1.2.2?external=@lezer/common",
   "@lezer/lr":"https://esm.sh/@lezer/lr@1.4.2?external=@lezer/common",
-  "@lezer/cpp":"https://esm.sh/@lezer/cpp@1.0.0?external=@lezer/common,@lezer/lr,@lezer/highlight"
+  "@lezer/cpp":"https://esm.sh/@lezer/cpp@1.0.0?external=@lezer/common,@lezer/lr,@lezer/highlight",
+  "perfect-arrows":"https://esm.sh/perfect-arrows@0.3.7",
+  "@material/web/slider/slider.js":"https://esm.sh/@material/web@2.5.0/slider/slider.js"
 }}
 </script>
 </head>
@@ -233,9 +298,7 @@ select.speed{font:inherit;font-size:12px;background:var(--owl-input);color:var(-
   <div class="brand">
     <span class="brand-mark" aria-hidden="true"><span class="ms">loop</span></span>
     <span class="brand-name">AveLoop</span>
-    <span class="brand-sub">Visual Code Execution</span>
   </div>
-  <span class="badge sim" title="Predefined symbolic trace — not a real C toolchain">SIMULATED TRACE</span>
   <span class="badge stale" id="staleBadge" role="status">EDITED — TRACE STALE</span>
   <span class="sp"></span>
   <button class="btn" id="resetSrc" title="Restore the original demo source"><span class="ms">restart_alt</span>Reset demo</button>
@@ -244,7 +307,7 @@ select.speed{font:inherit;font-size:12px;background:var(--owl-input);color:var(-
 <main class="workspace">
   <!-- Editor pane -->
   <section class="pane" aria-label="Code editor">
-    <div class="pane-h"><span class="ms">code</span>Editor<span class="right addr-note">C · tabs preserved</span></div>
+    <div class="pane-h"><span class="ms">code</span>Editor<span class="right addr-note">C</span></div>
     <div class="filetab" id="filetab"><span>main.c</span><span class="dot" aria-hidden="true"></span><span class="execline-chip" id="execChip">line 11</span></div>
     <div id="editor" aria-label="C source editor"></div>
     <textarea id="fallback" aria-label="C source fallback editor" spellcheck="false"></textarea>
@@ -257,14 +320,16 @@ select.speed{font:inherit;font-size:12px;background:var(--owl-input);color:var(-
       <span class="right legend">
         <span class="chip"><i style="background:var(--ave-ptr)"></i>pointer</span>
         <span class="chip"><i style="background:var(--ave-changed-edge)"></i>changed</span>
-        <span class="chip addr-note">addrs illustrative</span>
       </span>
     </div>
     <div id="stage">
       <div id="stageContent">
         <svg id="arrows" aria-hidden="true"><defs>
-          <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-            <path d="M0,0 L10,5 L0,10 z" fill="#7fdbca"></path>
+          <marker id="ah" viewBox="0 0 14 14" refX="11" refY="7" markerWidth="14" markerHeight="14" markerUnits="userSpaceOnUse" orient="auto">
+            <path d="M3.5,3 L11,7 L3.5,11" fill="none" stroke="#7fdbca" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path>
+          </marker>
+          <marker id="ahHot" viewBox="0 0 14 14" refX="11" refY="7" markerWidth="14" markerHeight="14" markerUnits="userSpaceOnUse" orient="auto">
+            <path d="M3.5,3 L11,7 L3.5,11" fill="none" stroke="#ffcb8b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path>
           </marker>
         </defs><g id="arrowLayer"></g></svg>
         <div id="stackCol"><div class="region-h"><span class="ms">layers</span>Stack</div><div id="frames"></div></div>
@@ -294,7 +359,18 @@ select.speed{font:inherit;font-size:12px;background:var(--owl-input);color:var(-
   <button class="iconbtn" id="lastBtn" title="Last step (End)" aria-label="Last step"><span class="ms">last_page</span></button>
   <span class="tsep"></span>
   <div class="timeline">
-    <input type="range" id="scrub" min="0" max="16" value="0" step="1" aria-label="Execution step">
+    <!-- Official Material Web slider (Option A per research); the native
+         M3 build below stays as the offline fallback. -->
+    <md-slider id="mdSlider" min="0" max="16" step="1" value="0" ticks labeled
+      aria-label="Execution step" hidden></md-slider>
+    <div class="mslider" id="mslider" role="slider" tabindex="0" aria-label="Execution step"
+      aria-valuemin="0" aria-valuemax="16" aria-valuenow="0" aria-valuetext="Step 0 of 16" style="--p:0">
+      <div class="mtrack" aria-hidden="true"><div class="mtrack-on" id="mtrackOn"></div><div class="mgap"></div><div class="mtrack-off"></div></div>
+      <div class="mticks" id="mticks" aria-hidden="true"></div>
+      <div class="mstop" aria-hidden="true"></div>
+      <div class="mhandle" aria-hidden="true"></div>
+      <div class="mvalue" id="mvalue" aria-hidden="true">0</div>
+    </div>
     <span class="stepread" id="stepRead">0 / 16</span>
     <span class="eventread" id="eventRead"></span>
   </div>
@@ -308,13 +384,13 @@ select.speed{font:inherit;font-size:12px;background:var(--owl-input);color:var(-
 
 <!-- Console -->
 <section class="console" id="consolePane" aria-label="Console">
-  <button class="chead" id="consoleHead" aria-expanded="true"><span class="ms">terminal</span>Console · output at selected step<span style="margin-left:auto" class="ms" id="consoleChevron">unfold_less</span></button>
+  <button class="chead" id="consoleHead" aria-expanded="true"><span class="ms">terminal</span>Console<span class="conchip" id="consoleStep">step 0</span><span class="ms" id="consoleChevron">unfold_less</span></button>
   <div class="cbody"><pre id="consoleOut"></pre></div>
 </section>
 
 <footer class="statusbar" aria-label="Status">
-  <span>C</span><span class="ok">simulated</span><span id="cursorPos">Ln 1, Col 1</span>
-  <span class="grow"></span><span>tabs preserved</span><span>addrs illustrative</span><span id="stepStat">step 0/16</span>
+  <span>C</span><span>main.c</span><span id="cursorPos">Ln 1, Col 1</span>
+  <span class="grow"></span><span id="stepStat">step 0/16</span>
 </footer>
 
 <script>
@@ -406,7 +482,6 @@ function renderStack(step, changed){
       const row = document.createElement("div");
       const isCh = changed.has(f.id+":"+v.n);
       row.className = "varrow"+(isCh?" changed":"");
-      if(v.k==="ptr"&&v.ref){row.setAttribute("data-ptr-src",f.id+":"+v.n);}
       if(v.n==="pt"){row.setAttribute("data-ptr-target","pt");}
       let right = "";
       if(v.k==="array"){
@@ -420,7 +495,7 @@ function renderStack(step, changed){
         if(v.null) right = '<span class="vv"><span class="tag null">NULL</span></span>';
         else if(v.freed) right = '<span class="vv">'+esc(v.v)+' <span class="tag freed">FREED</span></span>';
         else if(v.uninit) right = '<span class="vv"><span class="tag uninit">?</span></span>';
-        else right = '<span class="vv">'+esc(v.v)+'</span>';
+        else right = '<span class="vv">'+esc(v.v)+'<span class="ptr-origin" data-ptr-src="'+esc(f.id+":"+v.n)+'" title="'+esc(v.n+" → "+v.ref)+'"></span></span>';
       }else{
         right = v.uninit?'<span class="vv"><span class="tag uninit">?</span></span>':'<span class="vv">'+esc(v.v)+'</span>';
       }
@@ -495,6 +570,10 @@ function renderInspector(step){
       b.addEventListener("click",()=>go(i));
       host.appendChild(b);
     });
+    const note=document.createElement("p");
+    note.style.cssText="color:var(--owl-muted);font-size:11px;margin:10px 0 0";
+    note.textContent="Demo trace · "+STEPS.length+" steps · addresses are illustrative, not real runtime addresses.";
+    host.appendChild(note);
   }
 }
 
@@ -504,15 +583,55 @@ function renderConsole(step){
 }
 
 function renderTransport(step){
-  $("scrub").value = step;
+  setSlider(step);
   $("stepRead").textContent = step+" / "+(STEPS.length-1);
   $("stepStat").textContent = "step "+step+"/"+(STEPS.length-1);
   $("eventRead").textContent = "L"+STEPS[step].line+" · "+STEPS[step].event;
   $("execChip").textContent = "line "+STEPS[step].line;
+  $("consoleStep").textContent = "step "+step;
   $("prevBtn").disabled = $("firstBtn").disabled = step===0;
   $("nextBtn").disabled = $("lastBtn").disabled = step===STEPS.length-1;
 }
 
+/* Arrow geometry provider: the perfect-arrows library (MIT, dependency-free)
+   computes the curve; the hand-rolled cubic below is the offline fallback.
+   Either way the visual contract is identical: one teal path + head per
+   relationship, orange only on hover. */
+let getArrowFn = null;
+function cubicPath(x1,y1,x2,y2,idx,dst){
+  if(dst && dst.indexOf(":")<0 && y2<y1) return hookPath(x1,y1,x2,y2);
+  const dx = x2 - x1;
+  const dir = dx <= 48 ? -1 : 1;
+  const mag = Math.abs(dx) <= 20 ? 6 : 16 + (idx%3)*12;
+  const bow = dir * (dx*dir > 48 ? Math.min(dx*dir/2, 110) : mag);
+  return "M"+x1+","+y1+" C"+(x1+bow)+","+y1+" "+(x2-bow*0.7)+","+y2+" "+x2+","+y2;
+}
+function arrowPath(x1,y1,x2,y2,idx,dst){
+  // Hook shape for whole-object targets above their source (e.g. ppt → pt):
+  // sweep out, curl back, head pointing up-left into the element.
+  if(dst && dst.indexOf(":")<0 && y2<y1) return hookPath(x1,y1,x2,y2);
+  if(!getArrowFn) return cubicPath(x1,y1,x2,y2,idx,dst);
+  if((x2-x1) > 48){
+    const r = getArrowFn(x1,y1,x2,y2,
+      {bow:0.22, stretch:0.5, stretchMin:40, stretchMax:420, padStart:0, padEnd:0, straights:false, flip:false});
+    return "M"+r[0]+","+r[1]+" Q"+r[2]+","+r[3]+" "+r[4]+","+r[5];
+  }
+  // UX: non-heap arrows slant right-to-left toward their element. The
+  // library mirrors relative to travel direction, so evaluate both sides
+  // and keep the curve with the smallest rightward excursion.
+  // Hook language (reference: bold C-curve, chevron head angled up-left):
+  // strong deliberate bow for short hops, open arc for heap jumps.
+  const base = {bow:0.32+(idx%3)*0.07, stretch:0.25, stretchMin:0, stretchMax:200, padStart:0, padEnd:0, straights:false};
+  const a = getArrowFn(x1,y1,x2,y2,{...base,flip:false});
+  const b = getArrowFn(x1,y1,x2,y2,{...base,flip:true});
+  const maxX = r=>Math.max(r[0],r[2],r[4]);
+  const r = maxX(b) <= maxX(a) ? b : a;
+  return "M"+r[0]+","+r[1]+" Q"+r[2]+","+r[3]+" "+r[4]+","+r[5];
+}
+function hookPath(x1,y1,x2,y2){
+  const cx = Math.max(x1,x2) + 26, cy = (y1+y2)/2;
+  return "M"+x1+","+y1+" Q"+cx+","+cy+" "+x2+","+y2;
+}
 /* ================= SVG arrows from live geometry ================= */
 let arrowQueued = false;
 function scheduleArrows(){
@@ -531,24 +650,32 @@ function drawArrows(){
     const dst = content.querySelector('[data-ptr-target="'+CSS.escape(p.dst)+'"]');
     if(!src||!dst) return; // target gone (freed/nulled) → no stale arrow
     const a = src.getBoundingClientRect(), b = dst.getBoundingClientRect();
-    const x1 = a.right - sRect.left, y1 = a.top + a.height/2 - sRect.top;
+    // Start at the origin dot's center (round cap hides under the dot: seamless joint).
+    const x1 = a.left + a.width/2 - sRect.left, y1 = a.top + a.height/2 - sRect.top;
     // Target on the left of the source (e.g. ppt -> pt row): anchor to its
     // value side (right edge) so the arrow stays a short local loop.
     const bLeft = b.left - sRect.left, bRight = b.right - sRect.left;
     const leftward = bLeft < x1 - 4 && (bRight - x1) < (x1 - bLeft);
-    const x2 = leftward ? bRight : bLeft, y2 = b.top + b.height/2 - sRect.top;
-    // Spread curves sharing a target so overlapping arrows stay distinguishable.
-    const spread = (idx%3)*14;
-    const mx = Math.max(x1+40+spread, (x1+x2)/2+spread);
+    // End 1px inside the target edge; the marker tip lands ~2px inside the
+    // border, so the head visibly touches its target instead of floating short.
+    const x2 = (leftward ? bRight : bLeft) + 1, y2 = b.top + b.height/2 - sRect.top;
+    // Library-computed curve (or the cubic fallback): gentle tangent into
+    // the target edge, matching the marker's auto-orientation.
     const path = document.createElementNS(NS,"path");
-    path.setAttribute("d","M"+x1+","+y1+" C"+mx+","+y1+" "+(x2-40-spread)+","+y2+" "+(x2-3)+","+y2);
-    path.setAttribute("fill","none");
-    path.setAttribute("stroke", idx%2? "var(--ave-ptr2)" : "var(--ave-ptr)");
-    path.setAttribute("stroke-width","1.8");
+    path.setAttribute("d", arrowPath(x1,y1,x2,y2,idx,p.dst));
+    path.setAttribute("class","wire");
     path.setAttribute("marker-end","url(#ah)");
+    path.setAttribute("data-src",p.src);
+    path.setAttribute("data-dst",p.dst);
     const title = document.createElementNS(NS,"title");
     title.textContent = p.name+" → "+p.dst; path.appendChild(title);
     layer.appendChild(path);
+    // Fat invisible twin: makes the 2.5px line hoverable without changing it.
+    const hit = document.createElementNS(NS,"path");
+    hit.setAttribute("d", path.getAttribute("d"));
+    hit.setAttribute("class","hit");
+    hit.setAttribute("data-src",p.src);
+    layer.appendChild(hit);
   });
 }
 
@@ -597,9 +724,9 @@ async function initEditor(){
     const HL = await import("@lezer/highlight");
     const {EditorState, StateField, StateEffect, RangeSet} = S;
     const {EditorView, lineNumbers, highlightActiveLine, highlightActiveLineGutter,
-      keymap, drawSelection, Decoration} = V;
+      keymap, drawSelection, Decoration, gutter, GutterMarker} = V;
     const {defaultKeymap, indentWithTab, history, historyKeymap} = Cmd;
-    const {syntaxHighlighting, HighlightStyle} = Lang;
+    const {syntaxHighlighting, HighlightStyle, bracketMatching} = Lang;
     const {cpp} = Cpp, {tags} = HL;
     const owlHL = HighlightStyle.define([
       {tag:tags.comment, color:"#637777", fontStyle:"italic"},
@@ -627,19 +754,34 @@ async function initEditor(){
       })
     });
     cmExecLine = n=>{ if(cmView) cmView.dispatch({effects:setLineEffect.of(n)}); };
+    class ExecMarker extends GutterMarker{
+      toDOM(){ const s=document.createElement("span"); s.className="exec-gutter-arrow"; s.title="Current execution line"; return s; }
+    }
+    const execGutter = gutter({
+      class:"cm-exec-gutter",
+      markers: view=>{
+        let n = 0;
+        try{ n = view.state.field(execState); }catch(e){ return RangeSet.empty; }
+        if(n<1||n>view.state.doc.lines) return RangeSet.empty;
+        return RangeSet.of([new ExecMarker().range(view.state.doc.line(n).from)]);
+      },
+      initialSpacer: ()=>new ExecMarker()
+    });
     const curTheme = EditorView.theme({
       "&": {backgroundColor:"#011627", color:"#d6deeb"},
       ".cm-content": {caretColor:"#80a4c2", fontFamily:"var(--font-mono)"},
       ".cm-gutters": {backgroundColor:"#011627", color:"#4b6479", borderRight:"1px solid #262A39"},
       ".cm-activeLineGutter": {backgroundColor:"#0b2942", color:"#C5E4FD"},
-      ".cm-activeLine": {backgroundColor:"#28707d29"}
+      ".cm-activeLine": {backgroundColor:"#28707d29"},
+      ".cm-matchingBracket": {backgroundColor:"rgba(130,170,255,.22)", outline:"1px solid #82AAFF"},
+      ".cm-nonmatchingBracket": {backgroundColor:"rgba(239,83,80,.28)", color:"#ffb4b0"}
     }, {dark:true});
     cmView = new EditorView({
       parent: $("editor"),
       state: EditorState.create({
         doc: SOURCE,
-        extensions: [lineNumbers(), highlightActiveLine(), highlightActiveLineGutter(),
-          history(), drawSelection(),
+        extensions: [execGutter, lineNumbers(), highlightActiveLine(), highlightActiveLineGutter(),
+          history(), drawSelection(), bracketMatching(),
           keymap.of([indentWithTab, ...defaultKeymap, ...historyKeymap]),
           cpp(), syntaxHighlighting(owlHL), curTheme, execState,
           EditorView.updateListener.of(u=>{
@@ -659,13 +801,79 @@ async function initEditor(){
   }
 }
 
+/* ================= M3 discrete slider =================
+   Primary: official <md-slider> (Material Web). Fallback: the native M3
+   build below it, used when the CDN import fails. Both stay synced. */
+const SNS = STEPS.length - 1;
+let mdActive = false;
+const mdEl = ()=>document.getElementById("mdSlider");
+function setSlider(i){
+  const el = $("mslider");
+  el.style.setProperty("--p",(i/SNS).toFixed(4));
+  el.setAttribute("aria-valuenow",i);
+  el.setAttribute("aria-valuetext","Step "+i+" of "+SNS);
+  $("mvalue").textContent = i;
+  const ticks = $("mticks").children;
+  // Ticks strictly left of the handle sit on the active track (light);
+  // the tick under the handle is covered by it; the rest sit inactive.
+  for(let k=0;k<ticks.length;k++) ticks[k].classList.toggle("on",k<i);
+  if(mdActive && mdEl().value!==i) mdEl().value = i;
+}
+async function initMaterialSlider(){
+  try{
+    await import("@material/web/slider/slider.js");
+    if(!customElements.get("md-slider")) return false;
+    await customElements.whenDefined("md-slider");
+  }catch(e){ return false; }
+  const md = mdEl();
+  md.hidden = false;
+  $("mslider").classList.add("hide");
+  mdActive = true;
+  md.addEventListener("input",()=>{ stopPlay(); go(Math.round(md.value)); });
+  return true;
+}
+function buildTicks(){
+  const host = $("mticks"); host.innerHTML = "";
+  for(let k=0;k<=SNS;k++){
+    const t = document.createElement("span");
+    t.className = "mtick"+(k===0||k===SNS?" end":"");
+    t.style.left = (k/SNS*100).toFixed(3)+"%";
+    host.appendChild(t);
+  }
+}
+function seekFromPointer(e){
+  const r = $("mslider").getBoundingClientRect();
+  const ratio = Math.min(1,Math.max(0,(e.clientX-r.left)/r.width));
+  stopPlay(); go(Math.round(ratio*SNS));
+}
+let sliderDrag = false;
+$("mslider").addEventListener("pointerdown",e=>{
+  sliderDrag = true;
+  $("mslider").classList.add("dragging");
+  $("mslider").setPointerCapture(e.pointerId);
+  seekFromPointer(e);
+});
+$("mslider").addEventListener("pointermove",e=>{ if(sliderDrag) seekFromPointer(e); });
+$("mslider").addEventListener("pointerup",()=>{ sliderDrag=false; $("mslider").classList.remove("dragging"); });
+$("mslider").addEventListener("pointercancel",()=>{ sliderDrag=false; $("mslider").classList.remove("dragging"); });
+$("mslider").addEventListener("keydown",e=>{
+  let d = null;
+  if(e.key==="ArrowRight"||e.key==="ArrowUp") d = 1;
+  else if(e.key==="ArrowLeft"||e.key==="ArrowDown") d = -1;
+  else if(e.key==="Home"){ stopPlay(); go(0); }
+  else if(e.key==="End"){ stopPlay(); go(SNS); }
+  else return;
+  if(d!==null){ stopPlay(); go(sel+d); }
+  e.preventDefault(); e.stopPropagation();
+});
+
 /* ================= Wiring ================= */
 $("prevBtn").addEventListener("click",()=>{stopPlay();go(sel-1);});
 $("nextBtn").addEventListener("click",()=>{stopPlay();go(sel+1);});
 $("firstBtn").addEventListener("click",()=>{stopPlay();go(0);});
 $("lastBtn").addEventListener("click",()=>{stopPlay();go(STEPS.length-1);});
 $("playBtn").addEventListener("click",playPause);
-$("scrub").addEventListener("input",e=>{stopPlay();go(parseInt(e.target.value,10));});
+buildTicks();
 $("speed").addEventListener("change",()=>{ if(playing){stopPlay();playPause();} });
 $("resetSrc").addEventListener("click",()=>{
   pristine = SOURCE;
@@ -678,6 +886,27 @@ document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
   document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected",x===t?"true":"false"));
   renderInspector(sel); scheduleArrows();
 }));
+/* Pointer hover: hovering a pointer row (or the arrow path itself) turns that
+   one arrow orange. Structure never changes, only appearance. */
+function hotArrow(srcOn){
+  document.querySelectorAll("#arrowLayer path.hot").forEach(p=>p.classList.remove("hot"));
+  document.querySelectorAll(".ptr-origin.hot").forEach(d=>d.classList.remove("hot"));
+  if(srcOn){
+    const p = document.querySelector('#arrowLayer path.wire[data-src="'+srcOn+'"]');
+    if(p) p.classList.add("hot");
+    const dot = document.querySelector('.ptr-origin[data-ptr-src="'+srcOn+'"]');
+    if(dot) dot.classList.add("hot");
+  }
+}
+$("stageContent").addEventListener("mouseover",e=>{
+  // Hovering the arrow path itself lights the same pair (path + its dot).
+  const path = e.target.closest?e.target.closest("#arrowLayer path"):null;
+  if(path&&path.hasAttribute("data-src")){ hotArrow(path.getAttribute("data-src")); return; }
+  const row = e.target.closest?e.target.closest(".varrow"):null;
+  const dot = row?row.querySelector("[data-ptr-src]"):null;
+  hotArrow(dot?dot.getAttribute("data-ptr-src"):null);
+});
+$("stageContent").addEventListener("mouseleave",()=>hotArrow(null));
 function toggleConsole(force){
   const c = $("consolePane");
   const show = force!==undefined?force:c.classList.contains("collapsed");
@@ -692,7 +921,11 @@ $("consoleBtn").addEventListener("click",()=>toggleConsole());
 document.addEventListener("keydown",e=>{
   const tag = (e.target.tagName||"").toLowerCase();
   const inField = tag==="input"||tag==="textarea"||tag==="select"||e.target.isContentEditable||(cmView&&cmView.hasFocus&&e.target.closest&&e.target.closest(".cm-editor"));
+  const onSlider = e.target.closest&&e.target.closest("#mslider,md-slider");
   if(inField) { if(e.key==="Escape") e.target.blur(); return; }
+  // The M3 slider consumes its own arrows/Home/End; anything else (e.g. Space
+  // for play) falls through to the global transport shortcuts.
+  if(onSlider && ["ArrowRight","ArrowLeft","ArrowUp","ArrowDown","Home","End"].includes(e.key)) return;
   if(e.key==="ArrowRight"){stopPlay();go(sel+1);e.preventDefault();}
   else if(e.key==="ArrowLeft"){stopPlay();go(sel-1);e.preventDefault();}
   else if(e.key==="Home"){stopPlay();go(0);e.preventDefault();}
@@ -706,8 +939,9 @@ window.addEventListener("resize",scheduleArrows);
 
 /* ================= Boot ================= */
 (async function(){
-  $("scrub").max = STEPS.length-1;
   await initEditor();
+  try{ ({getArrow:getArrowFn} = await import("perfect-arrows")); }catch(e){ /* cubic fallback stays */ }
+  await initMaterialSlider(); /* native slider stays on failure */
   go(0);
 })();
 </script>
