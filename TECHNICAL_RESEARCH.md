@@ -141,7 +141,9 @@ State layers (hover +8%, focus ring, pressed), 4dp spacing scale, type scale
 (title/body/label + mono for code), restrained shape (6–12px, no pill-everything),
 icon buttons 40px targets, tabs with indicator, slider with value readout,
 tooltips, visible focus on all controls, `prefers-reduced-motion` support.
-M3 informs behavior/spacing/a11y; it never supplies the palette. Timeline is
+M3 informs behavior/spacing/a11y; it never supplies the palette. Scrollbars use
+the Night Owl button violet (`#7e57c2`) at rest/hover/active alpha steps, with
+a thin Firefox fallback. Timeline is
 a native-built M3 discrete slider per the Sliders guidelines (m3 spec pages
 are JS-gated; anatomy/behavior confirmed via search excerpts + Android
 `Slider.md` + Flutter M3 slider docs): two-tone track with handle gap,
@@ -168,7 +170,35 @@ linear bar (not the default circle) purely through documented tokens —
 `--md-slider-handle-width:4px`, `-handle-height:30px`, `-handle-shape:2px`,
 plus 16px active/inactive track heights — matching the official slider anatomy
 reference. No other Material Web components are
-imported — restraint, not wholesale adoption.
+imported — restraint, not wholesale adoption. Second component per user request:
+**official `<md-outlined-select>` for playback speed** (`select.md` API +
+`_md-comp-menu-item.scss` allowlist verified; only documented tokens used:
+outlined text-field outline/shape/input-text, `::part(menu)` container color/
+shape, menu-item selected container/label-text, plus scoped sys on-surface/
+variant/primary). Menu compacted per user request via verified tokens only:
+`clamp-menu-width` attribute, field fixed to 100px (`#mdSpeed{min-width:0}`
+beats the component `:host` 210px minimum), menu top/bottom-space 4px,
+item leading/trailing-space 10px, item label 13px. Known limitation: the
+`one-line-container-height` 36px token inherits onto rows but v2.5.0 does not
+consume it (rows stay 48px M3 default) — so rows were compacted at the light-DOM
+host instead (`#mdSpeed md-select-option{height:38px}`, screenshot-verified
+with no text clipping). Final menu: 100×160.
+
+Speed control migrated from `<md-outlined-select>` to `<md-menu>` + compact
+native anchor (36px button): the select field height is fixed at 56px by the
+library (full token allowlist confirms no height/density token), while the
+menu pattern matches the requested reference exactly. Official `menu.md`
+verified (`anchor`, `open`/`show()`/`close()`, `close-menu` initiator detail,
+`selected` items, `opening/opened/closing/closed`, `positioning="popover"`).
+Only documented tokens used; native `<select>` remains the offline fallback. Critical delivery finding: esm.sh builds each Material
+component into build-scoped chunks, so slider + select each registered their
+own `md-elevation` copy and the second `define()` threw. Fix: load the raw
+package files from unpkg through importmap (`tslib`, `lit`, `lit/`,
+`@lit/reactive-element[/]`, `@lit-labs/ssr-dom-shim`, `lit-html[/]`,
+`lit-element[/]` — versions resolved from the registries, missing specifiers
+found by iterating real browser errors), so package-internal relatives stay
+true singletons. Native select retained as offline fallback; Space-with-open-
+menu guarded to the menu.
 
 Evaluated via `docs/intro.md` + repo knowledge: official M3 web components,
 token-themed, framework-agnostic. Original concern (npm/bundler weight, default

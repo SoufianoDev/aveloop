@@ -14,7 +14,7 @@
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
 <style>
 /* ============ 1. Theme tokens: original Night Owl (--owl-*) vs AveLoop semantics (--ave-*) ============ */
 :root{
@@ -28,13 +28,25 @@
   --owl-input:#0b253a;
   --ave-exec-line:rgba(127,219,202,.10); --ave-exec-bar:#7fdbca;
   --ave-changed:rgba(255,203,139,.13); --ave-changed-edge:#ffcb8b;
-  --ave-ptr:#7fdbca; --ave-ptr2:#ffcb8b; --ave-freed:#EF5350; --ave-ok:#c5e478;
+  --ave-ptr:#7fdbca; --ave-ptr2:#ffcb8b; --ave-freed:#EF5350; --ave-ok:#c5e478; --ave-next:#ff5874;
   --ave-radius:8px; --ave-radius-s:6px;
   --font-ui:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  --font-mono:"Cascadia Code","JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --font-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
 }
 *{box-sizing:border-box}
 html,body{height:100%}
+/* Purple scrollbars on the Night Owl button violet (#7e57c2):
+   subtle thumb, clean track. */
+*{scrollbar-width:thin;scrollbar-color:rgba(126,87,194,.55) transparent}
+*::-webkit-scrollbar{width:10px;height:10px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:rgba(126,87,194,.55);border-radius:5px;
+  border:2px solid transparent;background-clip:padding-box}
+*::-webkit-scrollbar-thumb:hover{background:rgba(126,87,194,.8);border:2px solid transparent;
+  background-clip:padding-box}
+*::-webkit-scrollbar-thumb:active{background:#7e57c2;border:2px solid transparent;
+  background-clip:padding-box}
+*::-webkit-scrollbar-corner{background:transparent}
 body{margin:0;background:var(--owl-bg-deep);color:var(--owl-fg);font-family:var(--font-ui);
   font-size:13.5px;line-height:1.45;display:flex;flex-direction:column;height:100vh;overflow:hidden}
 ::selection{background:var(--owl-sel)}
@@ -101,9 +113,12 @@ body{margin:0;background:var(--owl-bg-deep);color:var(--owl-fg);font-family:var(
 .cm-cursor{border-left-color:var(--owl-cursor)!important}
 .cm-selectionBackground{background:var(--owl-sel)!important}
 .exec-line{background:rgba(127,219,202,.13)!important}
+.next-line{background:rgba(255,88,116,.08)!important}
 .cm-exec-gutter{width:15px}
 .exec-gutter-arrow{display:block;width:0;height:0;border-top:5px solid transparent;
   border-bottom:5px solid transparent;border-left:7px solid #7fdbca;margin:6px 0 0 4px}
+.next-gutter-arrow{display:block;width:0;height:0;border-top:5px solid transparent;
+  border-bottom:5px solid transparent;border-left:7px solid var(--ave-next);margin:6px 0 0 4px}
 #fallback{flex:1;min-height:0;display:none;width:100%;background:var(--owl-bg);color:var(--owl-fg);
   border:0;font-family:var(--font-mono);font-size:13px;padding:10px 12px;resize:none;line-height:1.6;white-space:pre}
 .stalebar{display:none;align-items:center;gap:8px;background:rgba(239,83,80,.1);
@@ -245,6 +260,33 @@ md-slider[hidden]{display:none}
 .eventread{font-size:12px;color:var(--owl-type);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:280px}
 select.speed{font:inherit;font-size:12px;background:var(--owl-input);color:var(--owl-fg);
   border:1px solid var(--owl-muted);border-radius:var(--ave-radius-s);padding:6px}
+select.speed.hide{display:none}
+/* Official Material Web menu, themed with documented tokens
+   (docs/components/menu.md + menu-item allowlist) onto Night Owl. */
+.speedwrap{position:relative;display:inline-flex}
+.speedwrap[hidden]{display:none}
+.speedbtn{height:36px;border:1px solid var(--owl-muted);font-family:var(--font-mono)}
+.speedbtn:hover{background:rgba(130,170,255,.08);border-color:var(--owl-focus)}
+.speedbtn .ms{font-size:18px;color:var(--owl-muted)}
+#speedMenu{
+  --md-menu-container-color:#0b2942;
+  --md-menu-container-shape:8px;
+  --md-menu-top-space:4px;
+  --md-menu-bottom-space:4px;
+  --md-menu-item-one-line-container-height:36px;
+  --md-list-item-one-line-container-height:36px;
+  --md-menu-item-leading-space:10px;
+  --md-menu-item-trailing-space:10px;
+  --md-menu-item-label-text-size:13px;
+  --md-menu-item-label-text-color:#d6deeb;
+  --md-menu-item-selected-container-color:#4b3566;
+  --md-menu-item-selected-label-text-color:#f2ecff;
+  --md-sys-color-on-surface:#d6deeb;
+  --md-sys-color-on-surface-variant:#89a4bb;
+}
+#speedMenu[hidden]{display:none}
+#speedMenu md-menu-item{display:block;height:38px;overflow:hidden}
+md-slider:focus-visible{outline:none}
 .console{flex:0 0 auto;background:var(--owl-bg);border-top:1px solid var(--owl-border);display:flex;flex-direction:column;max-height:150px}
 .console.collapsed .cbody{display:none}
 .chead{display:flex;align-items:center;gap:8px;padding:5px 12px;color:var(--owl-muted);font-size:11px;
@@ -287,7 +329,19 @@ select.speed{font:inherit;font-size:12px;background:var(--owl-input);color:var(-
   "@lezer/lr":"https://esm.sh/@lezer/lr@1.4.2?external=@lezer/common",
   "@lezer/cpp":"https://esm.sh/@lezer/cpp@1.0.0?external=@lezer/common,@lezer/lr,@lezer/highlight",
   "perfect-arrows":"https://esm.sh/perfect-arrows@0.3.7",
-  "@material/web/slider/slider.js":"https://esm.sh/@material/web@2.5.0/slider/slider.js"
+  "tslib":"https://unpkg.com/tslib@2.8.1/tslib.es6.js",
+  "lit":"https://unpkg.com/lit@3.3.3/index.js",
+  "lit/":"https://unpkg.com/lit@3.3.3/",
+  "@lit/reactive-element/":"https://unpkg.com/@lit/reactive-element@2.1.2/",
+  "@lit/reactive-element":"https://unpkg.com/@lit/reactive-element@2.1.2/reactive-element.js",
+  "@lit-labs/ssr-dom-shim":"https://unpkg.com/@lit-labs/ssr-dom-shim@1.6.0/index.js",
+  "lit-html":"https://unpkg.com/lit-html@3.3.3/lit-html.js",
+  "lit-html/":"https://unpkg.com/lit-html@3.3.3/",
+  "lit-element":"https://unpkg.com/lit-element@4.2.2/lit-element.js",
+  "lit-element/":"https://unpkg.com/lit-element@4.2.2/",
+  "@material/web/slider/slider.js":"https://unpkg.com/@material/web@2.5.0/slider/slider.js",
+  "@material/web/menu/menu.js":"https://unpkg.com/@material/web@2.5.0/menu/menu.js",
+  "@material/web/menu/menu-item.js":"https://unpkg.com/@material/web@2.5.0/menu/menu-item.js"
 }}
 </script>
 </head>
@@ -375,6 +429,17 @@ select.speed{font:inherit;font-size:12px;background:var(--owl-input);color:var(-
     <span class="eventread" id="eventRead"></span>
   </div>
   <span class="tsep"></span>
+  <span class="speedwrap" id="speedWrap" hidden>
+    <button class="btn speedbtn" id="speedBtn" aria-haspopup="menu" aria-expanded="false" aria-label="Playback speed">
+      <span id="speedLabel">1×</span><span class="ms">arrow_drop_down</span>
+    </button>
+    <md-menu id="speedMenu" anchor="speedBtn" y-offset="4" positioning="popover">
+      <md-menu-item data-speed="1600"><div slot="headline">0.5×</div></md-menu-item>
+      <md-menu-item data-speed="900" selected><div slot="headline">1×</div></md-menu-item>
+      <md-menu-item data-speed="450"><div slot="headline">2×</div></md-menu-item>
+      <md-menu-item data-speed="220"><div slot="headline">4×</div></md-menu-item>
+    </md-menu>
+  </span>
   <select class="speed" id="speed" aria-label="Playback speed">
     <option value="1600">0.5×</option><option value="900" selected>1×</option>
     <option value="450">2×</option><option value="220">4×</option>
@@ -487,7 +552,8 @@ function renderStack(step, changed){
       if(v.k==="array"){
         right = '<span class="cells">'+v.cells.map((c,i)=>{
           const un = c==="?"; const cellCh = isCh&&!un;
-          return '<span class="cell'+(un?" uninit":"")+(cellCh?" changed":"")+'" title="'+esc(v.n+"["+i+"]")+'" data-ptr-target="'+esc(v.n+":"+i)+'">'+(un?'<span class="tag uninit">?</span>':esc(c))+'<span class="ci">'+i+'</span></span>';
+          const glyph = un?'<span class="tag uninit">?</span>':esc(c);
+          return '<span class="cell'+(un?" uninit":"")+(cellCh?" changed":"")+'" title="'+esc(v.n+"["+i+"]")+'"><span class="cv" data-ptr-target="'+esc(v.n+":"+i)+'">'+glyph+'</span><span class="ci">'+i+'</span></span>';
         }).join("")+'</span>';
       }else if(v.k==="struct"){
         right = '<span class="cells">'+v.fields.map(f2=>'<span class="cell">'+esc(f2[1])+'<span class="ci">.'+esc(f2[0])+'</span></span>').join("")+'</span>';
@@ -515,7 +581,8 @@ function renderHeap(step, changed){
     d.className = "heapobj"+(h.state==="freed"?" freed":"");
     const cells = h.cells.map((c,i)=>{
       const un = c==="?";
-      return '<span class="cell'+(un?" uninit":"")+(changed.has("heap:"+h.id)?" changed":"")+'" data-ptr-target="'+esc(h.id+":"+i)+'">'+(un?'<span class="tag uninit">?</span>':esc(c))+'<span class="ci">'+esc(h.addr)+'+'+(i*4)+'</span></span>';
+      const glyph = un?'<span class="tag uninit">?</span>':esc(c);
+      return '<span class="cell'+(un?" uninit":"")+(changed.has("heap:"+h.id)?" changed":"")+'"><span class="cv" data-ptr-target="'+esc(h.id+":"+i)+'">'+glyph+'</span><span class="ci">'+esc(h.addr)+'+'+(i*4)+'</span></span>';
     }).join("");
     d.innerHTML = '<div class="heap-h"><span>'+esc(h.label)+'</span><span class="addr">'+esc(h.addr)+'</span>'+
       (h.state==="freed"?'<span class="tag freed">FREED — do not use</span>':'<span class="tag" style="color:var(--ave-ok);border:1px solid rgba(197,228,120,.5)">LIVE</span>')+'</div>'+
@@ -584,10 +651,12 @@ function renderConsole(step){
 
 function renderTransport(step){
   setSlider(step);
+  const cur = STEPS[step].line;
+  const next = step<STEPS.length-1 ? STEPS[step+1].line : null;
   $("stepRead").textContent = step+" / "+(STEPS.length-1);
   $("stepStat").textContent = "step "+step+"/"+(STEPS.length-1);
   $("eventRead").textContent = "L"+STEPS[step].line+" · "+STEPS[step].event;
-  $("execChip").textContent = "line "+STEPS[step].line;
+  $("execChip").textContent = next&&next!==cur ? "line "+cur+" → "+next : "line "+cur;
   $("consoleStep").textContent = "step "+step;
   $("prevBtn").disabled = $("firstBtn").disabled = step===0;
   $("nextBtn").disabled = $("lastBtn").disabled = step===STEPS.length-1;
@@ -685,7 +754,7 @@ function go(i){
   const changed = changedSet(sel);
   renderStack(sel, changed); renderHeap(sel, changed);
   renderInspector(sel); renderConsole(sel); renderTransport(sel);
-  setExecLine(STEPS[sel].line);
+  setExecLine(sel);
   scheduleArrows();
 }
 function playPause(){
@@ -712,7 +781,12 @@ function markStale(){
   $("staleBadge").classList.toggle("on",dirty);
   $("filetab").classList.toggle("dirty",dirty);
 }
-function setExecLine(n){ /* set by CM extension below; fallback: chip only */ if(!cmView) return; cmExecLine(n); }
+function setExecLine(step){ /* set by CM extension below; fallback: chip only */
+  if(!cmView) return;
+  const cur = STEPS[step].line;
+  const next = step<STEPS.length-1 ? STEPS[step+1].line : null;
+  cmExecLine(cur, next===cur?null:next);
+}
 let cmExecLine = ()=>{};
 async function initEditor(){
   try{
@@ -722,7 +796,7 @@ async function initEditor(){
     const Lang = await import("@codemirror/language");
     const Cpp = await import("@codemirror/lang-cpp");
     const HL = await import("@lezer/highlight");
-    const {EditorState, StateField, StateEffect, RangeSet} = S;
+    const {EditorState, StateField, StateEffect, RangeSet, RangeSetBuilder} = S;
     const {EditorView, lineNumbers, highlightActiveLine, highlightActiveLineGutter,
       keymap, drawSelection, Decoration, gutter, GutterMarker} = V;
     const {defaultKeymap, indentWithTab, history, historyKeymap} = Cmd;
@@ -742,28 +816,38 @@ async function initEditor(){
       {tag:tags.invalid, color:"#ffffff", backgroundColor:"#ff2c83"}
     ]);
     const execDeco = Decoration.line({class:"exec-line"});
+    const nextDeco = Decoration.line({class:"next-line"});
     const setLineEffect = StateEffect.define();
     const execState = StateField.define({
-      create(){return 11;},
+      create(){return {cur:11,next:null};},
       update(v,tr){ for(const e of tr.effects) if(e.is(setLineEffect)) return e.value; return v; },
       provide:f=>EditorView.decorations.compute([f], state=>{
-        const n = state.field(f);
-        if(n<1||n>state.doc.lines) return RangeSet.empty;
-        const line = state.doc.line(n);
-        return RangeSet.of([execDeco.range(line.from)]);
+        const v = state.field(f);
+        const b = new RangeSetBuilder();
+        for(const [n,deco] of [[v.cur,execDeco],[v.next,nextDeco]]){
+          if(!n||n<1||n>state.doc.lines) continue;
+          try{ const line = state.doc.line(n); b.add(line.from,line.from,deco); }catch(e){}
+        }
+        return b.finish();
       })
     });
-    cmExecLine = n=>{ if(cmView) cmView.dispatch({effects:setLineEffect.of(n)}); };
+    cmExecLine = (cur,next)=>{ if(cmView) cmView.dispatch({effects:setLineEffect.of({cur,next})}); };
     class ExecMarker extends GutterMarker{
       toDOM(){ const s=document.createElement("span"); s.className="exec-gutter-arrow"; s.title="Current execution line"; return s; }
+    }
+    class NextMarker extends GutterMarker{
+      toDOM(){ const s=document.createElement("span"); s.className="next-gutter-arrow"; s.title="Next line to execute"; return s; }
     }
     const execGutter = gutter({
       class:"cm-exec-gutter",
       markers: view=>{
-        let n = 0;
-        try{ n = view.state.field(execState); }catch(e){ return RangeSet.empty; }
-        if(n<1||n>view.state.doc.lines) return RangeSet.empty;
-        return RangeSet.of([new ExecMarker().range(view.state.doc.line(n).from)]);
+        let v = null;
+        try{ v = view.state.field(execState); }catch(e){ return RangeSet.empty; }
+        const b = new RangeSetBuilder();
+        const add = (n,Mk)=>{ if(!n||n<1||n>view.state.doc.lines) return;
+          try{ b.add(view.state.doc.line(n).from,view.state.doc.line(n).from,new Mk()); }catch(e){} };
+        add(v.cur,ExecMarker); add(v.next,NextMarker);
+        return b.finish();
       },
       initialSpacer: ()=>new ExecMarker()
     });
@@ -830,6 +914,44 @@ async function initMaterialSlider(){
   $("mslider").classList.add("hide");
   mdActive = true;
   md.addEventListener("input",()=>{ stopPlay(); go(Math.round(md.value)); });
+  return true;
+}
+let mdMenuOpen = false;
+async function initSpeedMenu(){
+  try{
+    await import("@material/web/menu/menu.js");
+    await import("@material/web/menu/menu-item.js");
+    if(!customElements.get("md-menu")) return false;
+    await customElements.whenDefined("md-menu");
+  }catch(e){ return false; }
+  const btn = $("speedBtn"), menu = $("speedMenu");
+  const labelFor = ms=>{
+    const it = menu.querySelector('md-menu-item[data-speed="'+ms+'"]');
+    const h = it && it.querySelector("[slot=headline]");
+    return h ? h.textContent : String(ms);
+  };
+  const sync = ms=>{
+    $("speed").value = String(ms);
+    $("speedLabel").textContent = labelFor(ms);
+    btn.setAttribute("aria-label","Playback speed, "+labelFor(ms));
+    menu.querySelectorAll("md-menu-item").forEach(it=>{
+      if(it.dataset.speed===String(ms)) it.setAttribute("selected","");
+      else it.removeAttribute("selected");
+    });
+  };
+  document.getElementById("speedWrap").hidden = false;
+  $("speed").classList.add("hide");
+  sync(900);
+  btn.addEventListener("click",()=>{ menu.open = !menu.open; });
+  menu.addEventListener("close-menu",e=>{
+    const it = e.target.closest?e.target.closest("md-menu-item"):null;
+    const ms = it?parseInt(it.dataset.speed,10):NaN;
+    if(!it||isNaN(ms)) return;
+    sync(ms);
+    if(playing){ stopPlay(); playPause(); }
+  });
+  menu.addEventListener("opening",()=>{ mdMenuOpen = true; btn.setAttribute("aria-expanded","true"); });
+  menu.addEventListener("closed",()=>{ mdMenuOpen = false; btn.setAttribute("aria-expanded","false"); });
   return true;
 }
 function buildTicks(){
@@ -921,7 +1043,9 @@ $("consoleBtn").addEventListener("click",()=>toggleConsole());
 document.addEventListener("keydown",e=>{
   const tag = (e.target.tagName||"").toLowerCase();
   const inField = tag==="input"||tag==="textarea"||tag==="select"||e.target.isContentEditable||(cmView&&cmView.hasFocus&&e.target.closest&&e.target.closest(".cm-editor"));
-  const onSlider = e.target.closest&&e.target.closest("#mslider,md-slider");
+  const onSlider = e.target.closest&&e.target.closest("#mslider,md-slider,md-menu");
+  // Space with the speed menu open belongs to the menu, never to transport.
+  if(onSlider && e.key===" " && mdMenuOpen) return;
   if(inField) { if(e.key==="Escape") e.target.blur(); return; }
   // The M3 slider consumes its own arrows/Home/End; anything else (e.g. Space
   // for play) falls through to the global transport shortcuts.
@@ -942,6 +1066,7 @@ window.addEventListener("resize",scheduleArrows);
   await initEditor();
   try{ ({getArrow:getArrowFn} = await import("perfect-arrows")); }catch(e){ /* cubic fallback stays */ }
   await initMaterialSlider(); /* native slider stays on failure */
+  await initSpeedMenu(); /* native speed select stays on failure */
   go(0);
 })();
 </script>
