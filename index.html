@@ -130,8 +130,8 @@ body{margin:0;background:var(--owl-bg-deep);color:var(--owl-fg);font-family:var(
   padding:2px 8px;border-radius:20px;display:inline-flex;align-items:center;gap:5px;text-transform:none;letter-spacing:0}
 .chip i{width:8px;height:8px;border-radius:2px;display:inline-block}
 #stage{flex:1;min-height:0;min-width:0;overflow:auto;position:relative}
-#stageContent{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;
-  padding:16px 18px 26px;min-height:100%;min-width:0}
+#stageContent{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;
+  padding:20px 22px 30px;min-height:100%;min-width:0}
 #arrows{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
 /* One pre-designed arrow: teal, rounded 2.5px stroke, open chevron head.
    Orange appears ONLY on hover. */
@@ -140,16 +140,16 @@ body{margin:0;background:var(--owl-bg-deep);color:var(--owl-fg);font-family:var(
 #arrowLayer path.wire:hover,#arrowLayer path.wire.hot{stroke:var(--ave-ptr2);stroke-width:3;marker-end:url(#ahHot)}
 #arrowLayer path.hit{pointer-events:stroke;stroke:transparent;stroke-width:14px}
 .region-h{font-size:11px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:var(--owl-muted);
-  margin:2px 0 8px;display:flex;align-items:center;gap:6px}
+  margin:4px 0 12px;display:flex;align-items:center;gap:6px}
 .region-h .ms{font-size:16px}
-.frame{border:1px solid var(--owl-contrast);border-radius:var(--ave-radius);margin-bottom:12px;
+.frame{border:1px solid var(--owl-contrast);border-radius:var(--ave-radius);margin-bottom:16px;
   background:rgba(11,41,66,.35);overflow:hidden}
 .frame.active{border-color:rgba(127,219,202,.45)}
 .frame-h{background:rgba(11,41,66,.7);padding:6px 10px;font-family:var(--font-mono);font-size:12px;
   color:var(--owl-fg);display:flex;gap:8px;align-items:center;border-bottom:1px solid var(--owl-contrast)}
 .frame-h .fname{color:var(--owl-func);font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .frame-h .retired{margin-left:auto;font-size:10.5px;color:var(--owl-muted);font-family:var(--font-ui);flex:0 0 auto}
-.varrow{display:flex;align-items:center;gap:8px;padding:5px 10px;border-bottom:1px solid rgba(38,42,57,.6);font-family:var(--font-mono);font-size:12.5px;flex-wrap:wrap}
+.varrow{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid rgba(38,42,57,.6);font-family:var(--font-mono);font-size:12.5px;flex-wrap:wrap}
 .varrow:last-child{border-bottom:0}
 .varrow .vn{color:var(--owl-var);min-width:44px}
 .varrow .vt{color:var(--owl-muted);font-size:11px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:0 1 auto}
@@ -159,23 +159,23 @@ body{margin:0;background:var(--owl-bg-deep);color:var(--owl-fg);font-family:var(
 .tag.null{color:#ffb4b0;border:1px solid rgba(239,83,80,.6)}
 .tag.uninit{color:var(--owl-soft);border:1px dashed var(--owl-muted)}
 .tag.freed{color:#ffb4b0;border:1px solid var(--owl-error);background:rgba(239,83,80,.12)}
-.cells{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
+.cells{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
 .ptr-origin{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ave-ptr);
-  margin-left:8px;vertical-align:1px;flex:0 0 auto;transition:background .12s}
+  margin-left:12px;vertical-align:1px;flex:0 0 auto;transition:background .12s}
 .ptr-origin.hot{background:var(--ave-ptr2)}
-.cell{min-width:30px;text-align:center;padding:3px 5px;border:1px solid var(--owl-contrast);
+.cell{min-width:36px;text-align:center;padding:5px 8px;border:1px solid var(--owl-contrast);
   border-radius:5px;background:var(--owl-bg-deep);font-size:12px}
 .cell.idx{border-color:rgba(127,219,202,.4)}
 .cell.uninit{color:var(--owl-muted);border-style:dashed}
 .cell .ci{display:block;font-size:9px;color:var(--owl-muted)}
 .cell.changed{background:var(--ave-changed);border-color:var(--ave-changed-edge)}
-.heapobj{border:1px solid var(--owl-contrast);border-radius:var(--ave-radius);margin-bottom:12px;overflow:hidden;background:rgba(126,87,194,.05)}
+.heapobj{border:1px solid var(--owl-contrast);border-radius:var(--ave-radius);margin-bottom:16px;overflow:hidden;background:rgba(126,87,194,.05)}
 .heapobj.freed{opacity:.85;border-color:rgba(239,83,80,.55)}
 .heap-h{padding:6px 10px;font-family:var(--font-mono);font-size:11.5px;color:var(--owl-soft);
   border-bottom:1px solid var(--owl-contrast);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .heap-h>*{min-width:0}
 .heap-h .addr{color:var(--owl-muted);margin-left:auto;white-space:nowrap}
-.heap-cells{display:flex;gap:4px;padding:8px 10px;flex-wrap:wrap}
+.heap-cells{display:flex;gap:8px;padding:10px 12px;flex-wrap:wrap}
 .empty-note{color:var(--owl-muted);font-size:12px;padding:8px 2px;font-style:italic}
 .addr-note{font-size:10.5px;color:var(--owl-muted)}
 /* Inspector */
@@ -671,7 +671,7 @@ function cubicPath(x1,y1,x2,y2,idx,dst){
   if(dst && dst.indexOf(":")<0 && y2<y1) return hookPath(x1,y1,x2,y2);
   const dx = x2 - x1;
   const dir = dx <= 48 ? -1 : 1;
-  const mag = Math.abs(dx) <= 20 ? 6 : 16 + (idx%3)*12;
+  const mag = Math.abs(dx) <= 20 ? 6 : 16 + (idx%3)*16;
   const bow = dir * (dx*dir > 48 ? Math.min(dx*dir/2, 110) : mag);
   return "M"+x1+","+y1+" C"+(x1+bow)+","+y1+" "+(x2-bow*0.7)+","+y2+" "+x2+","+y2;
 }
@@ -690,7 +690,7 @@ function arrowPath(x1,y1,x2,y2,idx,dst){
   // and keep the curve with the smallest rightward excursion.
   // Hook language (reference: bold C-curve, chevron head angled up-left):
   // strong deliberate bow for short hops, open arc for heap jumps.
-  const base = {bow:0.32+(idx%3)*0.07, stretch:0.25, stretchMin:0, stretchMax:200, padStart:0, padEnd:0, straights:false};
+  const base = {bow:0.32+(idx%3)*0.1, stretch:0.25, stretchMin:0, stretchMax:200, padStart:0, padEnd:0, straights:false};
   const a = getArrowFn(x1,y1,x2,y2,{...base,flip:false});
   const b = getArrowFn(x1,y1,x2,y2,{...base,flip:true});
   const maxX = r=>Math.max(r[0],r[2],r[4]);
@@ -711,10 +711,16 @@ function drawArrows(){
   const layer = $("arrowLayer"), svg = $("arrows"), content = $("stageContent");
   const ptrs = pointersOf(sel);
   const sRect = svg.getBoundingClientRect();
+  // Arrows sharing one target fan out along the glyph instead of stacking
+  // on the same pixel.
+  const seen = {};
+  ptrs.forEach(p=>{ seen[p.dst]=(seen[p.dst]||0)+1; });
+  const order = {};
   // Recompute paths (cheap for this size); skip only when identical
   layer.innerHTML = "";
   const NS = "http://www.w3.org/2000/svg";
   ptrs.forEach((p,idx)=>{
+    order[p.dst] = (order[p.dst]||0)+1;
     const src = content.querySelector('[data-ptr-src="'+CSS.escape(p.src)+'"]');
     const dst = content.querySelector('[data-ptr-target="'+CSS.escape(p.dst)+'"]');
     if(!src||!dst) return; // target gone (freed/nulled) → no stale arrow
@@ -727,7 +733,11 @@ function drawArrows(){
     const leftward = bLeft < x1 - 4 && (bRight - x1) < (x1 - bLeft);
     // End 1px inside the target edge; the marker tip lands ~2px inside the
     // border, so the head visibly touches its target instead of floating short.
-    const x2 = (leftward ? bRight : bLeft) + 1, y2 = b.top + b.height/2 - sRect.top;
+    // Duplicates fan vertically along the glyph: top/middle/bottom stay on digits.
+    const nDup = seen[p.dst], kDup = order[p.dst]-1;
+    const x2 = (leftward ? bRight : bLeft) + 1;
+    let y2 = b.top + b.height/2 - sRect.top + (kDup-(nDup-1)/2)*7;
+    y2 = Math.min(b.bottom - sRect.top - 2, Math.max(b.top - sRect.top + 2, y2));
     // Library-computed curve (or the cubic fallback): gentle tangent into
     // the target edge, matching the marker's auto-orientation.
     const path = document.createElementNS(NS,"path");
