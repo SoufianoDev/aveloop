@@ -7,7 +7,7 @@
 <!--
   AveLoop prototype — single-file deliverable.
   Attributions: Night Owl theme values (MIT, Sarah Drasner / sdras/night-owl-vscode-theme);
-  CodeMirror 6 + Lezer (MIT); perfect-arrows (MIT); Material Web slider (Apache-2.0);
+  CodeMirror 6 + Lezer (MIT); Material Web slider (Apache-2.0);
   Material Symbols (Apache 2.0). No Python Tutor code reused
   (behavioral reimplementation only). Trace below is predefined/symbolic: illustrative
   addresses, simulated execution. See TECHNICAL_RESEARCH.md.
@@ -138,6 +138,10 @@ body{margin:0;background:var(--owl-bg-deep);color:var(--owl-fg);font-family:var(
 #arrowLayer path{pointer-events:none;fill:none;stroke:var(--ave-ptr);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
 #arrowLayer path.wire{pointer-events:stroke}
 #arrowLayer path.wire:hover,#arrowLayer path.wire.hot{stroke:var(--ave-ptr2);stroke-width:3;marker-end:url(#ahHot)}
+/* Branch wires end at a merge junction — the head belongs to the trunk only. */
+#arrowLayer path.branch:hover,#arrowLayer path.branch.hot{marker-end:none}
+/* Hover tail for a pointer that joins the shared trunk mid-run. */
+#arrowLayer path.hotpath{stroke:var(--ave-ptr2);stroke-width:3;marker-end:url(#ahHot)}
 #arrowLayer path.hit{pointer-events:stroke;stroke:transparent;stroke-width:14px}
 .region-h{font-size:11px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:var(--owl-muted);
   margin:4px 0 12px;display:flex;align-items:center;gap:6px}
@@ -328,7 +332,6 @@ md-slider:focus-visible{outline:none}
   "@lezer/highlight":"https://esm.sh/@lezer/highlight@1.2.2?external=@lezer/common",
   "@lezer/lr":"https://esm.sh/@lezer/lr@1.4.2?external=@lezer/common",
   "@lezer/cpp":"https://esm.sh/@lezer/cpp@1.0.0?external=@lezer/common,@lezer/lr,@lezer/highlight",
-  "perfect-arrows":"https://esm.sh/perfect-arrows@0.3.7",
   "tslib":"https://unpkg.com/tslib@2.8.1/tslib.es6.js",
   "lit":"https://unpkg.com/lit@3.3.3/index.js",
   "lit/":"https://unpkg.com/lit@3.3.3/",
@@ -341,7 +344,10 @@ md-slider:focus-visible{outline:none}
   "lit-element/":"https://unpkg.com/lit-element@4.2.2/",
   "@material/web/slider/slider.js":"https://unpkg.com/@material/web@2.5.0/slider/slider.js",
   "@material/web/menu/menu.js":"https://unpkg.com/@material/web@2.5.0/menu/menu.js",
-  "@material/web/menu/menu-item.js":"https://unpkg.com/@material/web@2.5.0/menu/menu-item.js"
+  "@material/web/menu/menu-item.js":"https://unpkg.com/@material/web@2.5.0/menu/menu-item.js",
+  "@joint/core":"https://cdn.jsdelivr.net/npm/@joint/core@4.3.3/joint.mjs",
+  "libavoid-js":"https://cdn.jsdelivr.net/npm/libavoid-js@0.4.5/dist/index.js",
+  "@joint/router-avoid":"https://cdn.jsdelivr.net/npm/@joint/router-avoid@4.3.3/dist/esm/index.mjs"
 }}
 </script>
 </head>
@@ -380,10 +386,10 @@ md-slider:focus-visible{outline:none}
       <div id="stageContent">
         <svg id="arrows" aria-hidden="true"><defs>
           <marker id="ah" viewBox="0 0 14 14" refX="11" refY="7" markerWidth="14" markerHeight="14" markerUnits="userSpaceOnUse" orient="auto">
-            <path d="M3.5,3 L11,7 L3.5,11" fill="none" stroke="#7fdbca" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="M11,7 L5,3 L5,11 Z" fill="#7fdbca"></path>
           </marker>
           <marker id="ahHot" viewBox="0 0 14 14" refX="11" refY="7" markerWidth="14" markerHeight="14" markerUnits="userSpaceOnUse" orient="auto">
-            <path d="M3.5,3 L11,7 L3.5,11" fill="none" stroke="#ffcb8b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="M11,7 L5,3 L5,11 Z" fill="#ffcb8b"></path>
           </marker>
         </defs><g id="arrowLayer"></g></svg>
         <div id="stackCol"><div class="region-h"><span class="ms">layers</span>Stack</div><div id="frames"></div></div>
@@ -552,7 +558,7 @@ function renderStack(step, changed){
         right = '<span class="cells">'+v.cells.map((c,i)=>{
           const un = c==="?"; const cellCh = isCh&&!un;
           const glyph = un?'<span class="tag uninit">?</span>':esc(c);
-          return '<span class="cell'+(un?" uninit":"")+(cellCh?" changed":"")+'" title="'+esc(v.n+"["+i+"]")+'"><span class="cv" data-ptr-target="'+esc(v.n+":"+i)+'">'+glyph+'</span><span class="ci">'+i+'</span></span>';
+          return '<span class="cell'+(un?" uninit":"")+(cellCh?" changed":"")+'" title="'+esc(v.n+"["+i+"]")+'" data-ptr-target="'+esc(v.n+":"+i)+'"><span class="cv">'+glyph+'</span><span class="ci">'+i+'</span></span>';
         }).join("")+'</span>';
       }else if(v.k==="struct"){
         right = '<span class="cells">'+v.fields.map(f2=>'<span class="cell">'+esc(f2[1])+'<span class="ci">.'+esc(f2[0])+'</span></span>').join("")+'</span>';
@@ -564,12 +570,13 @@ function renderStack(step, changed){
       }else{
         right = v.uninit?'<span class="vv"><span class="tag uninit">?</span></span>':'<span class="vv">'+esc(v.v)+'</span>';
       }
-      // Origin dot leads the row (left channel); whole-struct targets anchor
-      // to the variable name so struct arrows hug the left edge too.
+      // Origin dot leads the row (left channel). A struct object is itself an
+      // arrow target: the anchor sits on the row's outer boundary so struct
+      // routes stop at the edge instead of crossing the name or field values.
       const dot = (v.k==="ptr"&&v.ref)
         ? '<span class="ptr-origin" data-ptr-src="'+esc(f.id+":"+v.n)+'" title="'+esc(v.n+" → "+v.ref)+'"></span>' : "";
-      const vnt = v.n==="pt" ? ' data-ptr-target="pt"' : "";
-      row.innerHTML = dot+'<span class="vn"'+vnt+'>'+esc(v.n)+'</span><span class="vt">'+esc(v.t)+'</span>'+right;
+      if(v.k==="struct") row.setAttribute("data-ptr-target", v.n);
+      row.innerHTML = dot+'<span class="vn">'+esc(v.n)+'</span><span class="vt">'+esc(v.t)+'</span>'+right;
       d.appendChild(row);
     }
     host.appendChild(d);
@@ -586,7 +593,7 @@ function renderHeap(step, changed){
     const cells = h.cells.map((c,i)=>{
       const un = c==="?";
       const glyph = un?'<span class="tag uninit">?</span>':esc(c);
-      return '<span class="cell'+(un?" uninit":"")+(changed.has("heap:"+h.id)?" changed":"")+'"><span class="cv" data-ptr-target="'+esc(h.id+":"+i)+'">'+glyph+'</span><span class="ci">'+esc(h.addr)+'+'+(i*4)+'</span></span>';
+      return '<span class="cell'+(un?" uninit":"")+(changed.has("heap:"+h.id)?" changed":"")+'" data-ptr-target="'+esc(h.id+":"+i)+'"><span class="cv">'+glyph+'</span><span class="ci">'+esc(h.addr)+'+'+(i*4)+'</span></span>';
     }).join("");
     d.innerHTML = '<div class="heap-h"><span>'+esc(h.label)+'</span><span class="addr">'+esc(h.addr)+'</span>'+
       (h.state==="freed"?'<span class="tag freed">FREED — do not use</span>':'<span class="tag" style="color:var(--ave-ok);border:1px solid rgba(197,228,120,.5)">LIVE</span>')+'</div>'+
@@ -666,106 +673,231 @@ function renderTransport(step){
   $("nextBtn").disabled = $("lastBtn").disabled = step===STEPS.length-1;
 }
 
-/* Arrow geometry provider: the perfect-arrows library (MIT, dependency-free)
-   computes the curve; the hand-rolled cubic below is the offline fallback.
-   Either way the visual contract is identical: one teal path + head per
-   relationship, orange only on hover. */
-let getArrowFn = null;
-function cubicPath(x1,y1,x2,y2,idx,dst){
-  if(dst && dst.indexOf(":")<0 && y2<y1) return hookPath(x1,y1,x2,y2);
-  const dx = x2 - x1;
-  const heapJump = dst && dst[0]==="h";
-  const dir = heapJump ? 1 : -1;
-  const mag = Math.abs(dx) <= 20 ? 6 : 16 + (idx%3)*16;
-  const bow = dir * (heapJump ? Math.min(dx/2, 110) : mag);
-  return "M"+x1+","+y1+" C"+(x1+bow)+","+y1+" "+(x2-bow*0.7)+","+y2+" "+x2+","+y2;
+/* ================= SVG arrows: library-assisted obstacle-avoiding routing ===
+   Geometry comes from JointJS's @joint/router-avoid — a maintained MPL-2.0
+   wrapper around libavoid (LGPL-2.1+, fetched as a separate .wasm) — loaded
+   on demand through the importmap. The DOM stays the source of truth: every
+   readable element becomes an invisible obstacle in a throwaway dia.Graph,
+   pointer dots / merge junctions / target pins become tiny endpoint shapes,
+   and libavoid returns orthogonal obstacle-free polylines which are rendered
+   into the existing #arrowLayer with the existing #ah markers. Pointers that
+   share one canonical target (e.g. p and alias → arr:1) are grouped: each
+   pointer gets a unique branch into a deterministic junction and ONE trunk
+   runs junction → target carrying the single arrowhead. Same state + layout
+   → same graph → same routes (libavoid is deterministic; verified). */
+const SVGNS = "http://www.w3.org/2000/svg";
+const CORNER = 0;     // sharp orthogonal corners per spec (no rounding)
+const LIBAVOID_WASM = "https://cdn.jsdelivr.net/npm/libavoid-js@0.4.5/dist/libavoid.wasm";
+
+function relRect(el, s){
+  const b = el.getBoundingClientRect();
+  return {x1:b.left-s.left, y1:b.top-s.top, x2:b.right-s.left, y2:b.bottom-s.top};
 }
-function arrowPath(x1,y1,x2,y2,idx,dst){
-  // Hook shape for whole-object targets above their source (e.g. ppt → pt):
-  // sweep out, curl back, head pointing up-left into the element.
-  if(dst && dst.indexOf(":")<0 && y2<y1) return hookPath(x1,y1,x2,y2);
-  if(!getArrowFn) return cubicPath(x1,y1,x2,y2,idx,dst);
-  // Cross-column jumps (stack → heap) get the open S-curve; everything
-  // in-frame takes the short left-hugging arc. Decided by target column,
-  // not distance.
-  if(dst && dst[0]==="h"){
-    const r = getArrowFn(x1,y1,x2,y2,
-      {bow:0.22, stretch:0.5, stretchMin:40, stretchMax:420, padStart:0, padEnd:0, straights:false, flip:false});
-    return "M"+r[0]+","+r[1]+" Q"+r[2]+","+r[3]+" "+r[4]+","+r[5];
+
+// H/V polyline → path string with small rounded corners (cosmetic only).
+function orthoPath(raw){
+  // libavoid's nudging re-aligns runs between adjacent buffer walls, leaving
+  // a ≤5px perpendicular step mid-run. Fold axis-preservingly: the later run
+  // snaps onto the first run's line (junction stays collinear, no slant).
+  // Interior vertices only — endpoints (pins, dots) are ≥3px from their
+  // neighbours and stay exact.
+  const pts=[raw[0].slice()];
+  let fix=null;
+  for(let i=1;i<raw.length-1;i++){
+    const p=[raw[i][0],raw[i][1]];
+    // libavoid attaches orthogonally except a ≤3px skew at endpoint stubs —
+    // square each interior vertex up against its neighbours (endpoints exact)
+    const a=raw[i-1], b=raw[i+1];
+    let sa=-1;
+    if(Math.abs(p[1]-a[1])<=3){p[1]=a[1];sa=1;}
+    else if(Math.abs(p[0]-a[0])<=3){p[0]=a[0];sa=0;}
+    if(sa!==1 && Math.abs(b[1]-p[1])<=3) p[1]=b[1];
+    else if(sa!==0 && Math.abs(b[0]-p[0])<=3) p[0]=b[0];
+    if(fix){
+      if(Math.abs(p[fix.i]-fix.from)<0.01) p[fix.i]=fix.to;
+      else fix=null;
+    }
+    const c=pts[pts.length-1];
+    if(Math.abs(p[0]-c[0])<5 && Math.abs(p[1]-c[1])<5){
+      // perpendicular step between two parallel runs: realign the rest of
+      // the newer run onto the older one's line
+      const ai=Math.abs(p[0]-c[0])>=Math.abs(p[1]-c[1])?0:1;
+      fix={i:ai,from:p[ai],to:c[ai]};
+      p[ai]=c[ai];
+    }
+    if(p[0]!==c[0]||p[1]!==c[1]) pts.push(p);
   }
-  // UX: non-heap arrows slant right-to-left toward their element. The
-  // library mirrors relative to travel direction, so evaluate both sides
-  // and keep the curve with the smallest rightward excursion.
-  // Hook language (reference: bold C-curve, chevron head angled up-left):
-  // strong deliberate bow for short hops, open arc for heap jumps.
-  const base = {bow:0.32+(idx%3)*0.1, stretch:0.25, stretchMin:0, stretchMax:200, padStart:0, padEnd:0, straights:false};
-  const a = getArrowFn(x1,y1,x2,y2,{...base,flip:false});
-  const b = getArrowFn(x1,y1,x2,y2,{...base,flip:true});
-  const maxX = r=>Math.max(r[0],r[2],r[4]);
-  const r = maxX(b) <= maxX(a) ? b : a;
-  return "M"+r[0]+","+r[1]+" Q"+r[2]+","+r[3]+" "+r[4]+","+r[5];
+  pts.push(raw[raw.length-1].slice());
+  let d="M"+pts[0][0].toFixed(1)+","+pts[0][1].toFixed(1);
+  for(let i=1;i<pts.length-1;i++){
+    const a=pts[i-1], p=pts[i], b=pts[i+1];
+    const l1=Math.abs(p[0]-a[0])+Math.abs(p[1]-a[1]);
+    const l2=Math.abs(b[0]-p[0])+Math.abs(b[1]-p[1]);
+    const r=Math.min(CORNER,l1/2,l2/2);
+    if(r<1.2){d+=" L"+p[0].toFixed(1)+","+p[1].toFixed(1);continue;}
+    const t1=[p[0]+(a[0]-p[0])/l1*r, p[1]+(a[1]-p[1])/l1*r];
+    const t2=[p[0]+(b[0]-p[0])/l2*r, p[1]+(b[1]-p[1])/l2*r];
+    d+=" L"+t1[0].toFixed(1)+","+t1[1].toFixed(1)+" Q"+p[0].toFixed(1)+","+p[1].toFixed(1)+" "+t2[0].toFixed(1)+","+t2[1].toFixed(1);
+  }
+  const e=pts[pts.length-1];
+  return d+" L"+e[0].toFixed(1)+","+e[1].toFixed(1);
 }
-function hookPath(x1,y1,x2,y2){
-  // S-slant for left-edge arrows: leaves heading up-left, arrives heading
-  // up-left, belly kept in the frame padding strip.
-  const lean = 16;
-  return "M"+x1+","+y1+" C"+(x1-lean)+","+(y1-8)+" "+(x2+lean)+","+(y2+8)+" "+x2+","+y2;
-}
-/* ================= SVG arrows from live geometry ================= */
-let arrowQueued = false;
+/* ================= SVG arrows: scheduling + libavoid integration ============ */
+let arrowQueued = false, routeGen = 0, routerWarned = false;
 function scheduleArrows(){
   if(arrowQueued) return; arrowQueued = true;
   requestAnimationFrame(()=>{arrowQueued=false; drawArrows();});
 }
-function drawArrows(){
-  const layer = $("arrowLayer"), svg = $("arrows"), content = $("stageContent");
-  const ptrs = pointersOf(sel);
-  const sRect = svg.getBoundingClientRect();
-  // Arrows sharing one target fan out along the glyph instead of stacking
-  // on the same pixel.
-  const seen = {};
-  ptrs.forEach(p=>{ seen[p.dst]=(seen[p.dst]||0)+1; });
-  const order = {};
-  // Recompute paths (cheap for this size); skip only when identical
-  layer.innerHTML = "";
-  const NS = "http://www.w3.org/2000/svg";
-  ptrs.forEach((p,idx)=>{
-    order[p.dst] = (order[p.dst]||0)+1;
-    const src = content.querySelector('[data-ptr-src="'+CSS.escape(p.src)+'"]');
-    const dst = content.querySelector('[data-ptr-target="'+CSS.escape(p.dst)+'"]');
-    if(!src||!dst) return; // target gone (freed/nulled) → no stale arrow
-    const a = src.getBoundingClientRect(), b = dst.getBoundingClientRect();
-    // Start at the origin dot's center (round cap hides under the dot: seamless joint).
-    const x1 = a.left + a.width/2 - sRect.left, y1 = a.top + a.height/2 - sRect.top;
-    // Target on the left of the source (e.g. ppt -> pt row): anchor to its
-    // value side (right edge) so the arrow stays a short local loop.
-    const bLeft = b.left - sRect.left, bRight = b.right - sRect.left;
-    const leftward = bLeft < x1 - 4 && (bRight - x1) < (x1 - bLeft);
-    // End 1px inside the target edge; the marker tip lands ~2px inside the
-    // border, so the head visibly touches its target instead of floating short.
-    // Duplicates fan vertically along the glyph: top/middle/bottom stay on digits.
-    const nDup = seen[p.dst], kDup = order[p.dst]-1;
-    const x2 = (leftward ? bRight : bLeft) + 1;
-    let y2 = b.top + b.height/2 - sRect.top + (kDup-(nDup-1)/2)*7;
-    y2 = Math.min(b.bottom - sRect.top - 2, Math.max(b.top - sRect.top + 2, y2));
-    // Library-computed curve (or the cubic fallback): gentle tangent into
-    // the target edge, matching the marker's auto-orientation.
-    const path = document.createElementNS(NS,"path");
-    path.setAttribute("d", arrowPath(x1,y1,x2,y2,idx,p.dst));
-    path.setAttribute("class","wire");
-    path.setAttribute("marker-end","url(#ah)");
-    path.setAttribute("data-src",p.src);
-    path.setAttribute("data-dst",p.dst);
-    const title = document.createElementNS(NS,"title");
-    title.textContent = p.name+" → "+p.dst; path.appendChild(title);
-    layer.appendChild(path);
-    // Fat invisible twin: makes the 2.5px line hoverable without changing it.
-    const hit = document.createElementNS(NS,"path");
-    hit.setAttribute("d", path.getAttribute("d"));
-    hit.setAttribute("class","hit");
-    hit.setAttribute("data-src",p.src);
-    layer.appendChild(hit);
+// One-shot libavoid pass over a throwaway graph. Rects are invisible shapes
+// (obstacles, dots, junctions, pins); links reference them by id. The
+// setRouteAttributes callback hands us the exact applied geometry (anchors +
+// vertices) because the service deliberately does not touch the models.
+async function routeWithLibavoid(rects, links){
+  const {dia, shapes} = await import("@joint/core");
+  const {initAvoidRouter} = await import("@joint/router-avoid");
+  const graph = new dia.Graph({}, {cellNamespace: shapes});
+  const routes = new Map();
+  const svc = await initAvoidRouter(graph, {
+    libavoidFilePath: LIBAVOID_WASM,
+    shapeBufferDistance: 6,      // clearance kept between lanes and content
+    idealNudgingDistance: 8,     // parallel routes get spaced apart
+    setRouteAttributes: ({link, attributes}) => routes.set(link, attributes),
   });
+  graph.addCells(rects.map(r=>new shapes.standard.Rectangle(
+    {id:r.id, position:{x:r.x, y:r.y}, size:{width:r.w, height:r.h}})));
+  const cells = links.map(l=>new shapes.standard.Link({source:{id:l.s}, target:{id:l.t}}));
+  graph.addCells(cells);
+  await svc.routeAll();
+  return cells.map(c=>routes.get(c)||null);
+}
+async function drawArrows(){
+  const gen = ++routeGen; // stale in-flight results are discarded, not painted
+  const layer=$("arrowLayer"), svg=$("arrows"), content=$("stageContent");
+  const ptrs=pointersOf(sel);
+  if(!ptrs.length){ layer.innerHTML=""; return; }
+  const s=svg.getBoundingClientRect();
+  // Group by canonical target identity (arr:1, h-r:0, pt — the trace's own
+  // object+index ids, never displayed values).
+  const groups={};
+  ptrs.forEach(p=>{(groups[p.dst]=groups[p.dst]||[]).push(p);});
+  let uid=0; const rects=[], rectsById=new Map();
+  const addRect=(x,y,w,h)=>{
+    const r={id:"r"+(uid++), x, y, w:Math.max(2,w), h:Math.max(2,h)};
+    rects.push(r); rectsById.set(r.id,r); return r.id;
+  };
+  // Obstacles: every readable element. Plus a thin barrier box at the SVG
+  // edge — without it libavoid escapes into unbounded free space.
+  content.querySelectorAll(".vn,.vt,.vv,.cell,.frame-h,.heap-h,.region-h,.empty-note")
+    .forEach(el=>{ const r=relRect(el,s); addRect(r.x1,r.y1,r.x2-r.x1,r.y2-r.y1); });
+  addRect(0,0,s.width,3); addRect(0,s.height-3,s.width,3);
+  addRect(0,0,3,s.height); addRect(s.width-3,0,3,s.height);
+  const links=[]; // {s,t,src?,dst?,gid?,sources?,names,marker}
+  for(const dst of Object.keys(groups)){
+    const g=groups[dst].map(p=>({p, dot:content.querySelector('[data-ptr-src="'+CSS.escape(p.src)+'"]')}))
+      .filter(m=>m.dot);
+    const dstEl=content.querySelector('[data-ptr-target="'+CSS.escape(dst)+'"]');
+    if(!g.length||!dstEl) continue; // target gone (freed/nulled) → no stale arrow
+    let dr=relRect(dstEl,s);
+    // Struct rows span the frame width — a side pin lands outside the frame
+    // border. Aim at the struct's cells (its value region) instead; empty
+    // rows keep the left channel below.
+    const cellEls=dstEl.classList.contains("varrow")?[...dstEl.querySelectorAll(".cell")]:[];
+    if(cellEls.length){
+      const rs=cellEls.map(c=>relRect(c,s));
+      dr={x1:Math.min(...rs.map(r=>r.x1)), x2:Math.max(...rs.map(r=>r.x2)),
+          y1:Math.min(...rs.map(r=>r.y1)), y2:Math.max(...rs.map(r=>r.y2))};
+    }
+    // Target pin sits just OFF the boundary (3px): the arrowhead tip lands a
+    // hair from the edge — never on the value glyph — and the final leg can't
+    // ride the border. Cells can wrap, so pick the first side whose approach
+    // lane is free of buffered obstacles: a pin sealed inside merged buffer
+    // zones is unreachable for libavoid, which then returns a path straight
+    // through content. shortcut: the tip is ~3px from the element instead of
+    // exactly on it (a side-constrained JointJS port proved unusable — its
+    // wrapper drops the orthogonal last segment).
+    const isRow=dstEl.classList.contains("varrow")&&!cellEls.length;
+    let px,py;
+    if(isRow){ px=dr.x1-3; py=(dr.y1+dr.y2)/2; }             // empty struct row: left channel
+    else{
+      const cx=(dr.x1+dr.x2)/2, cy=(dr.y1+dr.y2)/2, D=8, M=6; // M = shapeBufferDistance
+      const free=(x1,y1,x2,y2)=>!rects.some(o=>
+        !(o.x<dr.x2&&o.x+o.w>dr.x1&&o.y<dr.y2&&o.y+o.h>dr.y1) && // skip the target's own cell/content
+        x1<o.x+o.w+M && x2>o.x-M && y1<o.y+o.h+M && y2>o.y-M);
+      const sides=[[cx,dr.y2+3,cx-6,dr.y2,cx+6,dr.y2+D],   // below
+                   [dr.x2+3,cy,dr.x2,cy-6,dr.x2+D,cy+6],   // right
+                   [dr.x1-3,cy,dr.x1-D,cy-6,dr.x1,cy+6],   // left
+                   [cx,dr.y1-3,cx-6,dr.y1-D,cx+6,dr.y1]];  // above
+      const pick=sides.find(v=>free(v[2],v[3],v[4],v[5]))||sides[0];
+      px=pick[0]; py=pick[1];
+    }
+    const pin=addRect(px-2,py-2,4,4);
+    const names=g.map(m=>m.p.name), srcs=g.map(m=>m.p.src);
+    if(g.length===1){
+      const d=relRect(g[0].dot,s);
+      links.push({s:addRect((d.x1+d.x2)/2-2,(d.y1+d.y2)/2-2,4,4), t:pin,
+        src:g[0].p.src, dst, names, marker:true});
+    }else{
+      // Shared target: one branch per pointer → deterministic junction → one
+      // trunk carrying the single arrowhead. The junction sits ABOVE every
+      // dot of the group so the trunk's departure can never retrace a
+      // branch's lead-out (they leave the junction on opposite sides).
+      const cs=g.map(m=>{const d=relRect(m.dot,s);return [(d.x1+d.x2)/2,(d.y1+d.y2)/2];});
+      const jid=addRect(Math.min(...cs.map(c=>c[0]))-13.5,
+        Math.min(...cs.map(c=>c[1]))-14, 3, 3);
+      g.forEach((m,i)=>links.push({s:addRect(cs[i][0]-2,cs[i][1]-2,4,4), t:jid,
+        src:m.p.src, dst, gid:dst, names:[m.p.name], marker:false}));
+      links.push({s:jid, t:pin, dst, gid:dst, sources:srcs, names, marker:true});
+    }
+  }
+  if(!links.length){ layer.innerHTML=""; return; }
+  let results;
+  try{ results=await routeWithLibavoid(rects,links); }
+  catch(e){ if(!routerWarned){routerWarned=true; console.warn("avoid router unavailable:",e);} return; }
+  if(gen!==routeGen) return; // a newer redraw superseded this one
+  // Render captured routes; endpoints = shape center + the modelCenter
+  // anchor offsets libavoid applied.
+  const endPt=(r,a)=>[r.x+r.w/2+(a&&a.args?a.args.dx||0:0),
+    r.y+r.h/2+(a&&a.args?a.args.dy||0:0)];
+  const built=links.map((l,i)=>{
+    const a=results[i]; if(!a) return null;
+    return {l, pts:[endPt(rectsById.get(l.s),a.source)]
+      .concat((a.vertices||[]).map(v=>[v.x,v.y]),
+              [endPt(rectsById.get(l.t),a.target)])};
+  });
+  // A branch that reaches the shared junction from the side is trimmed to its
+  // own column: it meets the trunk as a T, never as a jog toward a sibling.
+  // The trunk tail it shares from that column is kept for hover so lighting a
+  // pointer never paints a stub reaching back at another pointer's column.
+  built.forEach(B=>{
+    if(!B||!B.l.gid||B.l.marker) return;
+    const T=built.find(x=>x&&x.l.marker&&x.l.gid===B.l.gid); if(!T) return;
+    const tp=T.pts, j=tp[0], P=B.pts[B.pts.length-2], E=B.pts[B.pts.length-1];
+    if(!P||!E||Math.abs(E[0]-j[0])>2||Math.abs(E[1]-j[1])>2) return; // ends at the junction
+    // ≤3px off-axis is the stub orthoPath squares flat, so it is on the trunk's run
+    if(Math.abs(tp[1][1]-j[1])>3||tp[1][0]<j[0]+0.6) return;          // trunk leaves flat toward it
+    if(Math.abs(P[1]-j[1])>3||P[0]<j[0]+0.6||P[0]>tp[1][0]+0.6) return;
+    B.pts.pop();
+    B.pts[B.pts.length-1]=[P[0],j[1]];
+    B.l.hotd=orthoPath([B.pts[B.pts.length-1]].concat(tp.slice(1)));
+  });
+  let html="";
+  built.forEach(B=>{
+    if(!B) return; const l=B.l, pts=B.pts;
+    const d=orthoPath(pts);
+    const attrs=' class="wire'+(l.gid?(l.marker?" trunk":" branch"):"")+'"'
+      +(l.marker?' marker-end="url(#ah)"':"")
+      +(l.src?' data-src="'+l.src+'"':"")
+      +(l.hotd?' data-hotd="'+l.hotd+'"':"")
+      +(l.dst?' data-dst="'+l.dst+'"':"")
+      +(l.gid?' data-group="'+l.gid+'"':"")
+      +(l.sources?' data-sources="'+l.sources.join(",")+'"':"");
+    const title=l.marker ? l.names.join(", ")+" → "+l.dst : l.names[0]+" → "+l.dst;
+    html+='<path d="'+d+'"'+attrs+'><title>'+esc(title)+'</title></path>'
+      // Fat invisible twin: keeps the 2.5px line hoverable without changing it.
+      +'<path d="'+d+'" class="hit"'+(l.src?' data-src="'+l.src+'"':"")
+      +(l.dst?' data-dst="'+l.dst+'"':"")+(l.gid?' data-group="'+l.gid+'"':"")+'></path>';
+  });
+  layer.innerHTML=html;
 }
 
 /* ================= Step selection: single source of truth ================= */
@@ -1028,27 +1160,59 @@ document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
   document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected",x===t?"true":"false"));
   renderInspector(sel); scheduleArrows();
 }));
-/* Pointer hover: hovering a pointer row (or the arrow path itself) turns that
-   one arrow orange. Structure never changes, only appearance. */
-function hotArrow(srcOn){
+/* Pointer hover: a pointer row or its branch turns that pointer's whole
+   route orange (its branch + the shared trunk + the single arrowhead).
+   Hovering a shared trunk highlights the entire group — every branch, both
+   dots — and its tooltip lists every pointer in it ("p, alias → arr[1]"). */
+function clearHot(){
   document.querySelectorAll("#arrowLayer path.hot").forEach(p=>p.classList.remove("hot"));
+  document.querySelectorAll("#arrowLayer path.hotpath").forEach(p=>p.remove());
   document.querySelectorAll(".ptr-origin.hot").forEach(d=>d.classList.remove("hot"));
-  if(srcOn){
-    const p = document.querySelector('#arrowLayer path.wire[data-src="'+srcOn+'"]');
-    if(p) p.classList.add("hot");
-    const dot = document.querySelector('.ptr-origin[data-ptr-src="'+srcOn+'"]');
-    if(dot) dot.classList.add("hot");
+}
+function hotSrc(srcOn){
+  clearHot();
+  if(!srcOn) return;
+  const w=document.querySelector('#arrowLayer path.wire[data-src="'+srcOn+'"]');
+  if(w) w.classList.add("hot");
+  const dot=document.querySelector('.ptr-origin[data-ptr-src="'+srcOn+'"]');
+  if(dot) dot.classList.add("hot");
+  const gid=w&&w.getAttribute("data-group");
+  if(!gid) return;
+  // This pointer joins the shared trunk mid-run: light only the tail it
+  // actually shares, so no orange reaches back toward a sibling's column.
+  const hotd=w.getAttribute("data-hotd");
+  if(hotd){
+    const p=document.createElementNS("http://www.w3.org/2000/svg","path");
+    p.setAttribute("d",hotd); p.setAttribute("class","hotpath");
+    document.getElementById("arrowLayer").appendChild(p);
+  }else{
+    const t=document.querySelector('#arrowLayer path.wire.trunk[data-group="'+gid+'"]');
+    if(t) t.classList.add("hot");
   }
 }
+function hotGroup(gid){
+  clearHot();
+  if(!gid) return;
+  document.querySelectorAll('#arrowLayer path.wire[data-group="'+gid+'"]').forEach(p=>p.classList.add("hot"));
+  const t=document.querySelector('#arrowLayer path.wire.trunk[data-group="'+gid+'"]');
+  (t?t.getAttribute("data-sources")||"":"").split(",").forEach(src=>{
+    const d=src&&document.querySelector('.ptr-origin[data-ptr-src="'+src+'"]');
+    if(d) d.classList.add("hot");
+  });
+}
 $("stageContent").addEventListener("mouseover",e=>{
-  // Hovering the arrow path itself lights the same pair (path + its dot).
-  const path = e.target.closest?e.target.closest("#arrowLayer path"):null;
-  if(path&&path.hasAttribute("data-src")){ hotArrow(path.getAttribute("data-src")); return; }
-  const row = e.target.closest?e.target.closest(".varrow"):null;
-  const dot = row?row.querySelector("[data-ptr-src]"):null;
-  hotArrow(dot?dot.getAttribute("data-ptr-src"):null);
+  const path=e.target.closest?e.target.closest("#arrowLayer path"):null;
+  if(path){
+    const gid=path.getAttribute("data-group");
+    if(path.classList.contains("trunk")&&gid){ hotGroup(gid); return; }
+    if(path.hasAttribute("data-src")){ hotSrc(path.getAttribute("data-src")); return; }
+    if(gid){ hotGroup(gid); return; } // trunk hit twin
+  }
+  const row=e.target.closest?e.target.closest(".varrow"):null;
+  const dot=row?row.querySelector("[data-ptr-src]"):null;
+  hotSrc(dot?dot.getAttribute("data-ptr-src"):null);
 });
-$("stageContent").addEventListener("mouseleave",()=>hotArrow(null));
+$("stageContent").addEventListener("mouseleave",()=>hotSrc(null));
 function toggleConsole(force){
   const c = $("consolePane");
   const show = force!==undefined?force:c.classList.contains("collapsed");
@@ -1084,7 +1248,6 @@ window.addEventListener("resize",scheduleArrows);
 /* ================= Boot ================= */
 (async function(){
   await initEditor();
-  try{ ({getArrow:getArrowFn} = await import("perfect-arrows")); }catch(e){ /* cubic fallback stays */ }
   await initMaterialSlider(); /* native slider stays on failure */
   await initSpeedMenu(); /* native speed select stays on failure */
   go(0);
