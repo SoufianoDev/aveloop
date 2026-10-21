@@ -310,7 +310,8 @@ body.resizing{cursor:ns-resize!important;user-select:none!important;-webkit-user
   color:var(--owl-soft);border:1px solid var(--owl-contrast);border-radius:5px;
   padding:1px 8px;text-transform:none;letter-spacing:0}
 .cbody{padding:2px 12px 10px;overflow:auto;contain:paint}
-.cbody pre{margin:0;font-family:var(--font-mono);font-size:12.5px;color:var(--ave-ok);white-space:pre-wrap}
+.cbody pre{margin:0;font-family:var(--font-mono);font-size:12.5px;color:var(--ave-ok);white-space:pre-wrap;overflow-wrap:break-word}
+.console.nowrap .cbody pre{white-space:pre;overflow-wrap:normal} /* long single lines scroll horizontally */
 .cbody .dim{color:var(--owl-muted);font-style:italic}
 .statusbar{flex:0 0 26px;display:flex;align-items:center;gap:14px;padding:0 12px;background:var(--owl-bg);
   border-top:1px solid var(--owl-border);font-size:11.5px;color:var(--owl-muted);font-family:var(--font-mono);overflow:hidden;white-space:nowrap}
@@ -466,6 +467,9 @@ body.resizing{cursor:ns-resize!important;user-select:none!important;-webkit-user
   <div class="cheadrow">
     <button class="chead" id="consoleHead" aria-expanded="true"><span class="ms">terminal</span>Console<span class="conchip" id="consoleStep">step 0</span><span class="ms" id="consoleChevron">unfold_less</span></button>
     <div class="ctools">
+      <button class="iconbtn cbtn on" id="followBtn" title="Follow output" aria-label="Follow output" aria-pressed="true"><span class="ms">vertical_align_bottom</span></button>
+      <button class="iconbtn cbtn on" id="wrapBtn" title="Wrap lines" aria-label="Wrap lines" aria-pressed="true"><span class="ms">wrap_text</span></button>
+      <button class="iconbtn cbtn" id="copyBtn" title="Copy output" aria-label="Copy output"><span class="ms">content_copy</span></button>
       <button class="iconbtn cbtn" id="expandBtn" title="Maximize console" aria-label="Maximize console" aria-expanded="false"><span class="ms">keyboard_double_arrow_up</span></button>
     </div>
   </div>
@@ -1439,7 +1443,7 @@ $("consoleBtn").addEventListener("click",()=>toggleConsole());
 /* ---- Console panel: resize / maximize / follow / wrap / copy.
    Interaction model per VS Code's panel (drag border, ^ maximize) and
    DevTools' Console (wrap-lines setting, copy preserves newlines). ---- */
-let consoleH = 200, consoleMaxed = false;
+let consoleH = 200, consoleMaxed = false, consoleFollow = true;
 const C_MIN = 140, C_FLOOR = 0.45, C_WS_KEEP = 200; // min px, max fraction of viewport, px kept for workspace
 function consoleMaxH(){
   const ws = document.querySelector(".workspace");
@@ -1499,7 +1503,48 @@ $("expandBtn").addEventListener("click", ()=>{
     b.title = "Maximize console"; b.setAttribute("aria-label","Maximize console"); b.setAttribute("aria-expanded","false");
   }
 });
+$("consoleBody").addEventListener("scroll", ()=>{
+  consoleFollow = $("consoleBody").scrollTop+$("consoleBody").clientHeight >= $("consoleBody").scrollHeight-28;
+  syncFollowBtn();
+},{passive:true});
+function syncFollowBtn(){
+  $("followBtn").setAttribute("aria-pressed", String(consoleFollow));
+  $("followBtn").classList.toggle("on", consoleFollow);
+}
+$("followBtn").addEventListener("click", ()=>{
+  consoleFollow = true;
+  const b = $("consoleBody");
+  b.scrollTop = b.scrollHeight;                     // return to the newest output
+  syncFollowBtn();
+});
+$("wrapBtn").addEventListener("click", ()=>{
+  const off = $("consolePane").classList.toggle("nowrap");
+  $("wrapBtn").setAttribute("aria-pressed", String(!off));
+  $("wrapBtn").classList.toggle("on", !off);
+});
+$("copyBtn").addEventListener("click", async ()=>{
+  const txt = STEPS[sel].out || "";                 // authoritative trace text, never the note
+  const btn = $("copyBtn"), ms = btn.querySelector(".ms");
+  const flash = ok=>{
+    ms.textContent = ok ? "check" : "content_paste_off";
+    btn.title = ok ? "Copied output" : "Clipboard unavailable";
+    setTimeout(()=>{ ms.textContent = "content_copy"; btn.title = "Copy output"; }, 1400);
+  };
+  const legacy = ()=>{
+    try{
+      const t = document.createElement("textarea");
+      t.value = txt; t.style.position = "fixed"; t.style.opacity = "0";
+      document.body.appendChild(t); t.select();
+      const ok = document.execCommand("copy");
+      t.remove(); flash(ok);
+    }catch(_){ flash(false); }
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(()=>flash(true), legacy);
+  }else{ legacy(); }
+});
 try{ setConsoleH(parseFloat(sessionStorage.getItem("ave.consoleH")) || consoleH); }catch(e){ setConsoleH(consoleH); }
+syncFollowBtn();
 document.addEventListener("keydown",e=>{
   const tag = (e.target.tagName||"").toLowerCase();
   const inField = tag==="input"||tag==="textarea"||tag==="select"||e.target.isContentEditable||(cmView&&cmView.hasFocus&&e.target.closest&&e.target.closest(".cm-editor"));
