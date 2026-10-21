@@ -161,7 +161,7 @@ body{margin:0;background:var(--owl-bg-deep);color:var(--owl-fg);font-family:var(
 .tag.freed{color:#ffb4b0;border:1px solid var(--owl-error);background:rgba(239,83,80,.12)}
 .cells{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
 .ptr-origin{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ave-ptr);
-  margin-left:12px;vertical-align:1px;flex:0 0 auto;transition:background .12s}
+  margin:0 10px 0 2px;vertical-align:1px;flex:0 0 auto;transition:background .12s}
 .ptr-origin.hot{background:var(--ave-ptr2)}
 .cell{min-width:36px;text-align:center;padding:5px 8px;border:1px solid var(--owl-contrast);
   border-radius:5px;background:var(--owl-bg-deep);font-size:12px}
@@ -547,7 +547,6 @@ function renderStack(step, changed){
       const row = document.createElement("div");
       const isCh = changed.has(f.id+":"+v.n);
       row.className = "varrow"+(isCh?" changed":"");
-      if(v.n==="pt"){row.setAttribute("data-ptr-target","pt");}
       let right = "";
       if(v.k==="array"){
         right = '<span class="cells">'+v.cells.map((c,i)=>{
@@ -561,11 +560,16 @@ function renderStack(step, changed){
         if(v.null) right = '<span class="vv"><span class="tag null">NULL</span></span>';
         else if(v.freed) right = '<span class="vv">'+esc(v.v)+' <span class="tag freed">FREED</span></span>';
         else if(v.uninit) right = '<span class="vv"><span class="tag uninit">?</span></span>';
-        else right = '<span class="vv">'+esc(v.v)+'<span class="ptr-origin" data-ptr-src="'+esc(f.id+":"+v.n)+'" title="'+esc(v.n+" → "+v.ref)+'"></span></span>';
+        else right = '<span class="vv">'+esc(v.v)+'</span>';
       }else{
         right = v.uninit?'<span class="vv"><span class="tag uninit">?</span></span>':'<span class="vv">'+esc(v.v)+'</span>';
       }
-      row.innerHTML = '<span class="vn">'+esc(v.n)+'</span><span class="vt">'+esc(v.t)+'</span>'+right;
+      // Origin dot leads the row (left channel); whole-struct targets anchor
+      // to the variable name so struct arrows hug the left edge too.
+      const dot = (v.k==="ptr"&&v.ref)
+        ? '<span class="ptr-origin" data-ptr-src="'+esc(f.id+":"+v.n)+'" title="'+esc(v.n+" → "+v.ref)+'"></span>' : "";
+      const vnt = v.n==="pt" ? ' data-ptr-target="pt"' : "";
+      row.innerHTML = dot+'<span class="vn"'+vnt+'>'+esc(v.n)+'</span><span class="vt">'+esc(v.t)+'</span>'+right;
       d.appendChild(row);
     }
     host.appendChild(d);
@@ -670,9 +674,10 @@ let getArrowFn = null;
 function cubicPath(x1,y1,x2,y2,idx,dst){
   if(dst && dst.indexOf(":")<0 && y2<y1) return hookPath(x1,y1,x2,y2);
   const dx = x2 - x1;
-  const dir = dx <= 48 ? -1 : 1;
+  const heapJump = dst && dst[0]==="h";
+  const dir = heapJump ? 1 : -1;
   const mag = Math.abs(dx) <= 20 ? 6 : 16 + (idx%3)*16;
-  const bow = dir * (dx*dir > 48 ? Math.min(dx*dir/2, 110) : mag);
+  const bow = dir * (heapJump ? Math.min(dx/2, 110) : mag);
   return "M"+x1+","+y1+" C"+(x1+bow)+","+y1+" "+(x2-bow*0.7)+","+y2+" "+x2+","+y2;
 }
 function arrowPath(x1,y1,x2,y2,idx,dst){
@@ -680,7 +685,10 @@ function arrowPath(x1,y1,x2,y2,idx,dst){
   // sweep out, curl back, head pointing up-left into the element.
   if(dst && dst.indexOf(":")<0 && y2<y1) return hookPath(x1,y1,x2,y2);
   if(!getArrowFn) return cubicPath(x1,y1,x2,y2,idx,dst);
-  if((x2-x1) > 48){
+  // Cross-column jumps (stack → heap) get the open S-curve; everything
+  // in-frame takes the short left-hugging arc. Decided by target column,
+  // not distance.
+  if(dst && dst[0]==="h"){
     const r = getArrowFn(x1,y1,x2,y2,
       {bow:0.22, stretch:0.5, stretchMin:40, stretchMax:420, padStart:0, padEnd:0, straights:false, flip:false});
     return "M"+r[0]+","+r[1]+" Q"+r[2]+","+r[3]+" "+r[4]+","+r[5];
@@ -698,8 +706,10 @@ function arrowPath(x1,y1,x2,y2,idx,dst){
   return "M"+r[0]+","+r[1]+" Q"+r[2]+","+r[3]+" "+r[4]+","+r[5];
 }
 function hookPath(x1,y1,x2,y2){
-  const cx = Math.max(x1,x2) + 26, cy = (y1+y2)/2;
-  return "M"+x1+","+y1+" Q"+cx+","+cy+" "+x2+","+y2;
+  // S-slant for left-edge arrows: leaves heading up-left, arrives heading
+  // up-left, belly kept in the frame padding strip.
+  const lean = 16;
+  return "M"+x1+","+y1+" C"+(x1-lean)+","+(y1-8)+" "+(x2+lean)+","+(y2+8)+" "+x2+","+y2;
 }
 /* ================= SVG arrows from live geometry ================= */
 let arrowQueued = false;
