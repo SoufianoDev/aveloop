@@ -1116,6 +1116,10 @@ async function initEditor(){
       {tag:tags.keyword, color:"#c792ea", fontStyle:"italic"},
       {tag:[tags.controlKeyword, tags.operatorKeyword], color:"#c792ea"},
       {tag:tags.string, color:"#ecc48d"},
+      /* Night Owl family: directives live in the keyword family (purple italic);
+         system-lib header strings (<stdio.h>) take the string color */
+      {tag:[tags.processingInstruction, tags.meta], color:"#c792ea", fontStyle:"italic"},
+      {tag:tags.special(tags.string), color:"#ecc48d"},
       {tag:[tags.number, tags.bool], color:"#F78C6C"},
       {tag:[tags.typeName, tags.className], color:"#ffcb8b"},
       {tag:[tags.function(tags.variableName), tags.function(tags.name)], color:"#82AAFF"},
