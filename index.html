@@ -14,7 +14,9 @@
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<!-- Icons use display=block: no flash of ligature text while the icon font loads. -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet">
 <style>
 /* ============ 1. Theme tokens: original Night Owl (--owl-*) vs AveLoop semantics (--ave-*) ============ */
 :root{
@@ -89,7 +91,7 @@ body{margin:0;background:var(--owl-bg-deep);color:var(--owl-fg);font-family:var(
 .iconbtn .ms{font-size:21px}
 /* ============ 3. Workspace grid ============ */
 .workspace{flex:1;min-height:0;display:grid;gap:1px;background:var(--owl-border);
-  grid-template-columns:minmax(330px,5fr) minmax(380px,6.2fr) minmax(250px,3.1fr);
+  grid-template-columns:minmax(0,5fr) minmax(0,6.2fr) minmax(0,3.1fr);
   grid-template-rows:minmax(0,1fr)}
 .pane{background:var(--owl-bg);min-height:0;min-width:0;display:flex;flex-direction:column;overflow:hidden}
 .pane-h{flex:0 0 34px;display:flex;align-items:center;gap:8px;padding:0 10px;
@@ -129,20 +131,14 @@ body{margin:0;background:var(--owl-bg-deep);color:var(--owl-fg);font-family:var(
 .chip{font-size:11px;font-weight:600;color:var(--owl-soft);border:1px solid var(--owl-contrast);
   padding:2px 8px;border-radius:20px;display:inline-flex;align-items:center;gap:5px;text-transform:none;letter-spacing:0}
 .chip i{width:8px;height:8px;border-radius:2px;display:inline-block}
-#stage{flex:1;min-height:0;min-width:0;overflow:auto;position:relative}
+#stage{flex:1;min-height:0;min-width:0;overflow:auto;position:relative;scrollbar-gutter:stable}
 #stageContent{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;
-  padding:20px 22px 30px;min-height:100%;min-width:0}
+  padding:20px 22px 30px;min-height:100%;min-width:0;contain:paint}
 #arrows{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
-/* One pre-designed arrow: teal, rounded 2.5px stroke, open chevron head.
-   Orange appears ONLY on hover. */
-#arrowLayer path{pointer-events:none;fill:none;stroke:var(--ave-ptr);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
-#arrowLayer path.wire{pointer-events:stroke}
-#arrowLayer path.wire:hover,#arrowLayer path.wire.hot{stroke:var(--ave-ptr2);stroke-width:3;marker-end:url(#ahHot)}
-/* Branch wires end at a merge junction — the head belongs to the trunk only. */
-#arrowLayer path.branch:hover,#arrowLayer path.branch.hot{marker-end:none}
-/* Hover tail for a pointer that joins the shared trunk mid-run. */
-#arrowLayer path.hotpath{stroke:var(--ave-ptr2);stroke-width:3;marker-end:url(#ahHot)}
-#arrowLayer path.hit{pointer-events:stroke;stroke:transparent;stroke-width:14px}
+/* Arrows are drawn by Cytoscape.js on a canvas (styled in getCy()):
+   teal, rounded 2.5px stroke, filled head. Orange appears ONLY on hover.
+   The canvas never takes mouse events — wires are hit-tested in JS. */
+#arrows canvas{pointer-events:none}
 .region-h{font-size:11px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:var(--owl-muted);
   margin:4px 0 12px;display:flex;align-items:center;gap:6px}
 .region-h .ms{font-size:16px}
@@ -211,7 +207,7 @@ body{margin:0;background:var(--owl-bg-deep);color:var(--owl-fg);font-family:var(
 /* Official Material Web slider, themed with documented component tokens
    (docs/components/slider.md) onto the Night Owl palette. */
 md-slider{
-  flex:1;min-width:160px;
+  flex:1;min-width:160px;height:44px; /* matches the native placeholder: no transport jump when this loads */
   --md-slider-active-track-color:#7e57c2;
   --md-slider-inactive-track-color:#22384e;
   --md-slider-active-track-height:16px;
@@ -307,14 +303,20 @@ md-slider:focus-visible{outline:none}
   border-top:1px solid var(--owl-border);font-size:11.5px;color:var(--owl-muted);font-family:var(--font-mono);overflow:hidden;white-space:nowrap}
 .statusbar .ok{color:var(--ave-ok)}
 .statusbar .grow{flex:1}
-@media (max-width:1100px){
-  .workspace{grid-template-columns:1fr 1fr;grid-template-rows:minmax(280px,1fr) minmax(220px,.8fr);overflow:auto}
+@media (max-width:1200px){
+  /* Split-screen / zoomed-in: editor and stage share the first row, the
+     inspector moves full-width below, and the stage stacks its two columns
+     so frames keep a readable width instead of squeezing to ~200px. */
   body{overflow:auto;height:auto;min-height:100vh}
-  .workspace{flex:none}
-  #stageContent{grid-template-columns:1fr 1fr}
+  .workspace{flex:none;overflow:visible;
+    grid-template-columns:minmax(0,4fr) minmax(0,6fr);
+    grid-template-rows:minmax(480px,72vh) auto}
+  .workspace>.pane:last-child{grid-column:1/-1;min-height:420px}
+  #stageContent{grid-template-columns:1fr}
 }
 @media (max-width:760px){
-  .workspace{grid-template-columns:1fr;grid-template-rows:none}
+  .workspace{grid-template-columns:1fr;grid-template-rows:auto}
+  .workspace>.pane{min-height:480px}
   .brand-sub{display:none}.eventread{display:none}
 }
 @media (prefers-reduced-motion:reduce){
@@ -345,9 +347,7 @@ md-slider:focus-visible{outline:none}
   "@material/web/slider/slider.js":"https://unpkg.com/@material/web@2.5.0/slider/slider.js",
   "@material/web/menu/menu.js":"https://unpkg.com/@material/web@2.5.0/menu/menu.js",
   "@material/web/menu/menu-item.js":"https://unpkg.com/@material/web@2.5.0/menu/menu-item.js",
-  "@joint/core":"https://cdn.jsdelivr.net/npm/@joint/core@4.3.3/joint.mjs",
-  "libavoid-js":"https://cdn.jsdelivr.net/npm/libavoid-js@0.4.5/dist/index.js",
-  "@joint/router-avoid":"https://cdn.jsdelivr.net/npm/@joint/router-avoid@4.3.3/dist/esm/index.mjs"
+  "cytoscape":"https://cdn.jsdelivr.net/npm/cytoscape@3.30.4/dist/cytoscape.esm.min.mjs"
 }}
 </script>
 </head>
@@ -384,14 +384,7 @@ md-slider:focus-visible{outline:none}
     </div>
     <div id="stage">
       <div id="stageContent">
-        <svg id="arrows" aria-hidden="true"><defs>
-          <marker id="ah" viewBox="0 0 14 14" refX="11" refY="7" markerWidth="14" markerHeight="14" markerUnits="userSpaceOnUse" orient="auto">
-            <path d="M11,7 L5,3 L5,11 Z" fill="#7fdbca"></path>
-          </marker>
-          <marker id="ahHot" viewBox="0 0 14 14" refX="11" refY="7" markerWidth="14" markerHeight="14" markerUnits="userSpaceOnUse" orient="auto">
-            <path d="M11,7 L5,3 L5,11 Z" fill="#ffcb8b"></path>
-          </marker>
-        </defs><g id="arrowLayer"></g></svg>
+        <div id="arrows" aria-hidden="true"></div>
         <div id="stackCol"><div class="region-h"><span class="ms">layers</span>Stack</div><div id="frames"></div></div>
         <div id="heapCol"><div class="region-h"><span class="ms">memory</span>Heap</div><div id="heap"></div></div>
       </div>
@@ -673,125 +666,253 @@ function renderTransport(step){
   $("nextBtn").disabled = $("lastBtn").disabled = step===STEPS.length-1;
 }
 
-/* ================= SVG arrows: library-assisted obstacle-avoiding routing ===
-   Geometry comes from JointJS's @joint/router-avoid — a maintained MPL-2.0
-   wrapper around libavoid (LGPL-2.1+, fetched as a separate .wasm) — loaded
-   on demand through the importmap. The DOM stays the source of truth: every
-   readable element becomes an invisible obstacle in a throwaway dia.Graph,
-   pointer dots / merge junctions / target pins become tiny endpoint shapes,
-   and libavoid returns orthogonal obstacle-free polylines which are rendered
-   into the existing #arrowLayer with the existing #ah markers. Pointers that
-   share one canonical target (e.g. p and alias → arr:1) are grouped: each
-   pointer gets a unique branch into a deterministic junction and ONE trunk
-   runs junction → target carrying the single arrowhead. Same state + layout
-   → same graph → same routes (libavoid is deterministic; verified). */
-const SVGNS = "http://www.w3.org/2000/svg";
-const CORNER = 0;     // sharp orthogonal corners per spec (no rounding)
-const LIBAVOID_WASM = "https://cdn.jsdelivr.net/npm/libavoid-js@0.4.5/dist/libavoid.wasm";
+/* ================= Arrows: Cytoscape.js canvas layer ========================
+   Rendering is done by Cytoscape.js (canvas, HiDPI-aware, no SVG). The DOM
+   stays the source of truth: every readable element becomes an obstacle,
+   pointer dots / merge junctions / target pins become route endpoints, and a
+   small deterministic orthogonal router (grid + A*, bends and lane-sharing
+   penalised) computes obstacle-free polylines. Each polyline is handed to
+   Cytoscape as a chain of straight edges with round caps; the last edge of a
+   route carries the single arrowhead. Pointers that share one canonical
+   target (e.g. p and alias → arr:1) are grouped: each pointer gets a branch
+   into a deterministic junction and ONE trunk runs junction → target.
+   Same state + layout → same graph → same routes (no randomness anywhere). */
+const CY_URL = "https://cdn.jsdelivr.net/npm/cytoscape@3.30.4/dist/cytoscape.esm.min.mjs";
+const CY_URL_FALLBACK = "https://unpkg.com/cytoscape@3.30.4/dist/cytoscape.esm.min.mjs";
+let cy = null, cyPromise = null, ROUTES = [], arrowQueued = false, routeGen = 0, routerWarned = false;
+let lastBoxW = -1, lastBoxH = -1; // canvas box already painted — avoids cy.resize() clears
 
 function relRect(el, s){
   const b = el.getBoundingClientRect();
   return {x1:b.left-s.left, y1:b.top-s.top, x2:b.right-s.left, y2:b.bottom-s.top};
 }
-
-// H/V polyline → path string with small rounded corners (cosmetic only).
-function orthoPath(raw){
-  // libavoid's nudging re-aligns runs between adjacent buffer walls, leaving
-  // a ≤5px perpendicular step mid-run. Fold axis-preservingly: the later run
-  // snaps onto the first run's line (junction stays collinear, no slant).
-  // Interior vertices only — endpoints (pins, dots) are ≥3px from their
-  // neighbours and stay exact.
-  const pts=[raw[0].slice()];
-  let fix=null;
-  for(let i=1;i<raw.length-1;i++){
-    const p=[raw[i][0],raw[i][1]];
-    // libavoid attaches orthogonally except a ≤3px skew at endpoint stubs —
-    // square each interior vertex up against its neighbours (endpoints exact)
-    const a=raw[i-1], b=raw[i+1];
-    let sa=-1;
-    if(Math.abs(p[1]-a[1])<=3){p[1]=a[1];sa=1;}
-    else if(Math.abs(p[0]-a[0])<=3){p[0]=a[0];sa=0;}
-    if(sa!==1 && Math.abs(b[1]-p[1])<=3) p[1]=b[1];
-    else if(sa!==0 && Math.abs(b[0]-p[0])<=3) p[0]=b[0];
-    if(fix){
-      if(Math.abs(p[fix.i]-fix.from)<0.01) p[fix.i]=fix.to;
-      else fix=null;
-    }
-    const c=pts[pts.length-1];
-    if(Math.abs(p[0]-c[0])<5 && Math.abs(p[1]-c[1])<5){
-      // perpendicular step between two parallel runs: realign the rest of
-      // the newer run onto the older one's line
-      const ai=Math.abs(p[0]-c[0])>=Math.abs(p[1]-c[1])?0:1;
-      fix={i:ai,from:p[ai],to:c[ai]};
-      p[ai]=c[ai];
-    }
-    if(p[0]!==c[0]||p[1]!==c[1]) pts.push(p);
-  }
-  pts.push(raw[raw.length-1].slice());
-  let d="M"+pts[0][0].toFixed(1)+","+pts[0][1].toFixed(1);
-  for(let i=1;i<pts.length-1;i++){
-    const a=pts[i-1], p=pts[i], b=pts[i+1];
-    const l1=Math.abs(p[0]-a[0])+Math.abs(p[1]-a[1]);
-    const l2=Math.abs(b[0]-p[0])+Math.abs(b[1]-p[1]);
-    const r=Math.min(CORNER,l1/2,l2/2);
-    if(r<1.2){d+=" L"+p[0].toFixed(1)+","+p[1].toFixed(1);continue;}
-    const t1=[p[0]+(a[0]-p[0])/l1*r, p[1]+(a[1]-p[1])/l1*r];
-    const t2=[p[0]+(b[0]-p[0])/l2*r, p[1]+(b[1]-p[1])/l2*r];
-    d+=" L"+t1[0].toFixed(1)+","+t1[1].toFixed(1)+" Q"+p[0].toFixed(1)+","+p[1].toFixed(1)+" "+t2[0].toFixed(1)+","+t2[1].toFixed(1);
-  }
-  const e=pts[pts.length-1];
-  return d+" L"+e[0].toFixed(1)+","+e[1].toFixed(1);
-}
-/* ================= SVG arrows: scheduling + libavoid integration ============ */
-let arrowQueued = false, routeGen = 0, routerWarned = false;
 function scheduleArrows(){
   if(arrowQueued) return; arrowQueued = true;
   requestAnimationFrame(()=>{arrowQueued=false; drawArrows();});
 }
-// One-shot libavoid pass over a throwaway graph. Rects are invisible shapes
-// (obstacles, dots, junctions, pins); links reference them by id. The
-// setRouteAttributes callback hands us the exact applied geometry (anchors +
-// vertices) because the service deliberately does not touch the models.
-async function routeWithLibavoid(rects, links){
-  const {dia, shapes} = await import("@joint/core");
-  const {initAvoidRouter} = await import("@joint/router-avoid");
-  const graph = new dia.Graph({}, {cellNamespace: shapes});
-  const routes = new Map();
-  const svc = await initAvoidRouter(graph, {
-    libavoidFilePath: LIBAVOID_WASM,
-    shapeBufferDistance: 6,      // clearance kept between lanes and content
-    idealNudgingDistance: 8,     // parallel routes get spaced apart
-    setRouteAttributes: ({link, attributes}) => routes.set(link, attributes),
-  });
-  graph.addCells(rects.map(r=>new shapes.standard.Rectangle(
-    {id:r.id, position:{x:r.x, y:r.y}, size:{width:r.w, height:r.h}})));
-  const cells = links.map(l=>new shapes.standard.Link({source:{id:l.s}, target:{id:l.t}}));
-  graph.addCells(cells);
-  await svc.routeAll();
-  return cells.map(c=>routes.get(c)||null);
+// Cytoscape is loaded once, on demand (importmap first, mirror as fallback).
+function getCy(){
+  if(cy) return Promise.resolve(cy);
+  if(!cyPromise) cyPromise = (async()=>{
+    let mod;
+    try{ mod = await import("cytoscape"); }
+    catch(e){ mod = await import(CY_URL_FALLBACK); }
+    const css = getComputedStyle(document.documentElement);
+    const teal = css.getPropertyValue("--ave-ptr").trim() || "#7fdbca";
+    const amber = css.getPropertyValue("--ave-ptr2").trim() || "#ffcb8b";
+    cy = (mod.default||mod)({
+      container: $("arrows"), elements: [],
+      userZoomingEnabled:false, userPanningEnabled:false, boxSelectionEnabled:false,
+      autoungrabify:true, autounselectify:true, minZoom:1, maxZoom:1,
+      style: [
+        {selector:"node", style:{width:1, height:1, "background-opacity":0, "border-width":0, events:"no"}},
+        {selector:"edge", style:{
+          "curve-style":"straight", width:2.5, "line-color":teal, "line-cap":"round",
+          "source-endpoint":"0 0", "target-endpoint":"0 0",
+          "target-arrow-shape":"none", "target-arrow-color":teal, "arrow-scale":0.85, events:"no"}},
+        {selector:"edge.head", style:{"target-arrow-shape":"triangle"}},
+        {selector:"edge.hot, edge.hotpath", style:{
+          "line-color":amber, "target-arrow-color":amber, width:3, "z-index":10}}
+      ]
+    });
+    return cy;
+  })().catch(e=>{ cyPromise = null; throw e; });
+  return cyPromise;
 }
+
+/* ---------- Orthogonal router: grid lanes + A* (deterministic) ---------- */
+const LANE_CLEAR = 6;   // clearance kept between a lane and any readable element
+const BEND_COST = 30, HUG_COST = 1.35, SHARE_COST = 4, CROSS_COST = 14;
+function makeRouter(obst, area, pts, dots){
+  const M = LANE_CLEAR, r5 = v=>Math.round(v*2)/2;
+  const xs0 = new Set([r5(area.x1), r5(area.x2)]), ys0 = new Set([r5(area.y1), r5(area.y2)]);
+  for(const o of obst){
+    xs0.add(r5(o.x-M)); xs0.add(r5(o.x+o.w+M)); ys0.add(r5(o.y-M)); ys0.add(r5(o.y+o.h+M));
+  }
+  for(const p of pts){ xs0.add(r5(p[0])); ys0.add(r5(p[1])); }
+  // Lanes = every obstacle edge (+clearance) plus a centre lane in each gap,
+  // so parallel wires settle in the middle of a channel, 8px apart.
+  const lanes = (set, lo, hi)=>{
+    const a = [...set].filter(v=>v>=lo&&v<=hi).sort((p,q)=>p-q), out = [];
+    for(let i=0;i<a.length;i++){
+      out.push(a[i]);
+      if(i+1<a.length && a[i+1]-a[i]>=9) out.push(r5((a[i]+a[i+1])/2));
+    }
+    return out;
+  };
+  const xs = lanes(xs0, r5(area.x1), r5(area.x2)), ys = lanes(ys0, r5(area.y1), r5(area.y2));
+  const NX = xs.length, NY = ys.length, CW = Math.max(1, NX-1);
+  const xi = new Map(xs.map((v,i)=>[v,i])), yi = new Map(ys.map((v,i)=>[v,i]));
+  const blocked = new Uint8Array(Math.max(1,(NX-1)*(NY-1)));
+  const lb = (a,v)=>{let lo=0,hi=a.length;while(lo<hi){const m=(lo+hi)>>1;if(a[m]<v)lo=m+1;else hi=m;}return lo;};
+  for(const o of obst){
+    const i0=lb(xs,r5(o.x-M)), ie=lb(xs,r5(o.x+o.w+M)+0.25)-1;
+    const j0=lb(ys,r5(o.y-M)), je=lb(ys,r5(o.y+o.h+M)+0.25)-1;
+    for(let j=j0;j<je;j++) for(let i=i0;i<ie;i++) blocked[j*CW+i]=1;
+  }
+  // 0 = blocked, 1 = free lane, 2 = free lane hugging an obstacle's clearance.
+  const hEdge = (i,j)=>{const a=j>0?blocked[(j-1)*CW+i]:0, b=j<NY-1?blocked[j*CW+i]:0; return a&&b?0:(a||b?2:1);};
+  const vEdge = (i,j)=>{const a=i>0?blocked[j*CW+i-1]:0, b=i<NX-1?blocked[j*CW+i]:0; return a&&b?0:(a||b?2:1);};
+  const ownH = new Int32Array(CW*NY), ownV = new Int32Array(NX*Math.max(1,NY-1));
+  const nodeH = new Int32Array(NX*NY), nodeV = new Int32Array(NX*NY);
+  // Pointer dots of OTHER pointers are hard obstacles: a wire never runs over
+  // a dot that is not its own origin.
+  const dotH = new Int32Array(CW*NY), dotV = new Int32Array(NX*Math.max(1,NY-1)), DR = 5;
+  for(const d of dots){
+    const i=xi.get(r5(d.x)), j=yi.get(r5(d.y)); if(i===undefined||j===undefined) continue;
+    for(let e=0;e<NX-1;e++) if(xs[e+1]>d.x-DR&&xs[e]<d.x+DR) dotH[j*CW+e]=d.id;
+    for(let e=0;e<NY-1;e++) if(ys[e+1]>d.y-DR&&ys[e]<d.y+DR) dotV[e*NX+i]=d.id;
+  }
+  const DX=[1,-1,0,0], DY=[0,0,1,-1], OPP=[1,0,3,2];
+  // Search scratch space is allocated once and reset by stamping (no refill).
+  const G=new Float64Array(NX*NY*4), P=new Int32Array(NX*NY*4), T=new Int32Array(NX*NY*4);
+  let stamp=0;
+  // route(from, to, goals, tok, owner): `to` is a point, or `goals` a Set of
+  // grid-node ids (merge into an existing wire at the first node reached).
+  function route(from,to,goals,tok,owner,bnd){
+    const sx=from[0], sy=from[1];
+    const si=xi.get(r5(sx)), sj=yi.get(r5(sy));
+    const gi=to?xi.get(r5(to[0])):0, gj=to?yi.get(r5(to[1])):0;
+    if(si===undefined||sj===undefined||gi===undefined||gj===undefined) return null;
+    // Optional search window (x1,y1,x2,y2): keeps long stacks fast.
+    const ilo=bnd?lb(xs,r5(bnd.x1)):0, ihi=bnd?lb(xs,r5(bnd.x2)+0.25)-1:NX-1;
+    const jlo=bnd?lb(ys,r5(bnd.y1)):0, jhi=bnd?lb(ys,r5(bnd.y2)+0.25)-1:NY-1;
+    stamp++;
+    const gOf=s=>T[s]===stamp?G[s]:Infinity;
+    const hk=[], hs=[]; // binary min-heap: keys / states
+    const push=(k,s)=>{let i=hk.length;hk.push(k);hs.push(s);
+      while(i>0){const p=(i-1)>>1;if(hk[p]<=k)break;hk[i]=hk[p];hs[i]=hs[p];i=p;}hk[i]=k;hs[i]=s;};
+    const pop=()=>{const rs=hs[0],lk=hk.pop(),ls=hs.pop();
+      if(hk.length){let i=0;for(;;){let c=2*i+1;if(c>=hk.length)break;if(c+1<hk.length&&hk[c+1]<hk[c])c++;
+        if(hk[c]>=lk)break;hk[i]=hk[c];hs[i]=hs[c];i=c;}hk[i]=lk;hs[i]=ls;}return rs;};
+    const h=(i,j)=>goals?0:Math.abs(xs[i]-xs[gi])+Math.abs(ys[j]-ys[gj]);
+    for(let d=0;d<4;d++){const st=(sj*NX+si)*4+d;G[st]=0;T[st]=stamp;P[st]=-1;push(h(si,sj),st);}
+    let goal=-1;
+    while(hk.length){
+      const st=pop(), d=st&3, n=st>>2, i=n%NX, j=(n-i)/NX, g=G[st];
+      if(g>gOf(st)) continue;
+      if(goals?(goals.has(n)):(i===gi&&j===gj)){goal=st;break;}
+      for(let d2=0;d2<4;d2++){
+        if(d2===OPP[d]) continue;
+        const ni=i+DX[d2], nj=j+DY[d2];
+        if(ni<ilo||nj<jlo||ni>ihi||nj>jhi) continue;
+        let e,own,len;
+        if(d2<2){const ei=d2===0?i:ni; e=hEdge(ei,j); own=ownH[j*CW+ei]; len=Math.abs(xs[ni]-xs[i]);
+          if(dotH[j*CW+ei]&&dotH[j*CW+ei]!==owner) continue;}
+        else{const ej=d2===2?j:nj; e=vEdge(i,ej); own=ownV[ej*NX+i]; len=Math.abs(ys[nj]-ys[j]);
+          if(dotV[ej*NX+i]&&dotV[ej*NX+i]!==owner) continue;}
+        if(!e) continue;
+        let c=len*(e===2?HUG_COST:1);
+        if(own&&own!==tok) c*=SHARE_COST;
+        const nn=nj*NX+ni;
+        if(d2<2){ if(nodeV[nn]&&nodeV[nn]!==tok&&!nodeH[nn]) c+=CROSS_COST; }
+        else if(nodeH[nn]&&nodeH[nn]!==tok&&!nodeV[nn]) c+=CROSS_COST;
+        if(d2!==d) c+=BEND_COST;
+        const ns=nn*4+d2, ng=g+c;
+        if(ng<gOf(ns)){G[ns]=ng;T[ns]=stamp;P[ns]=st;push(ng+h(ni,nj),ns);}
+      }
+    }
+    if(goal<0) return null;
+    const seq=[]; for(let s=goal;s>=0;s=P[s]) seq.push(s>>2);
+    seq.reverse();
+    for(let k=0;k<seq.length;k++){ // claim the lanes so later wires keep clear
+      const n=seq[k], i=n%NX, j=(n-i)/NX;
+      if(k+1<seq.length){
+        const m=seq[k+1], mi=m%NX, mj=(m-mi)/NX;
+        if(mj===j){ownH[j*CW+Math.min(i,mi)]=tok; nodeH[n]=nodeH[m]=tok;}
+        else{ownV[Math.min(j,mj)*NX+i]=tok; nodeV[n]=nodeV[m]=tok;}
+      }
+    }
+    return {nodes:seq, pts:seq.map(n=>{const i=n%NX;return [xs[i],ys[(n-i)/NX]];})};
+  }
+  return {route};
+}
+// Drop duplicate points and middle points of straight runs.
+function tidy(pts){
+  const o=[];
+  for(const p of pts){
+    const q=o[o.length-1]; if(q&&Math.abs(q[0]-p[0])<0.01&&Math.abs(q[1]-p[1])<0.01) continue;
+    o.push(p);
+  }
+  for(let i=o.length-2;i>0;i--){
+    const a=o[i-1],b=o[i],c=o[i+1];
+    if((Math.abs(a[0]-b[0])<0.01&&Math.abs(b[0]-c[0])<0.01&&(b[1]-a[1])*(c[1]-b[1])>0)||
+       (Math.abs(a[1]-b[1])<0.01&&Math.abs(b[1]-c[1])<0.01&&(b[0]-a[0])*(c[0]-b[0])>0)) o.splice(i,1);
+  }
+  return o;
+}
+
+/* ---------- Cytoscape element builders ---------- */
+function chainEls(pts, idp, cls, head, route){
+  const els=[];
+  pts.forEach((p,i)=>els.push({group:"nodes", data:{id:idp+"n"+i}, position:{x:p[0],y:p[1]}}));
+  for(let i=0;i<pts.length-1;i++)
+    els.push({group:"edges", data:{id:idp+"e"+i, source:idp+"n"+i, target:idp+"n"+(i+1), route:route},
+      classes:cls+(head&&i===pts.length-2?" head":"")});
+  return els;
+}
+function clearArrows(c){ ROUTES=[]; if(c) c.batch(()=>c.elements().remove()); }
+/* Nothing to draw: no cy instance at all — no canvas stack, no library cost
+   until the run actually produced a pointer relationship. destroy() detaches
+   its canvases cleanly; the ES-module import stays cached, so the next step
+   with pointers re-creates instantly. */
+function killCy(){
+  ROUTES=[]; arrWin=null; curHotKey=null;
+  if(!cy) return;
+  try{ cy.destroy(); }catch(e){}
+  cy=null; cyPromise=null; lastBoxW=-1; lastBoxH=-1;
+  const a=$("arrows"); a.className=""; a.style.cssText=""; // drop cy's leftover class + inline
+}
+
+/* The canvas only covers a window around the visible part of the stage
+   (about 2.5 screens) and follows the scroll position. Canvases have a hard
+   size limit (~32k px), so drawing a 150-frame recursion stack on one
+   full-height canvas would not work; this keeps it bounded at any depth.
+   Everything stays in stage-content coordinates; only the pan changes. */
+function stageWindow(){
+  const st=$("stage"), content=$("stageContent");
+  const H=Math.max(200,st.clientHeight), ch=content.getBoundingClientRect().height;
+  /* Fixed-size window that follows the scroll: a constant canvas size keeps
+     redraws from calling cy.resize() — resizing clears the canvas for a
+     frame before the next render, which is visible as arrow flicker. */
+  const height=Math.ceil(2.5*H)+1;
+  let top=Math.max(0, Math.min(ch-height, Math.floor(st.scrollTop-0.75*H)));
+  return {top, bottom:top+height, H, ch};
+}
+let arrWin=null;
+function onStageScroll(){
+  if(!arrWin) return;
+  const st=$("stage").scrollTop, H=arrWin.H, m=0.25*H;
+  if((arrWin.top>0 && st<arrWin.top+m) || (arrWin.bottom<arrWin.ch && st+H>arrWin.bottom-m)) scheduleArrows();
+}
+$("stage").addEventListener("scroll",onStageScroll,{passive:true});
+
 async function drawArrows(){
   const gen = ++routeGen; // stale in-flight results are discarded, not painted
-  const layer=$("arrowLayer"), svg=$("arrows"), content=$("stageContent");
-  const ptrs=pointersOf(sel);
-  if(!ptrs.length){ layer.innerHTML=""; return; }
-  const s=svg.getBoundingClientRect();
+  curHotKey = null;
+  const ptrs = pointersOf(sel);
+  if(!ptrs.length){ killCy(); return; } // no pointers ⇒ no Cytoscape at all
+  let c;
+  try{ c = await getCy(); }
+  catch(e){ if(!routerWarned){routerWarned=true; console.warn("Cytoscape unavailable:",e);} return; }
+  if(gen!==routeGen) return;
+  const content=$("stageContent"), s=content.getBoundingClientRect();
+  const W=stageWindow(); arrWin=W;
+  const VP=120; // routes whose endpoints lie within this distance of the window are kept
+  const wTop=W.top-VP, wBot=W.bottom+VP;
   // Group by canonical target identity (arr:1, h-r:0, pt — the trace's own
   // object+index ids, never displayed values).
   const groups={};
   ptrs.forEach(p=>{(groups[p.dst]=groups[p.dst]||[]).push(p);});
-  let uid=0; const rects=[], rectsById=new Map();
-  const addRect=(x,y,w,h)=>{
-    const r={id:"r"+(uid++), x, y, w:Math.max(2,w), h:Math.max(2,h)};
-    rects.push(r); rectsById.set(r.id,r); return r.id;
-  };
-  // Obstacles: every readable element. Plus a thin barrier box at the SVG
-  // edge — without it libavoid escapes into unbounded free space.
-  content.querySelectorAll(".vn,.vt,.vv,.cell,.frame-h,.heap-h,.region-h,.empty-note")
-    .forEach(el=>{ const r=relRect(el,s); addRect(r.x1,r.y1,r.x2-r.x1,r.y2-r.y1); });
-  addRect(0,0,s.width,3); addRect(0,s.height-3,s.width,3);
-  addRect(0,0,3,s.height); addRect(s.width-3,0,3,s.height);
-  const links=[]; // {s,t,src?,dst?,gid?,sources?,names,marker}
+  // Obstacles: every readable element.
+  const obst=[];
+  content.querySelectorAll(".vn,.vt,.vv,.cell,.frame-h,.heap-h,.region-h,.empty-note").forEach(el=>{
+    const r=relRect(el,s);
+    if(r.y2<wTop-400||r.y1>wBot+400) return;   // far outside the window: cannot matter
+    obst.push({x:r.x1, y:r.y1, w:Math.max(2,r.x2-r.x1), h:Math.max(2,r.y2-r.y1)});
+  });
+  const pgroups=[]; // one entry per canonical target
+  let tok=0, dotUid=0;
   for(const dst of Object.keys(groups)){
     const g=groups[dst].map(p=>({p, dot:content.querySelector('[data-ptr-src="'+CSS.escape(p.src)+'"]')}))
       .filter(m=>m.dot);
@@ -800,104 +921,126 @@ async function drawArrows(){
     let dr=relRect(dstEl,s);
     // Struct rows span the frame width — a side pin lands outside the frame
     // border. Aim at the struct's cells (its value region) instead; empty
-    // rows keep the left channel below.
+    // rows keep the left channel.
     const cellEls=dstEl.classList.contains("varrow")?[...dstEl.querySelectorAll(".cell")]:[];
     if(cellEls.length){
-      const rs=cellEls.map(c=>relRect(c,s));
+      const rs=cellEls.map(c2=>relRect(c2,s));
       dr={x1:Math.min(...rs.map(r=>r.x1)), x2:Math.max(...rs.map(r=>r.x2)),
           y1:Math.min(...rs.map(r=>r.y1)), y2:Math.max(...rs.map(r=>r.y2))};
     }
-    // Target pin sits just OFF the boundary (3px): the arrowhead tip lands a
-    // hair from the edge — never on the value glyph — and the final leg can't
-    // ride the border. Cells can wrap, so pick the first side whose approach
-    // lane is free of buffered obstacles: a pin sealed inside merged buffer
-    // zones is unreachable for libavoid, which then returns a path straight
-    // through content. shortcut: the tip is ~3px from the element instead of
-    // exactly on it (a side-constrained JointJS port proved unusable — its
-    // wrapper drops the orthogonal last segment).
+    const ctr=g.map(m=>{const d=relRect(m.dot,s);return [(d.x1+d.x2)/2,(d.y1+d.y2)/2];});
+    // Outside the drawn window → no wire needed now (redrawn on scroll).
+    if(Math.max(dr.y2,...ctr.map(p=>p[1]))<wTop || Math.min(dr.y1,...ctr.map(p=>p[1]))>wBot) continue;
+    // The arrowhead tip lands 3px off the target's boundary — never on the
+    // value glyph — after a straight approach stub. Pick the first side whose
+    // approach lane is free of other elements (cells can wrap), preferring a
+    // long stub so the head has room to orient.
     const isRow=dstEl.classList.contains("varrow")&&!cellEls.length;
-    let px,py;
-    if(isRow){ px=dr.x1-3; py=(dr.y1+dr.y2)/2; }             // empty struct row: left channel
+    let pin, appr;
+    if(isRow){ pin=[Math.round((dr.x1-3)*2)/2,Math.round((dr.y1+dr.y2))/2]; appr=[pin[0]-11,pin[1]]; }  // empty struct row: left channel
     else{
-      const cx=(dr.x1+dr.x2)/2, cy=(dr.y1+dr.y2)/2, D=8, M=6; // M = shapeBufferDistance
-      const free=(x1,y1,x2,y2)=>!rects.some(o=>
+      const cx=(dr.x1+dr.x2)/2, cy2=(dr.y1+dr.y2)/2, M=LANE_CLEAR;
+      const free=(x1,y1,x2,y2)=>!obst.some(o=>
         !(o.x<dr.x2&&o.x+o.w>dr.x1&&o.y<dr.y2&&o.y+o.h>dr.y1) && // skip the target's own cell/content
         x1<o.x+o.w+M && x2>o.x-M && y1<o.y+o.h+M && y2>o.y-M);
-      const sides=[[cx,dr.y2+3,cx-6,dr.y2,cx+6,dr.y2+D],   // below
-                   [dr.x2+3,cy,dr.x2,cy-6,dr.x2+D,cy+6],   // right
-                   [dr.x1-3,cy,dr.x1-D,cy-6,dr.x1,cy+6],   // left
-                   [cx,dr.y1-3,cx-6,dr.y1-D,cx+6,dr.y1]];  // above
-      const pick=sides.find(v=>free(v[2],v[3],v[4],v[5]))||sides[0];
-      px=pick[0]; py=pick[1];
+      const sides=D=>[
+        {pin:[cx,dr.y2+3], n:[0,1],  box:[cx-6,dr.y2,cx+6,dr.y2+D]},   // below
+        {pin:[dr.x2+3,cy2], n:[1,0], box:[dr.x2,cy2-6,dr.x2+D,cy2+6]}, // right
+        {pin:[dr.x1-3,cy2], n:[-1,0],box:[dr.x1-D,cy2-6,dr.x1,cy2+6]}, // left
+        {pin:[cx,dr.y1-3], n:[0,-1], box:[cx-6,dr.y1-D,cx+6,dr.y1]}];  // above
+      let pick=null, D=14;
+      for(const DD of [14,8]){ D=DD; pick=sides(DD).find(v=>free(...v.box)); if(pick) break; }
+      if(!pick){ D=8; pick=sides(8)[0]; }
+      const q=v=>Math.round(v*2)/2;           // snap to the router's 0.5px lanes
+      pin=pick.pin.map(q); appr=[pin[0]+pick.n[0]*(D-3), pin[1]+pick.n[1]*(D-3)];
     }
-    const pin=addRect(px-2,py-2,4,4);
     const names=g.map(m=>m.p.name), srcs=g.map(m=>m.p.src);
-    if(g.length===1){
-      const d=relRect(g[0].dot,s);
-      links.push({s:addRect((d.x1+d.x2)/2-2,(d.y1+d.y2)/2-2,4,4), t:pin,
-        src:g[0].p.src, dst, names, marker:true});
-    }else{
-      // Shared target: one branch per pointer → deterministic junction → one
-      // trunk carrying the single arrowhead. The junction sits ABOVE every
-      // dot of the group so the trunk's departure can never retrace a
-      // branch's lead-out (they leave the junction on opposite sides).
-      const cs=g.map(m=>{const d=relRect(m.dot,s);return [(d.x1+d.x2)/2,(d.y1+d.y2)/2];});
-      const jid=addRect(Math.min(...cs.map(c=>c[0]))-13.5,
-        Math.min(...cs.map(c=>c[1]))-14, 3, 3);
-      g.forEach((m,i)=>links.push({s:addRect(cs[i][0]-2,cs[i][1]-2,4,4), t:jid,
-        src:m.p.src, dst, gid:dst, names:[m.p.name], marker:false}));
-      links.push({s:jid, t:pin, dst, gid:dst, sources:srcs, names, marker:true});
-    }
+    // Shared target: the first pointer routes all the way to the pin; every
+    // other pointer branches off into the nearest point of that wire. The
+    // wire from the earliest merge point on is the ONE trunk that carries the
+    // single arrowhead — the junction is found by the router, not guessed.
+    pgroups.push({dst, pin, appr, names, srcs, ctr, tok:++tok, dotIds:g.map(()=>++dotUid)});
   }
-  if(!links.length){ layer.innerHTML=""; return; }
-  let results;
-  try{ results=await routeWithLibavoid(rects,links); }
-  catch(e){ if(!routerWarned){routerWarned=true; console.warn("avoid router unavailable:",e);} return; }
-  if(gen!==routeGen) return; // a newer redraw superseded this one
-  // Render captured routes; endpoints = shape center + the modelCenter
-  // anchor offsets libavoid applied.
-  const endPt=(r,a)=>[r.x+r.w/2+(a&&a.args?a.args.dx||0:0),
-    r.y+r.h/2+(a&&a.args?a.args.dy||0:0)];
-  const built=links.map((l,i)=>{
-    const a=results[i]; if(!a) return null;
-    return {l, pts:[endPt(rectsById.get(l.s),a.source)]
-      .concat((a.vertices||[]).map(v=>[v.x,v.y]),
-              [endPt(rectsById.get(l.t),a.target)])};
+  if(!pgroups.length){ clearArrows(c); return; }
+  // Route inside a window around the endpoints first (keeps very deep stacks
+  // fast); anything that fails is retried over the whole stage.
+  const ends=pgroups.flatMap(G=>G.ctr.concat([G.appr]));
+  const bx1=Math.min(...ends.map(p=>p[0])), bx2=Math.max(...ends.map(p=>p[0]));
+  const by1=Math.min(...ends.map(p=>p[1])), by2=Math.max(...ends.map(p=>p[1]));
+  const dots=pgroups.flatMap(G=>G.ctr.map((p,i)=>({id:G.dotIds[i], x:p[0], y:p[1]})));
+  const PAD=90;
+  const area={x1:Math.min(Math.max(2,bx1-PAD),bx1), x2:Math.max(Math.min(s.width-2,bx2+PAD),bx2),
+              y1:Math.min(Math.max(2,by1-PAD),by1), y2:Math.max(Math.min(s.height-2,by2+PAD),by2)};
+  const solve=()=>{
+    const sub=obst.filter(o=>o.x<area.x2+LANE_CLEAR&&o.x+o.w>area.x1-LANE_CLEAR&&o.y<area.y2+LANE_CLEAR&&o.y+o.h>area.y1-LANE_CLEAR);
+    const R=makeRouter(sub,area,ends,dots);
+    const box=(pts)=>({x1:Math.min(...pts.map(p=>p[0]))-PAD, x2:Math.max(...pts.map(p=>p[0]))+PAD,
+                       y1:Math.min(...pts.map(p=>p[1]))-PAD, y2:Math.max(...pts.map(p=>p[1]))+PAD});
+    // search inside a window around the wire first; widen only if that fails
+    const go2=(f,t,goals,tok,own,pts)=>R.route(f,t,goals,tok,own,box(pts))||R.route(f,t,goals,tok,own,null);
+    return pgroups.map(G=>{
+      const main=go2(G.ctr[0],G.appr,null,G.tok,G.dotIds[0],[G.ctr[0],G.appr]);
+      const goals=main?new Set(main.nodes.slice(1)):null;
+      const br=G.ctr.slice(1).map((p,k)=>main?go2(p,null,goals,G.tok,G.dotIds[k+1],main.pts.concat([p])):null);
+      return {main, br};
+    });
+  };
+  const sol={out:solve()};
+  const elbow=(a,b)=>[a,[b[0],a[1]],b];   // last-resort when no clear lane exists
+  const cp=P=>P.map(p=>[p[0],p[1]]);
+  const built=[]; // {src?, dst, gid?, marker, names, sources?, hotd?, pts}
+  pgroups.forEach((G,gi)=>{
+    const {main, br}=sol.out[gi];
+    const mainPts=main?cp(main.pts):elbow(G.ctr[0],G.appr);
+    const tail=P=>P.concat([G.pin]);
+    const usable=main&&br.every(Boolean);
+    if(G.ctr.length===1||!usable){
+      // single pointer (or a group the router could not merge): own wires
+      built.push({src:G.srcs[0], dst:G.dst, marker:true, names:[G.names[0]], pts:tidy(tail(mainPts))});
+      G.ctr.slice(1).forEach((p,k)=>{
+        built.push({src:G.srcs[k+1], dst:G.dst, marker:true, names:[G.names[k+1]],
+          pts:tidy(tail(elbow(p,G.appr)))});
+      });
+      return;
+    }
+    const idxOf=n=>main.nodes.indexOf(n);
+    const merge=br.map(r=>idxOf(r.nodes[r.nodes.length-1]));
+    const m0=Math.min(...merge);
+    // pointer #1: its own lead-in up to the earliest merge point …
+    built.push({src:G.srcs[0], dst:G.dst, gid:G.dst, marker:false, names:[G.names[0]],
+      pts:tidy(mainPts.slice(0,m0+1))});
+    // … then the one shared trunk carrying the single arrowhead.
+    built.push({dst:G.dst, gid:G.dst, marker:true, names:G.names, sources:G.srcs,
+      pts:tidy(tail(mainPts.slice(m0)))});
+    br.forEach((r,k)=>{
+      built.push({src:G.srcs[k+1], dst:G.dst, gid:G.dst, marker:false, names:[G.names[k+1]],
+        // light only the tail this pointer actually shares on hover
+        hotd:tidy(tail(mainPts.slice(merge[k]))), pts:tidy(cp(r.pts))});
+    });
   });
-  // A branch that reaches the shared junction from the side is trimmed to its
-  // own column: it meets the trunk as a T, never as a jog toward a sibling.
-  // The trunk tail it shares from that column is kept for hover so lighting a
-  // pointer never paints a stub reaching back at another pointer's column.
-  built.forEach(B=>{
-    if(!B||!B.l.gid||B.l.marker) return;
-    const T=built.find(x=>x&&x.l.marker&&x.l.gid===B.l.gid); if(!T) return;
-    const tp=T.pts, j=tp[0], P=B.pts[B.pts.length-2], E=B.pts[B.pts.length-1];
-    if(!P||!E||Math.abs(E[0]-j[0])>2||Math.abs(E[1]-j[1])>2) return; // ends at the junction
-    // ≤3px off-axis is the stub orthoPath squares flat, so it is on the trunk's run
-    if(Math.abs(tp[1][1]-j[1])>3||tp[1][0]<j[0]+0.6) return;          // trunk leaves flat toward it
-    if(Math.abs(P[1]-j[1])>3||P[0]<j[0]+0.6||P[0]>tp[1][0]+0.6) return;
-    B.pts.pop();
-    B.pts[B.pts.length-1]=[P[0],j[1]];
-    B.l.hotd=orthoPath([B.pts[B.pts.length-1]].concat(tp.slice(1)));
+  const routes=[];
+  built.forEach((B,i)=>{
+    if(B.pts.length<2) return;
+    routes.push({i, src:B.src, dst:B.dst, gid:B.gid, marker:B.marker, names:B.names,
+      sources:B.sources, hotd:B.hotd, pts:B.pts,
+      els:chainEls(B.pts, "r"+i+"_", "wire"+(B.gid?(B.marker?" trunk":" branch"):""), B.marker, i)});
   });
-  let html="";
-  built.forEach(B=>{
-    if(!B) return; const l=B.l, pts=B.pts;
-    const d=orthoPath(pts);
-    const attrs=' class="wire'+(l.gid?(l.marker?" trunk":" branch"):"")+'"'
-      +(l.marker?' marker-end="url(#ah)"':"")
-      +(l.src?' data-src="'+l.src+'"':"")
-      +(l.hotd?' data-hotd="'+l.hotd+'"':"")
-      +(l.dst?' data-dst="'+l.dst+'"':"")
-      +(l.gid?' data-group="'+l.gid+'"':"")
-      +(l.sources?' data-sources="'+l.sources.join(",")+'"':"");
-    const title=l.marker ? l.names.join(", ")+" → "+l.dst : l.names[0]+" → "+l.dst;
-    html+='<path d="'+d+'"'+attrs+'><title>'+esc(title)+'</title></path>'
-      // Fat invisible twin: keeps the 2.5px line hoverable without changing it.
-      +'<path d="'+d+'" class="hit"'+(l.src?' data-src="'+l.src+'"':"")
-      +(l.dst?' data-dst="'+l.dst+'"':"")+(l.gid?' data-group="'+l.gid+'"':"")+'></path>';
+  // Place the canvas window, then swap the wires in one synchronous step so
+  // scrolling never shows a half-updated frame.
+  const box=$("arrows").style;
+  box.top=W.top+"px"; box.bottom="auto"; box.height=(W.bottom-W.top)+"px";
+  /* cy.resize() sets the canvas width attribute, which clears it synchronously
+     while the repaint lands a frame later — skip it whenever the box is
+     unchanged (scroll redraws, step changes) so the repaint stays atomic. */
+  const cw=$("arrows").clientWidth, chh=$("arrows").clientHeight;
+  if(cw!==lastBoxW||chh!==lastBoxH){ lastBoxW=cw; lastBoxH=chh; c.resize(); }
+  c.pan({x:0,y:-W.top});
+  c.batch(()=>{
+    c.elements().remove();
+    routes.forEach(R=>{ R.eles=c.add(R.els).edges(); delete R.els; });
   });
-  layer.innerHTML=html;
+  ROUTES=routes;
+  c.forceRender();
 }
 
 /* ================= Step selection: single source of truth ================= */
@@ -1028,6 +1171,9 @@ async function initEditor(){
           EditorView.lineWrapping]
       })
     });
+    // CodeMirror takes over from the boot placeholder.
+    $("fallback").style.display="none";
+    $("editor").style.display="";
   }catch(e){
     // Offline/CDN failure: plain textarea preserves exact text incl. tabs
     window.__editorError = String((e && e.message) || e);
@@ -1163,56 +1309,75 @@ document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
 /* Pointer hover: a pointer row or its branch turns that pointer's whole
    route orange (its branch + the shared trunk + the single arrowhead).
    Hovering a shared trunk highlights the entire group — every branch, both
-   dots — and its tooltip lists every pointer in it ("p, alias → arr[1]"). */
+   dots — and its tooltip lists every pointer in it ("p, alias → arr[1]").
+   The arrow layer is a canvas, so wires are hit-tested geometrically (7px
+   either side of the line) and the canvas itself never intercepts the mouse:
+   rows, text selection and scrolling underneath keep working. */
+let curHotKey = null;
 function clearHot(){
-  document.querySelectorAll("#arrowLayer path.hot").forEach(p=>p.classList.remove("hot"));
-  document.querySelectorAll("#arrowLayer path.hotpath").forEach(p=>p.remove());
+  if(cy){ cy.remove(cy.elements(".hotpath")); cy.elements(".hot").removeClass("hot"); }
   document.querySelectorAll(".ptr-origin.hot").forEach(d=>d.classList.remove("hot"));
 }
 function hotSrc(srcOn){
   clearHot();
   if(!srcOn) return;
-  const w=document.querySelector('#arrowLayer path.wire[data-src="'+srcOn+'"]');
-  if(w) w.classList.add("hot");
   const dot=document.querySelector('.ptr-origin[data-ptr-src="'+srcOn+'"]');
   if(dot) dot.classList.add("hot");
-  const gid=w&&w.getAttribute("data-group");
-  if(!gid) return;
+  const w=ROUTES.find(r=>r.src===srcOn);
+  if(!w||!cy) return;
+  w.eles.addClass("hot");
+  if(!w.gid) return;
   // This pointer joins the shared trunk mid-run: light only the tail it
   // actually shares, so no orange reaches back toward a sibling's column.
-  const hotd=w.getAttribute("data-hotd");
-  if(hotd){
-    const p=document.createElementNS("http://www.w3.org/2000/svg","path");
-    p.setAttribute("d",hotd); p.setAttribute("class","hotpath");
-    document.getElementById("arrowLayer").appendChild(p);
+  if(w.hotd){
+    cy.add(chainEls(w.hotd, "hp"+w.i+"_", "hotpath", true, -1));
   }else{
-    const t=document.querySelector('#arrowLayer path.wire.trunk[data-group="'+gid+'"]');
-    if(t) t.classList.add("hot");
+    const t=ROUTES.find(r=>r.gid===w.gid&&r.marker);
+    if(t) t.eles.addClass("hot");
   }
 }
 function hotGroup(gid){
   clearHot();
-  if(!gid) return;
-  document.querySelectorAll('#arrowLayer path.wire[data-group="'+gid+'"]').forEach(p=>p.classList.add("hot"));
-  const t=document.querySelector('#arrowLayer path.wire.trunk[data-group="'+gid+'"]');
-  (t?t.getAttribute("data-sources")||"":"").split(",").forEach(src=>{
-    const d=src&&document.querySelector('.ptr-origin[data-ptr-src="'+src+'"]');
+  if(!gid||!cy) return;
+  ROUTES.filter(r=>r.gid===gid).forEach(r=>r.eles.addClass("hot"));
+  const t=ROUTES.find(r=>r.gid===gid&&r.marker);
+  ((t&&t.sources)||[]).forEach(src=>{
+    const d=document.querySelector('.ptr-origin[data-ptr-src="'+src+'"]');
     if(d) d.classList.add("hot");
   });
 }
-$("stageContent").addEventListener("mouseover",e=>{
-  const path=e.target.closest?e.target.closest("#arrowLayer path"):null;
-  if(path){
-    const gid=path.getAttribute("data-group");
-    if(path.classList.contains("trunk")&&gid){ hotGroup(gid); return; }
-    if(path.hasAttribute("data-src")){ hotSrc(path.getAttribute("data-src")); return; }
-    if(gid){ hotGroup(gid); return; } // trunk hit twin
+function hitRoute(x,y){
+  const TOL=7; let best=null, bd=TOL;
+  for(const R of ROUTES){
+    for(let k=0;k<R.pts.length-1;k++){
+      const a=R.pts[k], b=R.pts[k+1], dx=b[0]-a[0], dy=b[1]-a[1], L=dx*dx+dy*dy;
+      const t=L?Math.max(0,Math.min(1,((x-a[0])*dx+(y-a[1])*dy)/L)):0;
+      const d=Math.hypot(x-(a[0]+t*dx), y-(a[1]+t*dy));
+      if(d<=bd){bd=d; best=R;}   // ties → the later (top-most) wire
+    }
   }
-  const row=e.target.closest?e.target.closest(".varrow"):null;
-  const dot=row?row.querySelector("[data-ptr-src]"):null;
-  hotSrc(dot?dot.getAttribute("data-ptr-src"):null);
+  return best;
+}
+$("stageContent").addEventListener("mousemove",e=>{
+  const sc=$("stageContent"), b=sc.getBoundingClientRect();
+  const R=ROUTES.length?hitRoute(e.clientX-b.left,e.clientY-b.top):null;
+  let key=null, act=null, tip="";
+  if(R){
+    tip = R.marker ? R.names.join(", ")+" → "+R.dst : R.names[0]+" → "+R.dst;
+    if(R.marker&&R.gid){ key="g:"+R.gid; act=()=>hotGroup(R.gid); }
+    else if(R.src){ key="s:"+R.src; act=()=>hotSrc(R.src); }
+    else if(R.gid){ key="g:"+R.gid; act=()=>hotGroup(R.gid); }
+  }else{
+    const row=e.target.closest?e.target.closest(".varrow"):null;
+    const dot=row?row.querySelector("[data-ptr-src]"):null;
+    const src=dot?dot.getAttribute("data-ptr-src"):null;
+    key=src?"s:"+src:"none"; act=()=>hotSrc(src);
+  }
+  if(sc.title!==tip) sc.title=tip;
+  if(key===curHotKey) return;
+  curHotKey=key; if(act) act();
 });
-$("stageContent").addEventListener("mouseleave",()=>hotSrc(null));
+$("stageContent").addEventListener("mouseleave",()=>{curHotKey=null; $("stageContent").title=""; hotSrc(null);});
 function toggleConsole(force){
   const c = $("consolePane");
   const show = force!==undefined?force:c.classList.contains("collapsed");
@@ -1241,16 +1406,31 @@ document.addEventListener("keydown",e=>{
   else if(e.key===" "){playPause();e.preventDefault();}
   else if(e.key==="c"||e.key==="C"){toggleConsole();}
 });
-new ResizeObserver(scheduleArrows).observe($("stageContent"));
-new ResizeObserver(scheduleArrows).observe($("stage"));
-window.addEventListener("resize",scheduleArrows);
+/* Layout changes (window resize, split view, browser zoom) redraw once after
+   the reflow settles instead of re-routing on every observer tick. */
+let resizeTimer = 0;
+function scheduleArrowsResize(){
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(scheduleArrows, 140);
+}
+new ResizeObserver(scheduleArrowsResize).observe($("stageContent"));
+new ResizeObserver(scheduleArrowsResize).observe($("stage"));
+window.addEventListener("resize",scheduleArrowsResize);
 
 /* ================= Boot ================= */
+/* Show the source in the textarea placeholder immediately: CodeMirror comes
+   from the CDN and an empty editor pane that fills in seconds later is the
+   main first-load jump. */
+$("fallback").style.display = "block";
+$("fallback").value = SOURCE;
+$("editor").style.display = "none";
+go(0); /* paint state first — editor and slider imports must not blank the page */
 (async function(){
   await initEditor();
+  setExecLine(sel);
   await initMaterialSlider(); /* native slider stays on failure */
   await initSpeedMenu(); /* native speed select stays on failure */
-  go(0);
+  scheduleArrows();
 })();
 </script>
 </body>
