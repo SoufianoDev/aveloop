@@ -287,18 +287,31 @@ select.speed.hide{display:none}
 #speedMenu[hidden]{display:none}
 #speedMenu md-menu-item{display:block;height:38px;overflow:hidden}
 md-slider:focus-visible{outline:none}
-.console{flex:0 0 auto;background:var(--owl-bg);border-top:1px solid var(--owl-border);display:flex;flex-direction:column;max-height:150px}
+/* Console: a genuinely resizable bottom panel (VS Code panel model —
+   drag the separator or maximize; MD3 styling from existing owl tokens). */
+.console{flex:0 0 auto;background:var(--owl-bg);border-top:1px solid var(--owl-border);display:flex;flex-direction:column}
 .console.collapsed .cbody{display:none}
+.cresizer{flex:0 0 9px;display:flex;align-items:center;justify-content:center;cursor:ns-resize;touch-action:none}
+.cresizer::before{content:"";width:44px;height:3px;border-radius:2px;background:var(--owl-border)}
+.cresizer:hover::before,.cresizer.dragging::before{background:var(--owl-soft)}
+.cresizer:focus-visible{outline:none}
+.cresizer:focus-visible::before{background:var(--owl-focus);box-shadow:0 0 0 2px var(--owl-bg),0 0 0 4px var(--owl-focus)}
+body.resizing{cursor:ns-resize!important;user-select:none!important;-webkit-user-select:none!important}
+.cheadrow{display:flex;align-items:stretch}
 .chead{display:flex;align-items:center;gap:8px;padding:5px 12px;color:var(--owl-muted);font-size:11px;
-  font-weight:700;letter-spacing:.8px;text-transform:uppercase;cursor:pointer;border:0;background:transparent;font-family:var(--font-ui);width:100%;text-align:left}
+  font-weight:700;letter-spacing:.8px;text-transform:uppercase;cursor:pointer;border:0;background:transparent;font-family:var(--font-ui);flex:1 1 auto;min-width:0;text-align:left}
 .chead .ms{font-size:17px}
 .chead:hover{color:var(--owl-fg)}
+.ctools{display:flex;align-items:center;gap:2px;padding:0 6px}
+.cbtn{width:28px;height:28px;border-radius:6px}
+.cbtn .ms{font-size:17px}
+.cbtn.on{color:var(--owl-focus);background:rgba(130,170,255,.10)}
 .conchip{margin-left:auto;font-family:var(--font-mono);font-size:11px;font-weight:400;
   color:var(--owl-soft);border:1px solid var(--owl-contrast);border-radius:5px;
   padding:1px 8px;text-transform:none;letter-spacing:0}
-.cbody{padding:2px 12px 10px;overflow:auto}
+.cbody{padding:2px 12px 10px;overflow:auto;contain:paint}
 .cbody pre{margin:0;font-family:var(--font-mono);font-size:12.5px;color:var(--ave-ok);white-space:pre-wrap}
-.cbody pre .dim{color:var(--owl-muted);font-style:italic}
+.cbody .dim{color:var(--owl-muted);font-style:italic}
 .statusbar{flex:0 0 26px;display:flex;align-items:center;gap:14px;padding:0 12px;background:var(--owl-bg);
   border-top:1px solid var(--owl-border);font-size:11.5px;color:var(--owl-muted);font-family:var(--font-mono);overflow:hidden;white-space:nowrap}
 .statusbar .ok{color:var(--ave-ok)}
@@ -448,8 +461,15 @@ md-slider:focus-visible{outline:none}
 
 <!-- Console -->
 <section class="console" id="consolePane" aria-label="Console">
-  <button class="chead" id="consoleHead" aria-expanded="true"><span class="ms">terminal</span>Console<span class="conchip" id="consoleStep">step 0</span><span class="ms" id="consoleChevron">unfold_less</span></button>
-  <div class="cbody"><pre id="consoleOut"></pre></div>
+  <div class="cresizer" id="consoleResizer" role="separator" aria-orientation="vertical" aria-label="Console height"
+    tabindex="0" aria-valuemin="140" aria-valuenow="200" title="Drag to resize, or focus and use Arrow Up / Arrow Down"></div>
+  <div class="cheadrow">
+    <button class="chead" id="consoleHead" aria-expanded="true"><span class="ms">terminal</span>Console<span class="conchip" id="consoleStep">step 0</span><span class="ms" id="consoleChevron">unfold_less</span></button>
+    <div class="ctools">
+      <button class="iconbtn cbtn" id="expandBtn" title="Maximize console" aria-label="Maximize console" aria-expanded="false"><span class="ms">keyboard_double_arrow_up</span></button>
+    </div>
+  </div>
+  <div class="cbody" id="consoleBody"><div class="dim" id="consoleNote" hidden>— no output yet at this step —</div><pre id="consoleOut"></pre></div>
 </section>
 
 <footer class="statusbar" aria-label="Status">
@@ -652,8 +672,15 @@ function renderInspector(step){
 }
 
 function renderConsole(step){
-  const out = STEPS[step].out;
-  $("consoleOut").innerHTML = out===""?'<span class="dim">— no output yet at this step —</span>':esc(out);
+  const b=$("consoleBody"), pre=$("consoleOut");
+  // Position-based follow: only pin to the newest text when the user was
+  // already reading at the bottom; a scrolled-up position is preserved.
+  const pinned = b.scrollTop + b.clientHeight >= b.scrollHeight - 28;
+  const out = STEPS[step].out || "";
+  pre.textContent = out;                       // trace text only — never HTML
+  pre.hidden = out==="";
+  $("consoleNote").hidden = out!=="";
+  if(pinned) b.scrollTop = b.scrollHeight;
 }
 
 /* PT parity: entry i's "just executed" line = STEPS[i].line (the green arrow);
@@ -1408,6 +1435,71 @@ function toggleConsole(force){
 }
 $("consoleHead").addEventListener("click",()=>toggleConsole());
 $("consoleBtn").addEventListener("click",()=>toggleConsole());
+
+/* ---- Console panel: resize / maximize / follow / wrap / copy.
+   Interaction model per VS Code's panel (drag border, ^ maximize) and
+   DevTools' Console (wrap-lines setting, copy preserves newlines). ---- */
+let consoleH = 200, consoleMaxed = false;
+const C_MIN = 140, C_FLOOR = 0.45, C_WS_KEEP = 200; // min px, max fraction of viewport, px kept for workspace
+function consoleMaxH(){
+  const ws = document.querySelector(".workspace");
+  const c = $("consolePane");
+  const room = ws.getBoundingClientRect().height + c.getBoundingClientRect().height;
+  return Math.max(C_MIN, Math.min(Math.round(innerHeight*C_FLOOR), room - C_WS_KEEP));
+}
+function setConsoleH(h, save){
+  consoleH = Math.max(C_MIN, Math.min(Math.round(h), consoleMaxH()));
+  $("consolePane").style.height = consoleH + "px";
+  $("consoleResizer").setAttribute("aria-valuenow", consoleH);
+  if(save){ try{ sessionStorage.setItem("ave.consoleH", String(consoleH)); }catch(e){} }
+}
+(function initConsoleResizer(){
+  const rz = $("consoleResizer"), c = $("consolePane");
+  let sy = 0, sh = 0;
+  rz.addEventListener("pointerdown", e=>{           // capture: drag continues outside the handle
+    if(e.button!==0) return;
+    sy = e.clientY; sh = c.getBoundingClientRect().height;
+    document.body.classList.add("resizing"); rz.classList.add("dragging");
+    rz.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  rz.addEventListener("pointermove", e=>{
+    if(!rz.classList.contains("dragging")) return;
+    setConsoleH(sh + (sy - e.clientY));
+  });
+  const end = e=>{
+    if(!rz.classList.contains("dragging")) return;
+    rz.classList.remove("dragging"); document.body.classList.remove("resizing");
+    try{ rz.releasePointerCapture(e.pointerId); }catch(_){}
+    setConsoleH(c.getBoundingClientRect().height, true);
+  };
+  rz.addEventListener("pointerup", end);
+  rz.addEventListener("pointercancel", end);
+  rz.addEventListener("keydown", e=>{               // MD3: keyboard-adjustable separator
+    if(e.key==="ArrowUp"){ setConsoleH(consoleH+16, true); e.preventDefault(); }
+    else if(e.key==="ArrowDown"){ setConsoleH(consoleH-16, true); e.preventDefault(); }
+  });
+})();
+addEventListener("resize", ()=>{ if(!consoleMaxed) setConsoleH(consoleH); });
+/* Maximize = VS Code's ^: the panel takes the workspace; header, transport
+   and status bar stay reachable; restore returns the previous height. */
+$("expandBtn").addEventListener("click", ()=>{
+  consoleMaxed = !consoleMaxed;
+  const c = $("consolePane"), ws = document.querySelector(".workspace");
+  const b = $("expandBtn"), ms = b.querySelector(".ms");
+  if(consoleMaxed){
+    c.style.height = "auto"; c.style.flex = "1 1 auto";
+    ws.style.display = "none";
+    ms.textContent = "keyboard_double_arrow_down";
+    b.title = "Restore console"; b.setAttribute("aria-label","Restore console"); b.setAttribute("aria-expanded","true");
+  }else{
+    ws.style.display = ""; c.style.flex = "";
+    setConsoleH(consoleH);
+    ms.textContent = "keyboard_double_arrow_up";
+    b.title = "Maximize console"; b.setAttribute("aria-label","Maximize console"); b.setAttribute("aria-expanded","false");
+  }
+});
+try{ setConsoleH(parseFloat(sessionStorage.getItem("ave.consoleH")) || consoleH); }catch(e){ setConsoleH(consoleH); }
 document.addEventListener("keydown",e=>{
   const tag = (e.target.tagName||"").toLowerCase();
   const inField = tag==="input"||tag==="textarea"||tag==="select"||e.target.isContentEditable||(cmView&&cmView.hasFocus&&e.target.closest&&e.target.closest(".cm-editor"));
