@@ -331,6 +331,12 @@ body[data-mode="edit"] .execline-chip,
 body[data-mode="edit"] #stepStat{display:none}
 body[data-mode="edit"] #editCodeBtn{display:none}
 body[data-mode="execution"] #runBtn{display:none}
+/* Edit Mode focus: no execution marker/highlight leaks into the editor;
+   both return automatically in Execution Mode (state machinery unchanged). */
+body[data-mode="edit"] .exec-gutter-arrow,
+body[data-mode="edit"] .next-gutter-arrow{display:none}
+body[data-mode="edit"] .exec-line,
+body[data-mode="edit"] .next-line{background:none!important}
 @media (max-width:1200px){
   /* Split-screen / zoomed-in: editor and stage share the first row, the
      inspector moves full-width below, and the stage stacks its two columns
