@@ -317,6 +317,20 @@ body.resizing{cursor:ns-resize!important;user-select:none!important;-webkit-user
   border-top:1px solid var(--owl-border);font-size:11.5px;color:var(--owl-muted);font-family:var(--font-mono);overflow:hidden;white-space:nowrap}
 .statusbar .ok{color:var(--ave-ok)}
 .statusbar .grow{flex:1}
+
+/* ============ 4b. Application modes — body[data-mode] = edit | execution ============
+   One authoritative mode state; CSS owns every layout consequence. Edit Mode is
+   editor-first (VS Code Zen / IntelliJ distraction-free: hide everything but the
+   editor, no blank columns); Execution Mode is Python Tutor's post-"Visualize
+   Execution" workspace, reusing the existing panes untouched. */
+body[data-mode="edit"] .workspace{grid-template-columns:minmax(0,1fr)}
+body[data-mode="edit"] .workspace>.pane:not(:first-child){display:none}
+body[data-mode="edit"] .transport,
+body[data-mode="edit"] .console,
+body[data-mode="edit"] .execline-chip,
+body[data-mode="edit"] #stepStat{display:none}
+body[data-mode="edit"] #editCodeBtn{display:none}
+body[data-mode="execution"] #runBtn{display:none}
 @media (max-width:1200px){
   /* Split-screen / zoomed-in: editor and stage share the first row, the
      inspector moves full-width below, and the stage stacks its two columns
@@ -365,7 +379,7 @@ body.resizing{cursor:ns-resize!important;user-select:none!important;-webkit-user
 }}
 </script>
 </head>
-<body>
+<body data-mode="edit">
 <a class="skip" href="#transport">Skip to playback controls</a>
 
 <header class="topbar">
@@ -375,6 +389,8 @@ body.resizing{cursor:ns-resize!important;user-select:none!important;-webkit-user
   </div>
   <span class="badge stale" id="staleBadge" role="status">EDITED — TRACE STALE</span>
   <span class="sp"></span>
+  <button class="btn filled" id="runBtn" title="Open the execution visualization (demo trace)"><span class="ms">play_arrow</span>Run</button>
+  <button class="btn" id="editCodeBtn" title="Return to code editing"><span class="ms">edit</span>Edit code</button>
   <button class="btn" id="resetSrc" title="Restore the original demo source"><span class="ms">restart_alt</span>Reset demo</button>
 </header>
 
@@ -732,6 +748,7 @@ function relRect(el, s){
   return {x1:b.left-s.left, y1:b.top-s.top, x2:b.right-s.left, y2:b.bottom-s.top};
 }
 function scheduleArrows(){
+  if(uiMode !== "execution") return;   // no routing work while the viz is hidden
   if(arrowQueued) return; arrowQueued = true;
   requestAnimationFrame(()=>{arrowQueued=false; drawArrows();});
 }
@@ -1114,6 +1131,38 @@ function stopPlay(){
 
 /* ================= Editor (CodeMirror 6 w/ Night Owl; textarea fallback) ================= */
 let cmView = null, pristine = SOURCE;
+/* ================= App modes — uiMode = "edit" | "execution" =================
+   One authoritative mode state; body[data-mode] and CSS derive every layout
+   change (VS Code Zen / IntelliJ distraction-free editing; Python Tutor's
+   "Visualize Execution" workspace). UI mode is independent of the execution
+   state: sel/trace/console persist across transitions. applyEditable is set
+   once the CM6 module is live; the offline textarea path flips readOnly. */
+let uiMode = "edit", applyEditable = null;
+function enterExecutionMode(){
+  if(uiMode === "execution") return;
+  stopPlay();                                     // no stray timers when re-running
+  uiMode = "execution";
+  document.body.dataset.mode = "execution";
+  if(applyEditable) applyEditable(false);         // read-only demonstration session
+  else $("fallback").readOnly = true;             // offline textarea fallback
+  go(0);                                          // back to the demo's first step; Play starts it
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    if(cmView) cmView.requestMeasure();           // CM6 re-measures the new layout
+    scheduleArrows();                             // recalc pointers once geometry is live
+  }));
+}
+function enterEditMode(){
+  if(uiMode === "edit") return;
+  stopPlay();                                     // playback never continues while editing
+  uiMode = "edit";
+  document.body.dataset.mode = "edit";
+  if(applyEditable) applyEditable(true);          // same EditorView, editable again
+  else $("fallback").readOnly = false;
+  if(cmView){ cmView.requestMeasure(); cmView.focus(); }  // continue typing immediately
+  else $("fallback").focus();
+}
+$("runBtn").addEventListener("click", enterExecutionMode);
+$("editCodeBtn").addEventListener("click", enterEditMode);
 function currentDoc(){ return cmView ? cmView.state.doc.toString() : $("fallback").value; }
 function markStale(){
   const dirty = currentDoc() !== pristine;
@@ -1136,7 +1185,7 @@ async function initEditor(){
     const Lang = await import("@codemirror/language");
     const Cpp = await import("@codemirror/lang-cpp");
     const HL = await import("@lezer/highlight");
-    const {EditorState, StateField, StateEffect, RangeSet, RangeSetBuilder} = S;
+    const {EditorState, StateField, StateEffect, RangeSet, RangeSetBuilder, Compartment} = S;
     const {EditorView, lineNumbers, highlightActiveLine, highlightActiveLineGutter,
       keymap, drawSelection, Decoration, gutter, GutterMarker} = V;
     const {defaultKeymap, indentWithTab, history, historyKeymap} = Cmd;
@@ -1204,12 +1253,14 @@ async function initEditor(){
       ".cm-matchingBracket": {backgroundColor:"rgba(130,170,255,.22)", outline:"1px solid #82AAFF"},
       ".cm-nonmatchingBracket": {backgroundColor:"rgba(239,83,80,.28)", color:"#ffb4b0"}
     }, {dark:true});
+    const editComp = new Compartment();   // mode-aware editability (Run makes it read-only)
     cmView = new EditorView({
       parent: $("editor"),
       state: EditorState.create({
         doc: SOURCE,
         extensions: [execGutter, lineNumbers(), highlightActiveLine(), highlightActiveLineGutter(),
-          history(), drawSelection(), bracketMatching(),
+          history(), drawSelection(), bracketMatching(), editComp.of([
+            EditorView.editable.of(true), EditorState.readOnly.of(false)]),
           keymap.of([indentWithTab, ...defaultKeymap, ...historyKeymap]),
           cpp(), syntaxHighlighting(owlHL), curTheme, execState,
           EditorView.updateListener.of(u=>{
@@ -1223,6 +1274,10 @@ async function initEditor(){
     // CodeMirror takes over from the boot placeholder.
     $("fallback").style.display="none";
     $("editor").style.display="";
+    /* Mode bridge: the facet constructors are import-local, so the mode
+       transitions call this closure instead of re-deriving the imports. */
+    applyEditable = on => cmView.dispatch({effects: editComp.reconfigure([
+      EditorView.editable.of(on), EditorState.readOnly.of(!on)])});
   }catch(e){
     // Offline/CDN failure: plain textarea preserves exact text incl. tabs
     window.__editorError = String((e && e.message) || e);
@@ -1552,6 +1607,7 @@ document.addEventListener("keydown",e=>{
   // Space with the speed menu open belongs to the menu, never to transport.
   if(onSlider && e.key===" " && mdMenuOpen) return;
   if(inField) { if(e.key==="Escape") e.target.blur(); return; }
+  if(uiMode!=="execution") return;    // transport shortcuts belong to Execution Mode
   // The M3 slider consumes its own arrows/Home/End; anything else (e.g. Space
   // for play) falls through to the global transport shortcuts.
   if(onSlider && ["ArrowRight","ArrowLeft","ArrowUp","ArrowDown","Home","End"].includes(e.key)) return;
