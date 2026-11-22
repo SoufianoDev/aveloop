@@ -1,8 +1,8 @@
 # AveLoop Alpha — Task Breakdown
 
-**Document ID:** AVE-TASKS-001  
-**Version:** 1.0.0  
-**Status:** Derived from `spec.md` and `plan.md`; not implementation authorization  
+**Document ID:** AVE-TASKS-001\
+**Version:** 1.1.0\
+**Status:** Derived from `spec.md` and `plan.md`; not implementation authorization\
 **Date:** 22 November 2026
 
 ---
@@ -35,13 +35,15 @@
 
 These are mandatory before production foundation work. They are verification tasks, not excuses to silently drop a target platform.
 
+All compiler and debugger verification uses toolchains already installed on each platform. No compiler, debugger, or LLVM distribution is bundled, downloaded, or installed by the project.
+
 - [ ] T005 Verify a minimal GPUI application builds and launches on Linux x86_64; record the exact GPUI revision, Rust toolchain, system dependencies, and runtime result.
 - [ ] T006 [P] Verify the same GPUI application builds and launches on Windows x86_64.
 - [ ] T007 [P] Verify the same GPUI application builds and launches on macOS arm64.
 - [ ] T008 Verify GPUI text rendering, keyboard input, focus, clipboard, window resizing, and required Linux Wayland/X11 configurations across the target matrix.
-- [ ] T009 Verify Clang/LLVM 23.1.4 builds C17 and C++20 debug binaries on Linux, Windows, and macOS, documenting each platform's linker/runtime prerequisites.
-- [ ] T010 Verify LLDB-DAP launch, breakpoint, source-level stepping, stack, variables, aggregate children, pointer values, stdout/stderr, and termination on all three platforms.
-- [ ] T011 Record actual DAP capabilities per platform; explicitly verify that the design does not depend on `supportsStepBack`.
+- [ ] T009 Verify the installed platform C/C++ toolchain builds C17 and C++20 debug binaries on Linux (GCC/G++), Windows (MSVC or MinGW-w64), and macOS (Apple Clang), documenting each platform's linker/runtime prerequisites.
+- [ ] T010 Verify platform debugger launch, breakpoint, source-level stepping, stack, variables, aggregate children, pointer values, stdout/stderr, and termination on all three platforms: GDB on Linux, LLDB on macOS, the compiler-matched debugger on Windows.
+- [ ] T011 Record actual debugger capabilities per platform and backend (DAP or GDB/MI); explicitly verify that the design does not depend on `supportsStepBack`.
 - [ ] T012 Verify process cancellation and child-process cleanup behavior on each OS.
 - [ ] T013 [P] Verify Tree-sitter C/C++ grammar integration and license compatibility.
 - [ ] T014 Evaluate GPUI text primitives and the required Material 3 component surface; document build/reuse decisions without creating a fork.
@@ -80,12 +82,12 @@ These are mandatory before production foundation work. They are verification tas
 
 # Phase 5 — User Story 2: Build and launch real C/C++ programs
 
-- [ ] T029 [US2] Implement Clang/LLVM discovery, version/target reporting, and platform prerequisite diagnostics.
-- [ ] T030 [US2] Implement deterministic C17/C++20 compiler command construction from `ave.toml`, including debug profile and provenance.
+- [ ] T029 [US2] Implement platform C/C++ compiler discovery — project configuration, `CC`/`CXX`, `cc`/`c++` alias resolution, GCC/G++, Apple Clang, MSVC, MinGW-w64 — with version/target reporting and platform prerequisite diagnostics.
+- [ ] T030 [US2] Implement deterministic C17/C++20 compiler command construction from `ave.toml` for the discovered compiler family, including debug profile and provenance.
 - [ ] T031 [US2] Implement build process execution, cancellation, stdout/stderr capture, exit status, and cleanup.
 - [ ] T032 [US2] Map compiler diagnostics to source locations where available and distinguish build, launch, and runtime failures.
 - [ ] T033 [US2] Implement explicit launch consent and clear disclosure that Alpha programs run locally with the user's OS permissions and are not sandboxed.
-- [ ] T034 [US2] Verify real C17 and C++20 sample builds and failed-build behavior on Linux, Windows, and macOS.
+- [ ] T034 [US2] Verify real C17 and C++20 sample builds and failed-build behavior with the per-platform toolchains on Linux, Windows, and macOS.
 
 **Acceptance:** real programs compile with debug information; failures are classified correctly; no failed build creates a valid-looking trace.
 
@@ -93,14 +95,14 @@ These are mandatory before production foundation work. They are verification tas
 
 # Phase 6 — User Story 3: Debug sessions, trace capture, and historical navigation
 
-- [ ] T035 [US3] Implement DAP transport and `lldb-dap` lifecycle, including initialize, capability negotiation, launch, configuration, and termination.
+- [ ] T035 [US3] Implement debugger transport and session lifecycle for the selected backend (GDB DAP or GDB/MI on Linux, `lldb-dap` on macOS, the compiler-matched Windows debugger), including initialize, capability negotiation, launch, configuration, and termination.
 - [ ] T036 [US3] Implement source-level breakpoint/step operations and bounded retrieval of stack frames, scopes, variables, and aggregate children.
 - [ ] T037 [US3] Capture stdout/stderr and ordered debugger observations while preserving source, build, session, thread, and frame provenance.
 - [ ] T038 [US3] Implement trace records, derived events, bounded storage, and checkpoints without conflating observations, events, and snapshots.
 - [ ] T039 [US3] Implement deterministic selected-state reconstruction from recorded trace data.
 - [ ] T040 [US3] Implement first/previous/next/last, seeking, play/pause, and playback speed over recorded stops.
 - [ ] T041 [US3] Implement cancellation, process-tree cleanup, protocol timeouts, malformed-response handling, and stale-session message rejection.
-- [ ] T042 [US3] Verify capture and historical navigation using real C17/C++20 programs on all three target platforms; verify no reverse-debugger request is required.
+- [ ] T042 [US3] Verify capture and historical navigation using real C17/C++20 programs on all three target platforms and their platform debuggers; verify no reverse-debugger request is required.
 
 **Acceptance:** real execution yields an ordered, provenance-bound trace; earlier states can be selected from recorded data without claiming reverse execution.
 
@@ -148,12 +150,12 @@ These are mandatory before production foundation work. They are verification tas
 # Phase 10 — Cross-platform verification and release hardening
 
 - [ ] T061 Add the full CI matrix for build, tests, formatting, lint, and dependency checks on all Alpha targets.
-- [ ] T062 [P] Document compiler/debugger installation, discovery, prerequisites, and troubleshooting for Linux, Windows, and macOS.
+- [ ] T062 [P] Document per-platform compiler and debugger installation, discovery, prerequisites, and troubleshooting for Linux, Windows, and macOS using official vendor guidance, including that AveLoop never installs them.
 - [ ] T063 Run and retain evidence for the complete create/edit/build/debug/record/navigate/inspect workflow on Linux.
 - [ ] T064 [P] Run and retain evidence for the same full workflow on Windows.
 - [ ] T065 [P] Run and retain evidence for the same full workflow on macOS.
-- [ ] T066 Add long-trace, memory-bound, reconstruction, DAP fault-injection, timeout, and cancellation tests.
-- [ ] T067 Complete dependency/license review and inspect platform-specific code for unnecessary divergence.
+- [ ] T066 Add long-trace, memory-bound, reconstruction, protocol-neutral adapter fault-injection, DAP-specific malformed-payload, timeout, and cancellation tests.
+- [ ] T067 Complete dependency/license review — including confirmation that no compiler, debugger, or LLVM distribution is bundled — and inspect platform-specific code for unnecessary divergence.
 - [ ] T068 Review all UI and documentation claims about heap completeness, pointer lifetime, reverse execution, and sandboxing.
 - [ ] T069 Complete requirement-to-test traceability for every P0 requirement.
 - [ ] T070 Run `/speckit.analyze`; resolve all Critical and High findings at the owning artifact, then rerun.

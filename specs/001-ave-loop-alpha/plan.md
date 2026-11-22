@@ -1,8 +1,8 @@
 # AveLoop Alpha — Implementation Plan
 
-**Document ID:** AVE-PLAN-001  
-**Version:** 1.0.0  
-**Status:** Derived from AVE-SPEC-001; review required  
+**Document ID:** AVE-PLAN-001\
+**Version:** 1.1.0\
+**Status:** Derived from AVE-SPEC-001; review required\
 **Date:** 22 November 2026
 
 ---
@@ -160,24 +160,21 @@ The application code remains shared. The table identifies release targets, not s
 
 ### 3.3 C/C++ toolchain
 
-Reference baseline:
-- LLVM/Clang 23.1.4.
-- C17: `-std=c17`.
-- C++20: `-std=c++20`.
-- Debug information enabled.
-- Low/no optimization for the Alpha debug profile.
-- Platform-native linker and runtime prerequisites documented.
+AveLoop uses the compiler already installed on the platform. It does not bundle, download, or install one.
 
-Do not silently download a compiler. Toolchain discovery reports detected executable, version, target, and required companions. Unsupported/mismatched installations produce actionable diagnostics.
+- **Linux:** existing GCC/G++, or the compiler explicitly selected through project configuration or `CC`/`CXX`. Clang is used only when the user selects it.
+- **macOS:** the active Apple Clang/Clang++ toolchain (`xcrun --find clang`); Command Line Tools are sufficient.
+- **Windows:** existing MSVC (`cl.exe`) or MinGW-w64 GCC/G++.
+
+Standards: C17 (`-std=c17`), C++20 (`-std=c++20`), debug information enabled, low/no optimization in the debug profile. Platform-native linker and runtime prerequisites are documented per OS. Discovery reports executable path, version, target, and required companions; `cc`/`c++` aliases are resolved to the real compiler before capability reporting. Unsupported or mismatched installations produce actionable diagnostics. Verified versions are recorded per platform; there is no single pinned cross-platform compiler version.
 
 ### 3.4 Debugger
 
-- LLDB through `lldb-dap` and DAP.
-- DAP capability negotiation at session startup.
-- DAP protocol structures stay inside infrastructure.
-- Do not assume `supportsStepBack`.
-- Capture ordered stop observations and reconstruct prior selected states from AveLoop-owned trace data.
-- Source-level stepping is the Alpha granularity.
+- **Linux:** GDB. Use its DAP interpreter when the installed build provides one (GDB DAP requires Python support); otherwise use GDB/MI through a narrow adapter.
+- **macOS:** LLDB and `lldb-dap` from the active Apple developer toolchain.
+- **Windows:** the debugger matching the selected compiler — Visual Studio debugger interfaces for MSVC, GDB for MinGW-w64.
+
+DAP capability negotiation happens at session startup and is verified per backend, never assumed. DAP protocol structures stay inside infrastructure. Do not assume `supportsStepBack`. Capture ordered stop observations and reconstruct prior selected states from AveLoop-owned trace data. Source-level stepping is the Alpha granularity. Compiler and debugger discovery are independent.
 
 ### 3.5 Editor
 
@@ -201,9 +198,9 @@ Do not adopt GPUI Material or GPUI Kit wholesale without a completed audit and e
 
 ### 4.1 Responsibilities
 
-1. **Toolchain discovery:** locate Clang, LLDB-DAP, linker, and platform prerequisites; report versions and capabilities.
+1. **Toolchain discovery:** locate the platform C/C++ compiler, the matching debugger adapter, linker, and platform prerequisites; report versions and capabilities.
 2. **Build adapter:** produce a deterministic debug build from project configuration and source revision.
-3. **Debug session adapter:** launch/attach the process through LLDB-DAP, negotiate capabilities, send step/continue/terminate requests, and parse protocol responses.
+3. **Debug session adapter:** launch/attach the process through the selected debugger backend (GDB DAP or GDB/MI on Linux, `lldb-dap` on macOS, the compiler-matched debugger on Windows), negotiate capabilities, send step/continue/terminate requests, and parse protocol responses.
 4. **Capture coordinator:** convert debugger stops and output into ordered raw observations.
 5. **Trace store:** persist bounded session data and source/build provenance.
 6. **State resolver:** reconstruct a deterministic selected state from recorded observations/checkpoints.
@@ -301,8 +298,8 @@ Work:
 Spikes:
 - Build and launch a minimal GPUI app on Linux, Windows, and macOS.
 - Verify GPUI platform features and system dependencies.
-- Verify Clang 23.1.4 C17/C++20 builds and debug symbols on each OS.
-- Verify LLDB-DAP launch, breakpoint, step, stack, variables, output, and terminate on each OS.
+- Verify the platform C/C++ toolchain builds C17/C++20 debug binaries on each OS: GCC/G++ on Linux, Apple Clang on macOS, MSVC or MinGW-w64 on Windows.
+- Verify debugger integration on each OS: GDB DAP or GDB/MI on Linux, Apple `lldb-dap` on macOS, the compiler-matched debugger on Windows.
 - Verify Tree-sitter C/C++ grammars and highlighting.
 - Evaluate GPUI text primitives for editor scope.
 - Verify Material 3 implementation effort and required GPUI component primitives.
@@ -356,14 +353,14 @@ Work:
 
 ### Phase 5 — Toolchain and debugger integration
 
-**Outcome:** the app builds and launches real C17/C++20 programs under LLDB-DAP.
+**Outcome:** the app builds and launches real C17/C++20 programs under the platform debugger.
 
 Work:
-- Toolchain discovery and diagnostics.
+- Platform toolchain discovery and diagnostics.
 - Compiler command construction.
 - Build output/diagnostic parsing.
-- DAP transport and protocol lifecycle.
-- Capability negotiation.
+- Debugger transport and protocol lifecycle (DAP or GDB/MI).
+- Capability negotiation per backend.
 - Launch, stop, step, continue, terminate.
 - stdout/stderr capture.
 - Cancellation and process cleanup.
@@ -445,8 +442,9 @@ Work:
 - Compiler command construction.
 - Toolchain discovery.
 - DAP request/response handling.
+- GDB/MI request/response handling where the installed GDB lacks DAP.
 - Capability negotiation.
-- Malformed/partial DAP payloads.
+- Malformed/partial protocol payloads (DAP and GDB/MI).
 - stdout/stderr capture.
 - Process termination.
 - Trace serialization/recovery.
@@ -502,7 +500,7 @@ Before adoption, record:
 Alpha baseline:
 - GPUI: selected framework, exact revision pinned.
 - Tree-sitter: use for C/C++ syntax parsing/highlighting after integration validation.
-- LLDB-DAP: selected debugger interface, exact toolchain version pinned.
+- LLDB-DAP: one supported debugger interface on macOS (Apple toolchain); GDB is the Linux default. Exact versions are recorded per verified platform, not pinned globally.
 - Material components: owned focused GPUI implementation unless audit proves a compatible component set worth adopting.
 - GPUI Material fork: strategy was approved, repository creation was not; do not create or modify a fork as part of this plan.
 - GPUI Kit: evaluate useful lower-level primitives only; do not adopt its visual system wholesale.
@@ -531,7 +529,7 @@ No commits, pushes, PRs, repository creation, fork creation, or upstream modific
 | ID | Risk | Mitigation / gate |
 |---|---|---|
 | R-01 | GPUI API/platform gaps | Phase 1 GPUI spike on all OSes; pin revision. |
-| R-02 | LLDB-DAP behavior differs by OS | Phase 1 debugger matrix; capability negotiation. |
+| R-02 | Debugger backends behave differently by OS | Phase 1 debugger matrix; per-backend capability negotiation. |
 | R-03 | Debugger data insufficient for full heap | Observable-object scope; no complete-heap claim. |
 | R-04 | C++ debug information is incomplete | Debug profile; supported type matrix; unavailable states. |
 | R-05 | Reverse debugger support absent | Trace-backed reverse navigation. |

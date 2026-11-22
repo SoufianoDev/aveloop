@@ -7,12 +7,12 @@
 
 # AveLoop — Product & Software Requirements Specification
 
-**Document ID:** AVE-SPEC-001  
-**Version:** 1.0.0  
-**Status:** Consolidated Alpha Baseline — Review Required  
-**Date:** 22 November 2026  
-**Product:** AveLoop Native Desktop Visual Programming IDE  
-**Target release:** Alpha  
+**Document ID:** AVE-SPEC-001\
+**Version:** 1.1.0\
+**Status:** Consolidated Alpha Baseline — Review Required\
+**Date:** 22 November 2026\
+**Product:** AveLoop Native Desktop Visual Programming IDE\
+**Target release:** Alpha\
 **Specification authority:** This document supersedes the earlier draft SRS where explicitly stated below.
 
 ---
@@ -40,6 +40,7 @@ The following statements in the earlier SRS draft are obsolete:
 4. A Cargo workspace is not a prerequisite. The Alpha starts as one Rust package and one application crate, organized as a modular monolith.
 5. The HTML prototype is not the product implementation, but its interaction model and visual decisions are valid design references. Its simulated compiler/runtime/trace boundaries are intentional prototype limitations.
 6. A debugger's ability to inspect variables must not be conflated with complete knowledge of the process heap, allocation history, or pointer lifetime.
+7. "Clang/LLVM 23.1.4 as the mandatory cross-platform compiler baseline" and "LLDB as the sole debugger backend" are superseded by the per-platform toolchain policy in §7.2 and §7.3. No compiler or debugger is bundled, downloaded, or installed by the application.
 
 ---
 
@@ -77,7 +78,7 @@ AveLoop is not a general-purpose visual programming language, cloud IDE, or repl
 
 ## 1.5 Alpha success definition
 
-An Alpha user can create or open a local project, edit a C17 or C++20 source file, build it with the supported Clang toolchain, launch a real debug session, record a sequence of debugger stops, navigate the recorded sequence in both directions, and inspect all supported runtime panels at one consistent selected state.
+An Alpha user can create or open a local project, edit a C17 or C++20 source file, build it with the platform's supported C/C++ toolchain, launch a real debug session, record a sequence of debugger stops, navigate the recorded sequence in both directions, and inspect all supported runtime panels at one consistent selected state.
 
 The Alpha is successful only if this workflow works on Linux, Windows, and macOS according to the platform acceptance matrix.
 
@@ -111,14 +112,14 @@ The Alpha is successful only if this workflow works on Linux, Windows, and macOS
 ### C. Build and launch
 - C17 compilation.
 - C++20 compilation.
-- Clang/LLVM toolchain integration.
+- Platform C/C++ toolchain integration: GCC/G++ on Linux, Apple Clang on macOS, MSVC or MinGW-w64 on Windows.
 - Debug build configuration suitable for source-level debugging.
 - Compiler diagnostics with source locations where available.
 - Capture standard output and standard error.
 - Launch and terminate a local debug session.
 
 ### D. Execution capture and navigation
-- Real execution through LLDB using its Debug Adapter Protocol interface.
+- Real execution through the platform debugger — GDB on Linux, LLDB on macOS, a debugger compatible with the selected Windows toolchain — using the Debug Adapter Protocol where the installed backend provides it.
 - Source-line-granularity stepping for Alpha.
 - Capture ordered stop records and runtime observations.
 - Record the source revision and build configuration used by the session.
@@ -179,6 +180,7 @@ These are deliberate scope boundaries, not unfinished promises:
 10. **No integrated terminal/PTY.** The output console is a captured-output viewer, not an interactive shell.
 11. **No remote/cloud execution, collaboration, plugin marketplace, AI features, or integrated Git hosting.**
 12. **No hardened security sandbox claim.** Alpha launches local programs with the user's OS permissions. It applies explicit launch consent, working-directory controls, timeout/cancellation, and process-tree termination where supported, but it is not a security boundary against hostile code.
+13. **No bundled or automatically installed toolchain.** AveLoop neither bundles nor downloads a compiler, debugger, or LLVM distribution. Missing components are reported with official installation guidance; the user performs any installation.
 
 ## 2.3 Out of scope
 
@@ -270,7 +272,7 @@ A user builds the selected project using the configured C17 or C++20 mode.
 A user starts a real debug session and captures source-level execution stops.
 
 **Acceptance criteria**
-- A real executable is launched under LLDB.
+- A real executable is launched under the platform debugger.
 - The user is informed that local program code runs with the user's OS permissions.
 - The session records source/build provenance.
 - Stop records preserve order and available source locations.
@@ -348,11 +350,11 @@ Priority: **P0** = Alpha critical; **P1** = Alpha usability requirement; **P2** 
 |---|---|---|
 | FR-020 | The application shall build C sources in C17 mode. | P0 |
 | FR-021 | The application shall build C++ sources in C++20 mode. | P0 |
-| FR-022 | The application shall use the configured Clang toolchain and explicitly select the language standard. | P0 |
+| FR-022 | The application shall use the configured platform C/C++ toolchain — GCC/G++ on Linux, Apple Clang on macOS, MSVC or MinGW-w64 on Windows — and explicitly select the language standard. | P0 |
 | FR-023 | The application shall produce debug information and use the Alpha debug profile. | P0 |
 | FR-024 | The application shall capture compiler stdout, stderr, exit status, and source diagnostics where available. | P0 |
 | FR-025 | Build failure shall be distinct from launch failure and runtime failure. | P0 |
-| FR-026 | The application shall launch the executable under the configured LLDB debug adapter. | P0 |
+| FR-026 | The application shall launch the executable under the configured platform debug adapter — GDB on Linux, LLDB on macOS, or the debugger matching the selected Windows toolchain. | P0 |
 | FR-027 | The application shall support explicit cancellation and process termination. | P0 |
 | FR-028 | The application shall record the compiler/debugger versions and build inputs used for a session. | P1 |
 
@@ -509,17 +511,29 @@ It must not claim complete visibility into:
 
 ## 7.2 Compiler baseline
 
-The Alpha baseline uses Clang/LLVM **23.1.4** as the pinned reference toolchain version for reproducible validation. The toolchain must be installed or discovered locally; AveLoop does not silently download or replace system toolchains.
+AveLoop uses the C/C++ toolchain already present on the user's system. No compiler is bundled, downloaded, or installed by the application.
 
-The exact packaging and linker/runtime prerequisites are platform-specific and must be documented. A toolchain is considered supported only after the compiler, debugger adapter, debug symbols, launch, capture, and navigation workflow pass the platform smoke test.
+Platform defaults:
+- **Linux:** the existing GCC/G++ toolchain when it supports C17/C++20 and debug information. Clang is used only when the user or project selects it.
+- **macOS:** the active Apple Clang/Clang++ toolchain from Xcode or the Xcode Command Line Tools.
+- **Windows:** the existing compatible MSVC (`cl.exe`) or MinGW-w64 GCC/G++ toolchain.
+
+Selection order is: explicit project configuration, then `CC`/`CXX`, then the platform default discovered on `PATH`. `cc` and `c++` are resolved to the actual compiler behind the alias before capabilities are reported. Compiler discovery and debugger discovery are independent; a GCC-built program may be debugged by GDB, and an Apple-Clang-built program by Apple's LLDB.
+
+A toolchain is considered supported only after the compiler, debugger adapter, debug symbols, launch, capture, and navigation workflow pass the platform smoke test. Verified compiler versions are recorded per platform rather than pinned to one cross-platform reference version.
 
 ## 7.3 Debugger baseline
 
-LLDB is the Alpha debugger backend, accessed through `lldb-dap` and DAP. The DAP client must negotiate capabilities at session start and must not assume optional capabilities.
+The debugger is the one that matches the selected platform toolchain:
+- **Linux:** GDB, using its DAP interpreter when the installed build provides one (GDB DAP requires Python support), otherwise GDB/MI.
+- **macOS:** the LLDB and `lldb-dap` shipped with the active Apple developer toolchain.
+- **Windows:** the debugger compatible with the selected compiler environment — the Visual Studio debugger interfaces for MSVC, GDB for MinGW-w64.
+
+DAP is a protocol, not a debugger. A backend that exposes only a different machine interface is reached through a narrow adapter inside infrastructure. Capabilities are negotiated at session start and verified per backend; no capability is assumed because a protocol defines a related message.
 
 `supportsStepBack` is not assumed. Backward timeline navigation is implemented over AveLoop's recorded trace.
 
-The debugger adapter is an infrastructure implementation detail. DAP message types must not leak into domain entities or presentation components.
+Debugger protocol and message types are infrastructure implementation details. They must not leak into domain entities or presentation components.
 
 ## 7.4 Debug build profile
 
@@ -613,9 +627,9 @@ Accessibility limitations must be documented; do not claim full conformance with
 | NFR-004 | Trace growth shall be bounded by configurable session limits. | Long-running trace stress test and documented limit behavior. |
 | NFR-005 | Large variable/aggregate lists shall not require rendering every row at once. | Virtualization or incremental rendering test where needed. |
 | NFR-006 | Background work shall support cancellation where technically possible. | Cancellation tests for build, launch, capture, and reconstruction. |
-| NFR-007 | A failed or malformed DAP response shall not crash the application or corrupt the selected state. | Protocol fault-injection tests. |
+| NFR-007 | A failed or malformed debugger-protocol response shall not crash the application or corrupt the selected state. | Protocol fault-injection tests. |
 | NFR-008 | Platform-specific code shall be isolated and tested on its target OS. | CI matrix plus manual smoke-test evidence. |
-| NFR-009 | The application shall not silently fetch toolchains or execute code during project opening. | Behavior/security tests. |
+| NFR-009 | The application shall not install, download, or silently substitute compilers, debuggers, or toolchains, and shall not execute project code during project opening. | Behavior/security tests. |
 | NFR-010 | The application shall disclose execution's local privilege model and absence of hardened sandboxing. | UI copy and release checklist. |
 | NFR-011 | The app shall use a single Rust codebase and avoid duplicated per-OS application implementations. | Repository architecture review. |
 | NFR-012 | Dependencies shall be justified, license-reviewed, and pinned/reproducible. | Dependency audit and lockfile review. |
@@ -679,9 +693,9 @@ The Alpha is not accepted until all of the following are true:
 ### Product workflow
 - [ ] Create/open a local project.
 - [ ] Edit/save a C17 source file and a C++20 source file.
-- [ ] Build both standards with the selected Clang toolchain.
+- [ ] Build both standards with the platform's C/C++ toolchain.
 - [ ] Display compiler diagnostics and distinguish build/runtime failures.
-- [ ] Launch a real program under LLDB-DAP.
+- [ ] Launch a real program under the platform debug adapter.
 - [ ] Capture ordered source-level stops.
 - [ ] Navigate forward and backward through recorded states.
 - [ ] Verify selected-state synchronization across source, stack, variables, heap, trace, pointers, and output.
@@ -711,11 +725,11 @@ The Alpha is not accepted until all of the following are true:
 | Risk | Impact | Required mitigation |
 |---|---|---|
 | GPUI is pre-1.0 and changes | UI/API churn | Pin exact revision; isolate GPUI in presentation; update deliberately. |
-| LLDB-DAP capabilities vary | Inconsistent inspection | Negotiate capabilities; platform smoke tests; capability reporting. |
+| Debugger backend capabilities vary by platform | Inconsistent inspection | Negotiate capabilities per backend; platform smoke tests; capability reporting. |
 | DAP has no step-back guarantee | False reverse-debugging assumption | Record stop snapshots and navigate the trace. |
 | Heap visibility is incomplete | Misleading diagrams | Model observable/reachable objects only; disclose coverage. |
 | C++ debug info/pretty printers vary | Partial object views | Explicit supported-value matrix and honest unavailable states. |
-| Compiler/runtime availability differs | Platform parity risk | Pinned reference toolchain and per-OS setup/acceptance matrix. |
+| Compiler/runtime availability differs | Platform parity risk | Discover the installed per-OS toolchain; document per-OS setup and acceptance evidence. |
 | Untrusted local code | Host security risk | Explicit consent, process limits/termination, no sandbox claim. |
 | Large traces | Memory/latency issues | Bounded capture, checkpoints, incremental reconstruction, stress tests. |
 | Prototype interactions are copied literally | Native UX mismatch | Preserve behavior intent; implement with GPUI-native patterns. |
@@ -741,8 +755,8 @@ The Alpha is not accepted until all of the following are true:
 
 ## Alpha baseline technical decisions
 - One Rust package / one application crate, modular monolith.
-- Clang/LLVM 23.1.4 as the reference toolchain baseline.
-- LLDB through `lldb-dap`/DAP as the initial debugger integration.
+- Platform-native C/C++ toolchain discovery: GCC/G++ on Linux, Apple Clang on macOS, MSVC or MinGW-w64 on Windows.
+- Platform-native debugger integration: GDB on Linux, Apple LLDB on macOS, the debugger matching the selected Windows toolchain.
 - Source-line/debugger-stop granularity.
 - Recorded trace/checkpoint reconstruction for backward navigation.
 - Local execution under the user's OS permissions; not a hardened sandbox.
@@ -784,15 +798,17 @@ These sources inform the implementation plan; they do not override the product r
 - GPUI platform implementation: https://github.com/zed-industries/zed/blob/main/crates/gpui_platform/src/gpui_platform.rs
 - Clang C language modes: https://clang.llvm.org/docs/UsersManual.html
 - Clang C++ status: https://clang.llvm.org/cxx_status.html
-- LLVM 23.1.4 release: https://github.com/llvm/llvm-project/releases/tag/llvmorg-23.1.4
+- GCC instrumentation options: https://gcc.gnu.org/onlinedocs/gcc/Instrumentation-Options.html
+- GDB documentation: https://sourceware.org/gdb/current/onlinedocs/gdb.html/
+- GDB Python support: https://sourceware.org/gdb/current/onlinedocs/gdb.html/Python.html
 - LLDB-DAP overview and capabilities: https://lldb.llvm.org/use/lldbdap.html
-- LLDB-DAP extensions: https://lldb.llvm.org/resources/lldbdap-extensions.html
+- Apple Command Line Tools: https://developer.apple.com/documentation/xcode/installing-the-command-line-tools
+- MSVC command-line build: https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line
 - Tree-sitter: https://github.com/tree-sitter/tree-sitter
 - Material Design 3: https://m3.material.io/
 - Night Owl: https://github.com/sdras/night-owl-vscode-theme
 - Python Tutor: https://pythontutor.com/
 - AveLoop UI prototype: repository/project `index.html` supplied with this conversation.
-
 <!-- END spec.md -->
 
 
@@ -800,9 +816,9 @@ These sources inform the implementation plan; they do not override the product r
 
 # AveLoop Alpha — Implementation Plan
 
-**Document ID:** AVE-PLAN-001  
-**Version:** 1.0.0  
-**Status:** Derived from AVE-SPEC-001; review required  
+**Document ID:** AVE-PLAN-001\
+**Version:** 1.1.0\
+**Status:** Derived from AVE-SPEC-001; review required\
 **Date:** 22 November 2026
 
 ---
@@ -960,24 +976,21 @@ The application code remains shared. The table identifies release targets, not s
 
 ### 3.3 C/C++ toolchain
 
-Reference baseline:
-- LLVM/Clang 23.1.4.
-- C17: `-std=c17`.
-- C++20: `-std=c++20`.
-- Debug information enabled.
-- Low/no optimization for the Alpha debug profile.
-- Platform-native linker and runtime prerequisites documented.
+AveLoop uses the compiler already installed on the platform. It does not bundle, download, or install one.
 
-Do not silently download a compiler. Toolchain discovery reports detected executable, version, target, and required companions. Unsupported/mismatched installations produce actionable diagnostics.
+- **Linux:** existing GCC/G++, or the compiler explicitly selected through project configuration or `CC`/`CXX`. Clang is used only when the user selects it.
+- **macOS:** the active Apple Clang/Clang++ toolchain (`xcrun --find clang`); Command Line Tools are sufficient.
+- **Windows:** existing MSVC (`cl.exe`) or MinGW-w64 GCC/G++.
+
+Standards: C17 (`-std=c17`), C++20 (`-std=c++20`), debug information enabled, low/no optimization in the debug profile. Platform-native linker and runtime prerequisites are documented per OS. Discovery reports executable path, version, target, and required companions; `cc`/`c++` aliases are resolved to the real compiler before capability reporting. Unsupported or mismatched installations produce actionable diagnostics. Verified versions are recorded per platform; there is no single pinned cross-platform compiler version.
 
 ### 3.4 Debugger
 
-- LLDB through `lldb-dap` and DAP.
-- DAP capability negotiation at session startup.
-- DAP protocol structures stay inside infrastructure.
-- Do not assume `supportsStepBack`.
-- Capture ordered stop observations and reconstruct prior selected states from AveLoop-owned trace data.
-- Source-level stepping is the Alpha granularity.
+- **Linux:** GDB. Use its DAP interpreter when the installed build provides one (GDB DAP requires Python support); otherwise use GDB/MI through a narrow adapter.
+- **macOS:** LLDB and `lldb-dap` from the active Apple developer toolchain.
+- **Windows:** the debugger matching the selected compiler — Visual Studio debugger interfaces for MSVC, GDB for MinGW-w64.
+
+DAP capability negotiation happens at session startup and is verified per backend, never assumed. DAP protocol structures stay inside infrastructure. Do not assume `supportsStepBack`. Capture ordered stop observations and reconstruct prior selected states from AveLoop-owned trace data. Source-level stepping is the Alpha granularity. Compiler and debugger discovery are independent.
 
 ### 3.5 Editor
 
@@ -998,11 +1011,12 @@ Do not adopt GPUI Material or GPUI Kit wholesale without a completed audit and e
 ---
 
 ## 4. Execution architecture
+
 ### 4.1 Responsibilities
 
-1. **Toolchain discovery:** locate Clang, LLDB-DAP, linker, and platform prerequisites; report versions and capabilities.
+1. **Toolchain discovery:** locate the platform C/C++ compiler, the matching debugger adapter, linker, and platform prerequisites; report versions and capabilities.
 2. **Build adapter:** produce a deterministic debug build from project configuration and source revision.
-3. **Debug session adapter:** launch/attach the process through LLDB-DAP, negotiate capabilities, send step/continue/terminate requests, and parse protocol responses.
+3. **Debug session adapter:** launch/attach the process through the selected debugger backend (GDB DAP or GDB/MI on Linux, `lldb-dap` on macOS, the compiler-matched debugger on Windows), negotiate capabilities, send step/continue/terminate requests, and parse protocol responses.
 4. **Capture coordinator:** convert debugger stops and output into ordered raw observations.
 5. **Trace store:** persist bounded session data and source/build provenance.
 6. **State resolver:** reconstruct a deterministic selected state from recorded observations/checkpoints.
@@ -1100,8 +1114,8 @@ Work:
 Spikes:
 - Build and launch a minimal GPUI app on Linux, Windows, and macOS.
 - Verify GPUI platform features and system dependencies.
-- Verify Clang 23.1.4 C17/C++20 builds and debug symbols on each OS.
-- Verify LLDB-DAP launch, breakpoint, step, stack, variables, output, and terminate on each OS.
+- Verify the platform C/C++ toolchain builds C17/C++20 debug binaries on each OS: GCC/G++ on Linux, Apple Clang on macOS, MSVC or MinGW-w64 on Windows.
+- Verify debugger integration on each OS: GDB DAP or GDB/MI on Linux, Apple `lldb-dap` on macOS, the compiler-matched debugger on Windows.
 - Verify Tree-sitter C/C++ grammars and highlighting.
 - Evaluate GPUI text primitives for editor scope.
 - Verify Material 3 implementation effort and required GPUI component primitives.
@@ -1155,14 +1169,14 @@ Work:
 
 ### Phase 5 — Toolchain and debugger integration
 
-**Outcome:** the app builds and launches real C17/C++20 programs under LLDB-DAP.
+**Outcome:** the app builds and launches real C17/C++20 programs under the platform debugger.
 
 Work:
-- Toolchain discovery and diagnostics.
+- Platform toolchain discovery and diagnostics.
 - Compiler command construction.
 - Build output/diagnostic parsing.
-- DAP transport and protocol lifecycle.
-- Capability negotiation.
+- Debugger transport and protocol lifecycle (DAP or GDB/MI).
+- Capability negotiation per backend.
 - Launch, stop, step, continue, terminate.
 - stdout/stderr capture.
 - Cancellation and process cleanup.
@@ -1244,8 +1258,9 @@ Work:
 - Compiler command construction.
 - Toolchain discovery.
 - DAP request/response handling.
+- GDB/MI request/response handling where the installed GDB lacks DAP.
 - Capability negotiation.
-- Malformed/partial DAP payloads.
+- Malformed/partial protocol payloads (DAP and GDB/MI).
 - stdout/stderr capture.
 - Process termination.
 - Trace serialization/recovery.
@@ -1301,7 +1316,7 @@ Before adoption, record:
 Alpha baseline:
 - GPUI: selected framework, exact revision pinned.
 - Tree-sitter: use for C/C++ syntax parsing/highlighting after integration validation.
-- LLDB-DAP: selected debugger interface, exact toolchain version pinned.
+- LLDB-DAP: one supported debugger interface on macOS (Apple toolchain); GDB is the Linux default. Exact versions are recorded per verified platform, not pinned globally.
 - Material components: owned focused GPUI implementation unless audit proves a compatible component set worth adopting.
 - GPUI Material fork: strategy was approved, repository creation was not; do not create or modify a fork as part of this plan.
 - GPUI Kit: evaluate useful lower-level primitives only; do not adopt its visual system wholesale.
@@ -1330,7 +1345,7 @@ No commits, pushes, PRs, repository creation, fork creation, or upstream modific
 | ID | Risk | Mitigation / gate |
 |---|---|---|
 | R-01 | GPUI API/platform gaps | Phase 1 GPUI spike on all OSes; pin revision. |
-| R-02 | LLDB-DAP behavior differs by OS | Phase 1 debugger matrix; capability negotiation. |
+| R-02 | Debugger backends behave differently by OS | Phase 1 debugger matrix; per-backend capability negotiation. |
 | R-03 | Debugger data insufficient for full heap | Observable-object scope; no complete-heap claim. |
 | R-04 | C++ debug information is incomplete | Debug profile; supported type matrix; unavailable states. |
 | R-05 | Reverse debugger support absent | Trace-backed reverse navigation. |
@@ -1345,7 +1360,6 @@ No commits, pushes, PRs, repository creation, fork creation, or upstream modific
 ## 11. Plan completion definition
 
 The plan is complete when the tasks in `tasks.md` are implemented and verified, all Alpha acceptance criteria are satisfied on the three target OSes, and the remaining known limitations are published. The existence of the three documents alone is not completion.
-
 <!-- END plan.md -->
 
 
@@ -1353,9 +1367,9 @@ The plan is complete when the tasks in `tasks.md` are implemented and verified, 
 
 # AveLoop Alpha — Task Breakdown
 
-**Document ID:** AVE-TASKS-001  
-**Version:** 1.0.0  
-**Status:** Derived from `spec.md` and `plan.md`; not implementation authorization  
+**Document ID:** AVE-TASKS-001\
+**Version:** 1.1.0\
+**Status:** Derived from `spec.md` and `plan.md`; not implementation authorization\
 **Date:** 22 November 2026
 
 ---
@@ -1388,13 +1402,15 @@ The plan is complete when the tasks in `tasks.md` are implemented and verified, 
 
 These are mandatory before production foundation work. They are verification tasks, not excuses to silently drop a target platform.
 
+All compiler and debugger verification uses toolchains already installed on each platform. No compiler, debugger, or LLVM distribution is bundled, downloaded, or installed by the project.
+
 - [ ] T005 Verify a minimal GPUI application builds and launches on Linux x86_64; record the exact GPUI revision, Rust toolchain, system dependencies, and runtime result.
 - [ ] T006 [P] Verify the same GPUI application builds and launches on Windows x86_64.
 - [ ] T007 [P] Verify the same GPUI application builds and launches on macOS arm64.
 - [ ] T008 Verify GPUI text rendering, keyboard input, focus, clipboard, window resizing, and required Linux Wayland/X11 configurations across the target matrix.
-- [ ] T009 Verify Clang/LLVM 23.1.4 builds C17 and C++20 debug binaries on Linux, Windows, and macOS, documenting each platform's linker/runtime prerequisites.
-- [ ] T010 Verify LLDB-DAP launch, breakpoint, source-level stepping, stack, variables, aggregate children, pointer values, stdout/stderr, and termination on all three platforms.
-- [ ] T011 Record actual DAP capabilities per platform; explicitly verify that the design does not depend on `supportsStepBack`.
+- [ ] T009 Verify the installed platform C/C++ toolchain builds C17 and C++20 debug binaries on Linux (GCC/G++), Windows (MSVC or MinGW-w64), and macOS (Apple Clang), documenting each platform's linker/runtime prerequisites.
+- [ ] T010 Verify platform debugger launch, breakpoint, source-level stepping, stack, variables, aggregate children, pointer values, stdout/stderr, and termination on all three platforms: GDB on Linux, LLDB on macOS, the compiler-matched debugger on Windows.
+- [ ] T011 Record actual debugger capabilities per platform and backend (DAP or GDB/MI); explicitly verify that the design does not depend on `supportsStepBack`.
 - [ ] T012 Verify process cancellation and child-process cleanup behavior on each OS.
 - [ ] T013 [P] Verify Tree-sitter C/C++ grammar integration and license compatibility.
 - [ ] T014 Evaluate GPUI text primitives and the required Material 3 component surface; document build/reuse decisions without creating a fork.
@@ -1433,12 +1449,12 @@ These are mandatory before production foundation work. They are verification tas
 
 # Phase 5 — User Story 2: Build and launch real C/C++ programs
 
-- [ ] T029 [US2] Implement Clang/LLVM discovery, version/target reporting, and platform prerequisite diagnostics.
-- [ ] T030 [US2] Implement deterministic C17/C++20 compiler command construction from `ave.toml`, including debug profile and provenance.
+- [ ] T029 [US2] Implement platform C/C++ compiler discovery — project configuration, `CC`/`CXX`, `cc`/`c++` alias resolution, GCC/G++, Apple Clang, MSVC, MinGW-w64 — with version/target reporting and platform prerequisite diagnostics.
+- [ ] T030 [US2] Implement deterministic C17/C++20 compiler command construction from `ave.toml` for the discovered compiler family, including debug profile and provenance.
 - [ ] T031 [US2] Implement build process execution, cancellation, stdout/stderr capture, exit status, and cleanup.
 - [ ] T032 [US2] Map compiler diagnostics to source locations where available and distinguish build, launch, and runtime failures.
 - [ ] T033 [US2] Implement explicit launch consent and clear disclosure that Alpha programs run locally with the user's OS permissions and are not sandboxed.
-- [ ] T034 [US2] Verify real C17 and C++20 sample builds and failed-build behavior on Linux, Windows, and macOS.
+- [ ] T034 [US2] Verify real C17 and C++20 sample builds and failed-build behavior with the per-platform toolchains on Linux, Windows, and macOS.
 
 **Acceptance:** real programs compile with debug information; failures are classified correctly; no failed build creates a valid-looking trace.
 
@@ -1446,14 +1462,14 @@ These are mandatory before production foundation work. They are verification tas
 
 # Phase 6 — User Story 3: Debug sessions, trace capture, and historical navigation
 
-- [ ] T035 [US3] Implement DAP transport and `lldb-dap` lifecycle, including initialize, capability negotiation, launch, configuration, and termination.
+- [ ] T035 [US3] Implement debugger transport and session lifecycle for the selected backend (GDB DAP or GDB/MI on Linux, `lldb-dap` on macOS, the compiler-matched Windows debugger), including initialize, capability negotiation, launch, configuration, and termination.
 - [ ] T036 [US3] Implement source-level breakpoint/step operations and bounded retrieval of stack frames, scopes, variables, and aggregate children.
 - [ ] T037 [US3] Capture stdout/stderr and ordered debugger observations while preserving source, build, session, thread, and frame provenance.
 - [ ] T038 [US3] Implement trace records, derived events, bounded storage, and checkpoints without conflating observations, events, and snapshots.
 - [ ] T039 [US3] Implement deterministic selected-state reconstruction from recorded trace data.
 - [ ] T040 [US3] Implement first/previous/next/last, seeking, play/pause, and playback speed over recorded stops.
 - [ ] T041 [US3] Implement cancellation, process-tree cleanup, protocol timeouts, malformed-response handling, and stale-session message rejection.
-- [ ] T042 [US3] Verify capture and historical navigation using real C17/C++20 programs on all three target platforms; verify no reverse-debugger request is required.
+- [ ] T042 [US3] Verify capture and historical navigation using real C17/C++20 programs on all three target platforms and their platform debuggers; verify no reverse-debugger request is required.
 
 **Acceptance:** real execution yields an ordered, provenance-bound trace; earlier states can be selected from recorded data without claiming reverse execution.
 
@@ -1501,12 +1517,12 @@ These are mandatory before production foundation work. They are verification tas
 # Phase 10 — Cross-platform verification and release hardening
 
 - [ ] T061 Add the full CI matrix for build, tests, formatting, lint, and dependency checks on all Alpha targets.
-- [ ] T062 [P] Document compiler/debugger installation, discovery, prerequisites, and troubleshooting for Linux, Windows, and macOS.
+- [ ] T062 [P] Document per-platform compiler and debugger installation, discovery, prerequisites, and troubleshooting for Linux, Windows, and macOS using official vendor guidance, including that AveLoop never installs them.
 - [ ] T063 Run and retain evidence for the complete create/edit/build/debug/record/navigate/inspect workflow on Linux.
 - [ ] T064 [P] Run and retain evidence for the same full workflow on Windows.
 - [ ] T065 [P] Run and retain evidence for the same full workflow on macOS.
-- [ ] T066 Add long-trace, memory-bound, reconstruction, DAP fault-injection, timeout, and cancellation tests.
-- [ ] T067 Complete dependency/license review and inspect platform-specific code for unnecessary divergence.
+- [ ] T066 Add long-trace, memory-bound, reconstruction, protocol-neutral adapter fault-injection, DAP-specific malformed-payload, timeout, and cancellation tests.
+- [ ] T067 Complete dependency/license review — including confirmation that no compiler, debugger, or LLVM distribution is bundled — and inspect platform-specific code for unnecessary divergence.
 - [ ] T068 Review all UI and documentation claims about heap completeness, pointer lifetime, reverse execution, and sandboxing.
 - [ ] T069 Complete requirement-to-test traceability for every P0 requirement.
 - [ ] T070 Run `/speckit.analyze`; resolve all Critical and High findings at the owning artifact, then rerun.
@@ -1549,5 +1565,4 @@ Use the current Spec Kit workflow:
 9. `/speckit.converge` — compare implementation against artifacts and append remaining work as appropriate.
 
 The current documents have been structured according to this workflow, but `/speckit.analyze` has **not** been executed against the repository. Do not claim an analysis pass until the command has actually run.
-
 <!-- END tasks.md -->
