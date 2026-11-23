@@ -8,8 +8,8 @@ on:
 
 jobs:
   macos-feasibility:
-    name: macOS arm64 Verification (T007, T009, T010, T011)
-    runs-on: macos-14
+    name: macOS Verification (T007, T009, T010, T011)
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -20,7 +20,6 @@ jobs:
           clang --version
           xcrun --find lldb
           lldb --version
-          which lldb-dap || xcrun --find lldb-dap || true
 
       - name: T009 — macOS C17 and C++20 Debug Builds
         run: |
@@ -54,6 +53,7 @@ jobs:
           cat << 'EOF' > lldb_test.py
           import subprocess, json, shutil
 
+          # Check for lldb-dap in PATH or Xcode toolchain
           lldb_dap_bin = shutil.which("lldb-dap")
           if not lldb_dap_bin:
               res = subprocess.run(["xcrun", "--find", "lldb-dap"], capture_output=True, text=True)
@@ -86,9 +86,10 @@ jobs:
               body = init_resp.get("body", {})
               print(f"supportsStepBack: {body.get('supportsStepBack', False)}")
               p.terminate()
-          else:
-              print("lldb-dap not located directly; testing lldb batch CLI")
-              subprocess.run(["lldb", "--batch", "-o", "b main", "-o", "r", "-o", "bt", "-o", "q", "./c17_test"], check=True)
+          
+          # Also test standard LLDB CLI batch execution
+          print("Testing LLDB CLI batch execution:")
+          subprocess.run(["lldb", "--batch", "-o", "b main", "-o", "r", "-o", "bt", "-o", "q", "./c17_test"], check=True)
           EOF
           python3 lldb_test.py
 
@@ -102,35 +103,35 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+
       - name: Toolchain Inventory (MSVC & Clang)
         shell: bash
         run: |
-          which cl || true
+          which cl
+          cl
           which clang || true
-          which gdb || true
 
       - name: T009 — Windows MSVC C17 and C++20 Debug Builds
         shell: cmd
         run: |
           echo #include ^<stdio.h^> > c17_win.c
-          echo int main(void) { printf("Windows C17 compiled\n"); return 0; } >> c17_win.c
+          echo int main(void) { printf("Windows C17 ok\n"); return 0; } >> c17_win.c
           cl /std:c17 /Zi /Od /W4 c17_win.c /Fe:c17_win.exe
           c17_win.exe
 
           echo #include ^<iostream^> > cxx20_win.cpp
           echo #include ^<concepts^> >> cxx20_win.cpp
           echo template^<std::integral T^> T dbl(T x) { return x * 2; } >> cxx20_win.cpp
-          echo int main() { std::cout ^<^< "Windows C++20: " ^<^< dbl(21) ^<^< std::endl; return 0; } >> cxx20_win.cpp
+          echo int main() { std::cout ^<^< "Windows C++20 ok: " ^<^< dbl(21) ^<^< std::endl; return 0; } >> cxx20_win.cpp
           cl /std:c++20 /Zi /Od /W4 /EHsc cxx20_win.cpp /Fe:cxx20_win.exe
           cxx20_win.exe
 
       - name: T010 & T011 — Windows Debugger and Capability Verification
-        shell: bash
+        shell: cmd
         run: |
-          which cdb || true
-          # Test MSVC debugger/cdb presence or llvm-pdbutil
-          echo "Windows MSVC symbol inspection:"
-          dumpbin /HEADERS cxx20_win.exe | grep -i "cv" || true
+          dumpbin /HEADERS cxx20_win.exe | findstr /i "cv"
 
       - name: T006 — Windows GPUI Application Build
         shell: bash
