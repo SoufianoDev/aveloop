@@ -18,9 +18,35 @@ pub struct ExecutionPoint {
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(try_from = "ExecutionTraceData")]
 pub struct ExecutionTrace {
     points: Vec<ExecutionPoint>,
     current_cursor: Option<usize>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename = "ExecutionTrace")]
+struct ExecutionTraceData {
+    points: Vec<ExecutionPoint>,
+    current_cursor: Option<usize>,
+}
+
+impl TryFrom<ExecutionTraceData> for ExecutionTrace {
+    type Error = &'static str;
+
+    fn try_from(data: ExecutionTraceData) -> Result<Self, Self::Error> {
+        if data
+            .current_cursor
+            .is_some_and(|cursor| cursor >= data.points.len())
+        {
+            return Err("execution trace cursor is outside points");
+        }
+
+        Ok(Self {
+            points: data.points,
+            current_cursor: data.current_cursor,
+        })
+    }
 }
 
 impl ExecutionTrace {

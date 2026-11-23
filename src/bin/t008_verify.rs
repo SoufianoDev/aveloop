@@ -1,6 +1,5 @@
 use aveloop::presentation::theme;
 use gpui_kit::base::StyledExt;
-use gpui_kit::App;
 use gpui_kit::component::{
     button::Button,
     input::{Input, InputEvent, InputState},
@@ -23,9 +22,8 @@ impl T008VerificationApp {
         let wayland_display = std::env::var("WAYLAND_DISPLAY").ok();
         let x11_display = std::env::var("DISPLAY").ok();
 
-        let input_state = cx.new(|cx| {
-            InputState::new(window, cx).placeholder("Type C++ code or paste here...")
-        });
+        let input_state =
+            cx.new(|cx| InputState::new(window, cx).placeholder("Type C++ code or paste here..."));
 
         let _subscriptions = vec![cx.subscribe_in(&input_state, window, {
             let input_state = input_state.clone();
@@ -155,16 +153,11 @@ impl Render for T008VerificationApp {
                     .p_3()
                     .bg(cx.theme().secondary)
                     .rounded(px(6.))
-                    .child(
-                        div()
-                            .text_xs()
-                            .child(format!("Window Dimensions: {} x {}", self.window_size.width, self.window_size.height)),
-                    )
-                    .child(
-                        div()
-                            .text_xs()
-                            .child(format!("Status: {}", self.status)),
-                    )
+                    .child(div().text_xs().child(format!(
+                        "Window Dimensions: {} x {}",
+                        self.window_size.width, self.window_size.height
+                    )))
+                    .child(div().text_xs().child(format!("Status: {}", self.status)))
                     .child(
                         div()
                             .text_xs()
@@ -174,13 +167,12 @@ impl Render for T008VerificationApp {
     }
 }
 
-fn read_clipboard_text(cx: &mut App) -> Option<String> {
-    cx.read_from_clipboard().and_then(|item| {
-        match item.entries().first() {
+fn read_clipboard_text(cx: &App) -> Option<String> {
+    cx.read_from_clipboard()
+        .and_then(|item| match item.entries().first() {
             Some(ClipboardEntry::String(s)) => Some(s.text().to_string()),
             _ => None,
-        }
-    })
+        })
 }
 
 fn main() {
@@ -193,6 +185,7 @@ fn main() {
 
     const { assert!(gpui_kit::GPUI_FAST, "gpui-fast retained mode required") };
 
+    let probe_clipboard = std::env::var("AVELOOP_PROBE_CLIPBOARD").as_deref() == Ok("1");
     let is_automated = std::env::var("AVELOOP_PROBE_EXIT").is_ok();
     let read_only = std::env::var("AVELOOP_PROBE_READ_ONLY").is_ok();
 
@@ -200,23 +193,24 @@ fn main() {
         gpui_kit::init(cx);
         theme::apply_night_owl(cx);
 
-        // The clipboard must be read before the event loop starts: reading from a
-        // deferred callback panics on X11 ("RefCell already borrowed").
-        let probe_text = "AveLoop T008 Clipboard Verification";
-        if !read_only {
+        // Read during launch; a deferred clipboard read can reborrow the X11 client.
+        if read_only {
+            match read_clipboard_text(cx) {
+                Some(text) => println!("[T008] Clipboard read from external owner: {:?}", text),
+                None => println!("[T008] Clipboard read from external owner: FAILED (None)"),
+            }
+        } else if probe_clipboard {
+            let probe_text = "AveLoop T008 Clipboard Verification";
             cx.write_to_clipboard(ClipboardItem::new_string(probe_text.to_string()));
-        }
-        match read_clipboard_text(cx).as_deref() {
-            Some(text) if text == probe_text => {
-                println!("[T008] Programmatic clipboard write & read: PASSED")
+            match read_clipboard_text(cx).as_deref() {
+                Some(text) if text == probe_text => {
+                    println!("[T008] Programmatic clipboard write & read: PASSED")
+                }
+                other => println!(
+                    "[T008] Programmatic clipboard write & read: FAILED ({:?})",
+                    other
+                ),
             }
-            Some(text) if read_only => {
-                println!("[T008] Clipboard read from external owner: {:?}", text)
-            }
-            other if read_only => {
-                println!("[T008] Clipboard read from external owner: FAILED ({:?})", other)
-            }
-            other => println!("[T008] Programmatic clipboard write & read: FAILED ({:?})", other),
         }
 
         let window_options = WindowOptions {
@@ -238,14 +232,15 @@ fn main() {
 
         println!("[T008] Verification window opened successfully.");
 
-        // Defer so the platform event loop is running: a quit issued inside the
-        // launch callback is swallowed by the calloop signal, and Wayland delivers
-        // selection offers only after the loop starts.
         if is_automated {
-            cx.defer(move |cx| {
-                println!("[T008] Automated probe mode: closing application.");
-                cx.quit();
-            });
+            // GPUI Fast starts the Linux event loop after this launch callback.
+            cx.spawn(async |cx| {
+                cx.update(|cx| {
+                    println!("[T008] Automated probe mode: closing application.");
+                    cx.quit();
+                });
+            })
+            .detach();
         }
     });
 }

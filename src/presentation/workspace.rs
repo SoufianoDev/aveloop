@@ -8,7 +8,7 @@ use crate::domain::{ExecutionPoint, ExecutionTrace, SessionState, SourceBuffer, 
 
 pub struct Workspace {
     buffer: SourceBuffer,
-    trace: ExecutionTrace,
+    demo_trace: ExecutionTrace,
     session_state: SessionState,
 }
 
@@ -31,50 +31,51 @@ int main() {
     return 0;
 }
 "#;
-        let mut trace = ExecutionTrace::new();
-        trace.push(ExecutionPoint {
+        // Synthetic fixture for the UI preview, independent of debugger sessions.
+        let mut demo_trace = ExecutionTrace::new();
+        demo_trace.push(ExecutionPoint {
             step_index: 0,
             file: "main.cpp".into(),
             line: 4,
             column: 9,
             reason: StopReason::Breakpoint(4),
         });
-        trace.push(ExecutionPoint {
+        demo_trace.push(ExecutionPoint {
             step_index: 1,
             file: "main.cpp".into(),
             line: 5,
             column: 19,
             reason: StopReason::Step,
         });
-        trace.push(ExecutionPoint {
+        demo_trace.push(ExecutionPoint {
             step_index: 2,
             file: "main.cpp".into(),
             line: 6,
             column: 9,
             reason: StopReason::Step,
         });
-        trace.push(ExecutionPoint {
+        demo_trace.push(ExecutionPoint {
             step_index: 3,
             file: "main.cpp".into(),
             line: 5,
             column: 29,
             reason: StopReason::Step,
         });
-        trace.push(ExecutionPoint {
+        demo_trace.push(ExecutionPoint {
             step_index: 4,
             file: "main.cpp".into(),
             line: 6,
             column: 9,
             reason: StopReason::Step,
         });
-        trace.push(ExecutionPoint {
+        demo_trace.push(ExecutionPoint {
             step_index: 5,
             file: "main.cpp".into(),
             line: 8,
             column: 5,
             reason: StopReason::Step,
         });
-        trace.push(ExecutionPoint {
+        demo_trace.push(ExecutionPoint {
             step_index: 6,
             file: "main.cpp".into(),
             line: 9,
@@ -84,8 +85,8 @@ int main() {
 
         Self {
             buffer: SourceBuffer::new("main.cpp", initial_code),
-            trace,
-            session_state: SessionState::Paused,
+            demo_trace,
+            session_state: SessionState::Idle,
         }
     }
 
@@ -93,8 +94,9 @@ int main() {
         &self.buffer
     }
 
+    /// Returns the synthetic trace shown in the integration preview.
     pub fn trace(&self) -> &ExecutionTrace {
-        &self.trace
+        &self.demo_trace
     }
 
     pub fn session_state(&self) -> SessionState {
@@ -102,13 +104,13 @@ int main() {
     }
 
     fn step_forward(&mut self, _: &ClickEvent, _: &mut Window, cx: &mut Context<Self>) {
-        if self.trace.step_forward() {
+        if self.demo_trace.step_forward() {
             cx.notify();
         }
     }
 
     fn step_backward(&mut self, _: &ClickEvent, _: &mut Window, cx: &mut Context<Self>) {
-        if self.trace.step_backward() {
+        if self.demo_trace.step_backward() {
             cx.notify();
         }
     }
@@ -116,10 +118,10 @@ int main() {
 
 impl Render for Workspace {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let current_pt = self.trace.current().cloned();
+        let current_pt = self.demo_trace.current().cloned();
         let current_line = current_pt.as_ref().map(|p| p.line).unwrap_or(0);
         let step_idx = current_pt.as_ref().map(|p| p.step_index).unwrap_or(0);
-        let total_steps = self.trace.points().len();
+        let total_steps = self.demo_trace.points().len();
 
         let state_label = match self.session_state {
             SessionState::Idle => "IDLE",
@@ -155,6 +157,7 @@ impl Render for Workspace {
                             .items_center()
                             .gap(px(12.))
                             .child(div().text_sm().font_bold().child("AveLoop"))
+                            .child(Tag::info().child("DEMO PREVIEW"))
                             .child(Tag::info().child(state_label)),
                     )
                     .child(
@@ -202,31 +205,18 @@ impl Render for Workspace {
                             .children(self.buffer.content().lines().enumerate().map(
                                 |(idx, line_text)| {
                                     let line_no = (idx + 1) as u32;
-                                    let is_active = line_no == current_line;
-
-                                    let row_bg = if is_active {
-                                        cx.theme().accent
-                                    } else {
-                                        transparent_black()
-                                    };
-
                                     div()
                                         .flex()
                                         .items_center()
                                         .w_full()
                                         .px(px(4.))
                                         .py(px(2.))
-                                        .bg(row_bg)
                                         .rounded(px(4.))
                                         .child(
                                             div()
                                                 .w(px(32.))
                                                 .text_xs()
-                                                .text_color(if is_active {
-                                                    cx.theme().ring
-                                                } else {
-                                                    cx.theme().muted_foreground
-                                                })
+                                                .text_color(cx.theme().muted_foreground)
                                                 .child(format!("{:>2}", line_no)),
                                         )
                                         .child(
@@ -252,7 +242,7 @@ impl Render for Workspace {
                                     .text_sm()
                                     .font_bold()
                                     .pb(px(12.))
-                                    .child("Execution Inspector"),
+                                    .child("Demo Execution Inspector"),
                             )
                             .child(
                                 div()
@@ -293,11 +283,7 @@ impl Render for Workspace {
             )
             .child(
                 StatusBar::new()
-                    .left(format!(
-                        "File: {} | Ln {}",
-                        self.buffer.file_path(),
-                        current_line
-                    ))
+                    .left(format!("Demo file: {}", self.buffer.file_path()))
                     .right("GPUI Fast | Night Owl | M3"),
             )
     }

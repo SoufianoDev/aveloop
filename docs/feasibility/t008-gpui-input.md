@@ -111,22 +111,43 @@ Wayland clipboard reads return `None` in this environment, both for the app's ow
 
 Re-test with `wl-clipboard` on a focused Wayland session before relying on paste in production. The X11 path is fully verified.
 
-## 7. Reproduce
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:d9d995f25eb47b82d3ec5816c0f34083b0521c7e9a87588276e213ea6a417ec1 -->
+
+## 7. Follow-up verification
+
+Sections 1–6 record the prior Wayland and X11 runs. The current probe schedules automatic shutdown on the foreground executor after the native event loop starts. Clipboard checks still run during launch to avoid the X11 borrow panic described above.
+
+In the virtual display checks, the standalone binary opened a native window and the automated command below exited with status 0 on X11 (Xvfb) and Wayland (Weston nested in Xvfb). The resize test confirmed that both the viewport and the rendered workspace grew. Wayland system clipboard behavior, macOS, and Windows remain unverified.
+
+## 8. Reproduce
 
 ```bash
 cargo test --test t008_interaction_tests -- --nocapture
 cargo build --bin t008_verify
 
-# Wayland
-AVELOOP_PROBE_EXIT=1 ./target/debug/t008_verify
+# In a Wayland session:
+AVELOOP_PROBE_EXIT=1 timeout 60 ./target/debug/t008_verify
 
-# X11
-Xephyr :99 -screen 1024x768 -ac &
-env -u WAYLAND_DISPLAY DISPLAY=:99 AVELOOP_PROBE_EXIT=1 ./target/debug/t008_verify
-
-# Real clipboard round-trip
-env -u WAYLAND_DISPLAY DISPLAY=:99 ./target/debug/t008_verify &
-DISPLAY=:99 xsel -b -o
-printf 'External Clipboard Text' | DISPLAY=:99 xsel -b -i
-env -u WAYLAND_DISPLAY DISPLAY=:99 AVELOOP_PROBE_READ_ONLY=1 AVELOOP_PROBE_EXIT=1 ./target/debug/t008_verify
+# From a terminal with access to a running X11 test display:
+env -u WAYLAND_DISPLAY DISPLAY=:99 AVELOOP_PROBE_EXIT=1 timeout 60 ./target/debug/t008_verify
 ```
+
+The timeout is a failure safeguard. These commands leave the system clipboard untouched. Set `AVELOOP_PROBE_CLIPBOARD=1` to opt in to a write and read check; this can replace the clipboard contents. Set `AVELOOP_PROBE_READ_ONLY=1` to read an external selection without writing. Read-only mode takes precedence when both options are set.
+
+To reproduce the external X11 round trip, run the following against an isolated X11 display:
+
+```bash
+# Leave the window running while reading its clipboard from another client.
+env -u WAYLAND_DISPLAY DISPLAY=:99 AVELOOP_PROBE_CLIPBOARD=1 ./target/debug/t008_verify &
+DISPLAY=:99 xsel -b -o
+
+# Read an externally provided value without replacing it.
+printf 'External Clipboard Text' | DISPLAY=:99 xsel -b -i
+env -u WAYLAND_DISPLAY DISPLAY=:99 AVELOOP_PROBE_READ_ONLY=1 AVELOOP_PROBE_EXIT=1 timeout 60 ./target/debug/t008_verify
+```
+
+A successful exit alone does not verify the clipboard. Check for the corresponding clipboard output. The startup probe may not be able to claim ownership on Wayland; use the interactive Copy and Paste buttons in a focused session to check clipboard behavior there.
+
+<!-- /coderabbit-ai-generated:v1 -->

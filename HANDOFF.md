@@ -4,17 +4,17 @@ Canonical continuity record for every agent working on this repository. Read thi
 
 ## Current State
 
-- **Last updated:** 2026-11-23T14:35Z (UTC)
+- **Last updated:** 2026-11-23 (delivery reconciliation)
 - **Repository:** `SoufianoDev/aveloop` (`https://github.com/SoufianoDev/aveloop.git`)
 - **Project root:** `/home/soufiano/SoufianoDev/AveLoop`
-- **Active branch:** `dev`, tracking `origin/feat/gpui-kit-fast` (now `589b7e2`). Earlier entries named the branch `feat/gpui-kit-fast`; the local branch is `dev` with that remote upstream. Recorded as a discrepancy, not renamed.
-- **Last verified HEAD:** `589b7e2` (`test: verify T008 clipboard round-trip, quit path, and X11 session`), pushed to `origin/feat/gpui-kit-fast`
+- **Active branch:** `feat/gpui-kit-fast` in the delivery checkout. The maintainer checkout used `dev` to track that remote branch.
+- **Verified incoming head:** `01d1646` (`docs: record T008 gap closure and remote main move in handoff`), following the T008 gap closure at `589b7e2`.
 - **`main` moved:** `origin/main` is now `7953e08` (`Merge pull request #140 from SoufianoDev/feat/gpui-kit-fast`). It contains `4bf809c` but **not** `589b7e2`. This was not done in this session; it is recorded, not claimed.
-- **Working tree:** `HANDOFF.md` modified only
+- **Working tree before reconciliation:** clean at `d1a985a`.
 - **Active task:** T008 — complete for Linux (Wayland and X11); Wayland clipboard read unverified
 - **Current phase:** Phase 2 — Foundational feasibility
-- **Overall status:** Phase 1 complete (T001–T004); T005 complete; GPUI Kit + Fast integrated (`48f2fc0`); T008 complete on Linux with one documented Wayland clipboard caveat
-- **Current objective:** start T009; decide separately how `589b7e2` reaches `main`
+- **Overall status:** Phase 1 complete (T001–T004); T005 complete; GPUI Kit + Fast integrated (`48f2fc0`); T008 complete on Linux with one documented Wayland clipboard caveat. Review fixes passed seven tests and native probe checks in virtual X11 and Wayland displays.
+- **Current objective:** reconcile T008 review fixes with the updated remote handoff; T009 remains the next Linux feasibility task.
 
 ## Immediate Next Action
 
@@ -267,7 +267,7 @@ URLs: `https://github.com/SoufianoDev/aveloop/issues/<n>`.
 
 ## Activity Log (Append-Only)
 
-Entries H0001–H0068 record this session. Entry timestamps are as reported by the host clock at the time; ordering is positional and authoritative where timestamps disagree. Pre-handoff work is summarized in **Baseline**, not fabricated here.
+Entries H0001–H0075 record the project and review sessions. Entry timestamps are as reported by the host clock at the time; ordering is positional and authoritative where timestamps disagree. Pre-handoff work is summarized in **Baseline**, not fabricated here.
 
 - [H0001] [2026-11-22T23:47Z] [continuity] ACTION: Received and accepted the mandatory continuity protocol.
   - Command/tool: user instruction
@@ -744,6 +744,20 @@ Entries H0001–H0068 record this session. Entry timestamps are as reported by t
   - Result: `4bf809c..589b7e2 dev -> feat/gpui-kit-fast`; remote ref verified at `589b7e2`. Fetch revealed `origin/main` advanced `8d49588..7953e08` via "Merge pull request #140 from SoufianoDev/feat/gpui-kit-fast", which contains `4bf809c` but not `589b7e2`. That merge was not performed in this session
   - Evidence: push output; `git log --oneline origin/main`; `git diff --stat 8d49588 origin/main`
   - State change: branch pushed; `main` discrepancy recorded in Current State and the verification table
+
+- [H0069] [2026-11-23] [review fixes] VERIFIED-FACT: Local HEAD matched the remote feature ref; issue #8 was open. The five reported issues were present. The original plan and Planning with Files skill were absent from this sandbox. GPUI Fast invokes startup before calloop enters its run loop, and calloop clears the stop flag on entry.
+
+- [H0070] [2026-11-23] [review fixes] USER-CONFIRMED: Address the five verified findings. The clipboard probe now requires `AVELOOP_PROBE_CLIPBOARD=1`, automated quit runs on the foreground executor, trace deserialization validates the cursor, the workspace labels its demo data and keeps the session idle, and the resize test checks viewport and geometry. Rust 1.96.0 and Linux display prerequisites are installed; validation is in progress.
+
+- [H0071] [2026-11-23] [review fixes] VERIFIED-FACT: The locked Cargo suite passed all seven tests with Rust 1.96.0, including the viewport and layout assertions. Cargo formatting and diff whitespace checks passed. The standalone probe build and native display checks remain in progress.
+
+- [H0072] [2026-11-23] [review fixes] VERIFIED-FACT: The standalone T008 binary built with the lockfile and exited 0 using the documented automated command in Xvfb and nested Weston. Normal X11 startup preserved existing clipboard data and the opt-in X11 clipboard probe passed. Weston headless lacked the seat GPUI requires; the nested Weston fixture resolved that. Wayland clipboard ownership and other OSes were not tested.
+
+- [H0073] [2026-11-23] [delivery rebase] VERIFIED-FACT: The local review-fix commit `4309e99` and verified remote head `589b7e2` diverged from `4bf809c`. The probe conflict was resolved by keeping the incoming clipboard reader and diagnostics, making startup writes opt in, and scheduling the quit on the foreground executor. The incoming task completion and historical display evidence are preserved. Validation is in progress.
+
+- [H0074] [2026-11-23] [delivery rebase] VERIFIED-FACT: All seven tests, the standalone build, formatting and whitespace checks passed. The rebased probe exited normally in Xvfb and nested Weston; X11 external clipboard checks confirmed both directions and that read-only wins when both flags are set.
+
+- [H0075] [2026-11-23] [delivery rebase] VERIFIED-FACT: Remote head `01d1646` changed only this handoff. Kept the incoming history and appended the review and first rebase entries as H0069–H0074 to avoid duplicate IDs. The implementation, tests, feasibility report, and specification files match the previously validated commit `d1a985a`.
 
 ## Resume Instructions
 

@@ -4,9 +4,9 @@ use gpui_kit::component::{
 };
 use gpui_kit::test::{TestSupportExt, TestWindowExt};
 use gpui_kit::{
-    AppContext, Bounds, ClipboardEntry, ClipboardItem, Context, Entity, InteractiveElement,
-    IntoElement, ParentElement, Point, Render, SharedString, StatefulInteractiveElement, Styled,
-    TestAppContext, Window, WindowBounds, WindowOptions, div, px, size,
+    div, px, size, AppContext, Bounds, ClipboardEntry, ClipboardItem, Context, Entity,
+    InteractiveElement, IntoElement, ParentElement, Point, Render, SharedString,
+    StatefulInteractiveElement, Styled, TestAppContext, Window, WindowBounds, WindowOptions,
 };
 
 struct TestWorkspace {
@@ -18,6 +18,8 @@ struct TestWorkspace {
 impl Render for TestWorkspace {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         div()
+            .id("test-workspace")
+            .test_support()
             .size_full()
             .flex()
             .flex_col()
@@ -169,14 +171,22 @@ fn test_t008_window_resizing_and_layout_reflow(cx: &mut TestAppContext) {
         let initial_size = window.bounds().size;
         assert_eq!(initial_size.width, px(600.));
         assert_eq!(initial_size.height, px(400.));
+        assert_eq!(window.viewport_size(), initial_size);
+        let initial_layout = window.find("test-workspace").bounds().size;
 
         // Resize window to larger bounds
         window.resize(size(px(1024.), px(768.)));
+        window.bounds_changed(cx);
         window.render_frame(cx);
 
         let new_size = window.bounds().size;
         assert_eq!(new_size.width, px(1024.));
         assert_eq!(new_size.height, px(768.));
+        assert_eq!(window.viewport_size(), new_size);
+
+        let layout = window.find("test-workspace").bounds().size;
+        assert_eq!(layout.width - initial_layout.width, px(424.));
+        assert_eq!(layout.height - initial_layout.height, px(368.));
 
         // Verify elements are still present and responsive
         assert!(window.find("copy-btn").visible());
