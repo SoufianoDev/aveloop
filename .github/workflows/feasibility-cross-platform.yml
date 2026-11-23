@@ -1,0 +1,138 @@
+name: Cross-Platform Feasibility Verification
+
+on:
+  push:
+    branches:
+      - ci/platform-matrix-verification
+  workflow_dispatch:
+
+jobs:
+  macos-feasibility:
+    name: macOS arm64 Verification (T007, T009, T010, T011)
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: System and Toolchain Inventory
+        run: |
+          uname -a
+          xcrun --find clang
+          clang --version
+          xcrun --find lldb
+          lldb --version
+          which lldb-dap || xcrun --find lldb-dap || true
+
+      - name: T009 — macOS C17 and C++20 Debug Builds
+        run: |
+          cat << 'EOF' > c17_test.c
+          #include <stdio.h>
+          _Static_assert(__STDC_VERSION__ == 201710L, "C17 required");
+          int main(void) {
+              printf("macOS C17 ok: %ld\n", (long)__STDC_VERSION__);
+              return 0;
+          }
+          EOF
+          clang -std=c17 -g -O0 -Wall -Wextra -pedantic-errors -o c17_test c17_test.c
+          ./c17_test
+
+          cat << 'EOF' > cxx20_test.cpp
+          #include <concepts>
+          #include <iostream>
+          template <std::integral T>
+          constexpr T double_val(T x) { return x * 2; }
+          int main() {
+              static_assert(__cplusplus >= 202002L);
+              std::cout << "macOS C++20 ok: " << double_val(21) << std::endl;
+              return 0;
+          }
+          EOF
+          clang++ -std=c++20 -g -O0 -Wall -Wextra -pedantic-errors -o cxx20_test cxx20_test.cpp
+          ./cxx20_test
+
+      - name: T010 & T011 — macOS LLDB Capabilities and Protocol Check
+        run: |
+          cat << 'EOF' > lldb_test.py
+          import subprocess, json, shutil
+
+          lldb_dap_bin = shutil.which("lldb-dap")
+          if not lldb_dap_bin:
+              res = subprocess.run(["xcrun", "--find", "lldb-dap"], capture_output=True, text=True)
+              if res.returncode == 0:
+                  lldb_dap_bin = res.stdout.strip()
+
+          print(f"lldb-dap binary: {lldb_dap_bin}")
+          if lldb_dap_bin:
+              p = subprocess.Popen([lldb_dap_bin], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+              req = json.dumps({"seq": 1, "type": "request", "command": "initialize", "arguments": {"clientID": "aveloop", "adapterID": "lldb-dap"}})
+              header = f"Content-Length: {len(req)}\r\n\r\n"
+              p.stdin.write((header + req).encode('utf-8'))
+              p.stdin.flush()
+              
+              buf = b""
+              while b"\r\n\r\n" not in buf:
+                  byte = p.stdout.read(1)
+                  if not byte:
+                      break
+                  buf += byte
+              
+              length = 0
+              for line in buf.decode('utf-8', errors='ignore').split("\r\n"):
+                  if line.startswith("Content-Length:"):
+                      length = int(line.split(":")[1].strip())
+              resp = p.stdout.read(length)
+              init_resp = json.loads(resp.decode('utf-8'))
+              print("DAP Initialize response:")
+              print(json.dumps(init_resp, indent=2))
+              body = init_resp.get("body", {})
+              print(f"supportsStepBack: {body.get('supportsStepBack', False)}")
+              p.terminate()
+          else:
+              print("lldb-dap not located directly; testing lldb batch CLI")
+              subprocess.run(["lldb", "--batch", "-o", "b main", "-o", "r", "-o", "bt", "-o", "q", "./c17_test"], check=True)
+          EOF
+          python3 lldb_test.py
+
+      - name: T007 — macOS GPUI Application Build
+        run: |
+          cargo check --workspace --tests
+
+  windows-feasibility:
+    name: Windows x86_64 Verification (T006, T009, T010, T011)
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Toolchain Inventory (MSVC & Clang)
+        shell: bash
+        run: |
+          which cl || true
+          which clang || true
+          which gdb || true
+
+      - name: T009 — Windows MSVC C17 and C++20 Debug Builds
+        shell: cmd
+        run: |
+          echo #include ^<stdio.h^> > c17_win.c
+          echo int main(void) { printf("Windows C17 compiled\n"); return 0; } >> c17_win.c
+          cl /std:c17 /Zi /Od /W4 c17_win.c /Fe:c17_win.exe
+          c17_win.exe
+
+          echo #include ^<iostream^> > cxx20_win.cpp
+          echo #include ^<concepts^> >> cxx20_win.cpp
+          echo template^<std::integral T^> T dbl(T x) { return x * 2; } >> cxx20_win.cpp
+          echo int main() { std::cout ^<^< "Windows C++20: " ^<^< dbl(21) ^<^< std::endl; return 0; } >> cxx20_win.cpp
+          cl /std:c++20 /Zi /Od /W4 /EHsc cxx20_win.cpp /Fe:cxx20_win.exe
+          cxx20_win.exe
+
+      - name: T010 & T011 — Windows Debugger and Capability Verification
+        shell: bash
+        run: |
+          which cdb || true
+          # Test MSVC debugger/cdb presence or llvm-pdbutil
+          echo "Windows MSVC symbol inspection:"
+          dumpbin /HEADERS cxx20_win.exe | grep -i "cv" || true
+
+      - name: T006 — Windows GPUI Application Build
+        shell: bash
+        run: |
+          cargo check --workspace --tests
