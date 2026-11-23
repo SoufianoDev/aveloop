@@ -4,20 +4,21 @@ Canonical continuity record for every agent working on this repository. Read thi
 
 ## Current State
 
-- **Last updated:** 2026-11-23T14:45Z (UTC; host local time is UTC+1)
+- **Last updated:** 2026-11-23T14:35Z (UTC)
 - **Repository:** `SoufianoDev/aveloop` (`https://github.com/SoufianoDev/aveloop.git`)
 - **Project root:** `/home/soufiano/SoufianoDev/AveLoop`
-- **Active branch:** `feat/gpui-kit-fast` (2 commits ahead of `main` at `8d49588`)
-- **Last verified HEAD:** `ea07e67` (`test: add T008 interaction verification and evidence`)
-- **Working tree:** clean after the T008 verification commit
-- **Active task:** T008 — evidence recorded; task remains OPEN pending three gaps
-- **Current phase:** Phase 2 — Foundational feasibility (T008 partially verified)
-- **Overall status:** Phase 1 complete (T001–T004); T005 complete; GPUI Kit + Fast integrated (`48f2fc0`); T008 input/focus/resize verified on Linux, system clipboard, clean exit, and X11 still unverified
-- **Current objective:** close the three T008 gaps or proceed to T009
+- **Active branch:** `dev`, tracking `origin/feat/gpui-kit-fast` (now `589b7e2`). Earlier entries named the branch `feat/gpui-kit-fast`; the local branch is `dev` with that remote upstream. Recorded as a discrepancy, not renamed.
+- **Last verified HEAD:** `589b7e2` (`test: verify T008 clipboard round-trip, quit path, and X11 session`), pushed to `origin/feat/gpui-kit-fast`
+- **`main` moved:** `origin/main` is now `7953e08` (`Merge pull request #140 from SoufianoDev/feat/gpui-kit-fast`). It contains `4bf809c` but **not** `589b7e2`. This was not done in this session; it is recorded, not claimed.
+- **Working tree:** `HANDOFF.md` modified only
+- **Active task:** T008 — complete for Linux (Wayland and X11); Wayland clipboard read unverified
+- **Current phase:** Phase 2 — Foundational feasibility
+- **Overall status:** Phase 1 complete (T001–T004); T005 complete; GPUI Kit + Fast integrated (`48f2fc0`); T008 complete on Linux with one documented Wayland clipboard caveat
+- **Current objective:** start T009; decide separately how `589b7e2` reaches `main`
 
 ## Immediate Next Action
 
-T008 is not marked complete. Close one of the three recorded gaps in `docs/feasibility/t008-gpui-input.md` §5 — system clipboard round-trip, clean process exit, or X11 session — or proceed to T009 (C17/C++20 toolchain verification with the installed GCC 14.2 and GDB 16.2). Do not mark T008 complete until at least the clipboard and exit gaps are resolved. Windows (T006) and macOS (T007) remain blocked on host architecture.
+Start T009 (C17/C++20 toolchain verification with the installed GCC 14.2.0 and GDB 16.2). Separately, `589b7e2` exists only on `origin/feat/gpui-kit-fast`; integrating it into `main` needs explicit authorization (a PR, or a direct push). Do not close Issues #1–#8 without explicit authorization. Windows (T006) and macOS (T007) remain blocked on host architecture.
 
 ## Verified Project State
 
@@ -110,12 +111,13 @@ Verified this session: `f259ead` exists locally and on the remote, the tree is c
 | T004 complete | Repository audited (10 tracked files, no source); `prototype/index.html` untouched and gitignored; `tasks.md` T004 checked; `complete.md` byte-identical; evidence comment on Issue #4 |
 | T005 complete | Minimal GPUI app built on Linux x86_64, launched on Wayland with Intel Vulkan; `docs/feasibility/t005-gpui-linux.md`; `tasks.md` T005 checked; `complete.md` byte-identical; evidence comment on Issue #5 |
 | GPUI Kit and GPUI Fast Integration complete | `gpui-kit` v0.10.0 + `gpui-fast` v0.1.17 integrated into AveLoop; Night Owl theme, M3 controls, domain/presentation boundaries; 4 tests pass, clippy clean, Wayland launch verified | `docs/feasibility/gpui-kit-fast-integration.md` |
-| T008 verification (partial) | 2/2 interaction tests pass (focus, typing, backspace, clipboard via UI, resize/reflow); real window opens on Wayland; system clipboard, clean exit, and X11 remain unverified | `docs/feasibility/t008-gpui-input.md`; `src/bin/t008_verify.rs`; `tests/t008_interaction_tests.rs` |
+| T008 complete (Linux) | 2/2 interaction tests pass (focus, typing, backspace, clipboard via UI, resize/reflow); Wayland window opens and exits 0; X11 via Xephyr: clipboard write/read PASSED, window opens, exit 0; external round-trip verified both directions against `xsel`; Wayland clipboard read remains unverified (no `wl-clipboard`; offers need focus) | `docs/feasibility/t008-gpui-input.md`; `src/bin/t008_verify.rs`; `tests/t008_interaction_tests.rs`; Issue #8 comments |
 
 ## Active and Pending Work
 
-- **Phase 2 (active):** Foundational feasibility tasks (T005 complete; next T008 or T009).
-- **T008 / T009 (next Linux tasks):** GPUI interaction validation or C/C++ toolchain validation.
+- **Phase 2 (active):** Foundational feasibility tasks (T005 and T008 complete; next T009).
+- **T009 (next Linux task):** C17/C++20 toolchain verification with the installed GCC 14.2.0 and GDB 16.2.
+- **T008 residual:** Wayland clipboard read returns `None`; re-test with `wl-copy`/`wl-paste` on a focused Wayland session.
 
 ## Files Changed
 
@@ -136,9 +138,11 @@ Verified this session: `f259ead` exists locally and on the remote, the tree is c
 | `tests/domain_tests.rs`, `tests/presentation_tests.rs` | added | Domain navigation and workspace initialization tests | Committed `48f2fc0` |
 | `docs/feasibility/gpui-kit-fast-integration.md` | added | Audit, compatibility, integration map, and verification report | Committed `48f2fc0` |
 | `docs/decisions/alpha-baseline.md` | modified | Record GPUI Kit and GPUI Fast adoption decision | Committed `48f2fc0` |
-| `src/bin/t008_verify.rs` | added | T008 runtime probe: window, display server, clipboard | This commit |
-| `tests/t008_interaction_tests.rs` | added | T008 focus, typing, clipboard, resize tests | This commit |
-| `docs/feasibility/t008-gpui-input.md` | added | T008 evidence with observed output and gaps | This commit |
+| `src/bin/t008_verify.rs` | added, then modified | T008 runtime probe: window, display server, clipboard; deferred quit, read-only mode | Committed `ea07e67`; gap-closure edits pending commit |
+| `tests/t008_interaction_tests.rs` | added | T008 focus, typing, clipboard, resize tests | Committed `ea07e67` |
+| `docs/feasibility/t008-gpui-input.md` | added, then rewritten | T008 evidence with per-requirement status and Wayland caveat | Committed `ea07e67`; gap-closure rewrite pending commit |
+| `specs/001-ave-loop-alpha/tasks.md` | modified | T001–T005, T008 checked | T008 check pending commit |
+| `specs/001-ave-loop-alpha/complete.md` | modified | Regenerated after the T008 check | Byte-identical; pending commit |
 | `.planning/2026-11-22-aveloop-continuity-t001-kickoff/*` | untracked, ignored | Local planning files | Not tracked by design |
 | `specs/001-ave-loop-alpha/{spec,plan,tasks,complete}.md` | committed in `f259ead` | Authoritative Alpha baseline | Verified clean |
 
@@ -155,6 +159,8 @@ Verified this session: `f259ead` exists locally and on the remote, the tree is c
 | #3 | T003 | OPEN | Evidence comment posted |
 | #4 | T004 | OPEN | Evidence comment posted |
 | #5 | T005 | OPEN | Evidence comment posted; Linux GPUI verified |
+| #8 | T008 | OPEN | 2 evidence comments; Linux verified, Wayland clipboard caveat |
+| PR #140 | `feat/gpui-kit-fast` → `main` | MERGED | Merged by someone other than this session; produced `7953e08` containing `4bf809c` |
 | #118 / #133 | T066 canonical / duplicate | OPEN | #133 marked superseded, not closed |
 | #75 / #93 / #129 / #134 / #79 | Earlier reconciliations | — | Unchanged this session |
 
@@ -213,8 +219,19 @@ URLs: `https://github.com/SoufianoDev/aveloop/issues/<n>`.
 | T008 probe compile (fixed) | PASS — `cargo build --bin t008_verify` finished in 57.83s | H0057 |
 | T008 interaction tests | PASS — 2 passed, 0 failed, 0.18s | H0058 |
 | T008 Wayland window | PASS — 720×480 window opened on `wayland-0` | H0059 |
-| T008 clean exit | FAIL — `cx.quit()` did not terminate; killed by 60 s timeout (exit 124) | H0059 |
-| T008 system clipboard | NOT VERIFIED — probe printed no `PASSED` line; read returned nothing | H0059 |
+| T008 quit inside launch callback | FAIL — swallowed by the calloop `LoopSignal`; killed by timeout (exit 124) | H0059, H0062 |
+| T008 clean exit (Wayland) | PASS — deferred `cx.quit()`, exit 0 | H0062 |
+| T008 clean exit (X11) | PASS — Xephyr `:99`, exit 0 | H0064 |
+| T008 X11 in-app clipboard | PASS — write then read returned the probe text | H0064 |
+| T008 X11 app→external clipboard | PASS — `xsel -b -o` returned `AveLoop T008 Clipboard Verification` | H0065 |
+| T008 X11 external→app clipboard | PASS — app read `External Clipboard Text` set by `xsel -b -i` | H0065 |
+| T008 deferred clipboard read (X11) | FAIL — panic `RefCell already borrowed` at `x11/client.rs:1904` | H0063 |
+| T008 Wayland clipboard read | NOT VERIFIED — returns `None` for own and external selection; no `wl-clipboard` installed | H0066 |
+| T008 checkbox and `complete.md` | PASS — T008 marked `[x]`; regenerated file byte-identical; `git diff --check` exit 0 | H0066 |
+| Issue #8 evidence comment | PASS — second comment posted; issue remains OPEN | H0066 |
+| T008 gap-closure commit | PASS — `589b7e2`, 4 files, 99 insertions / 38 deletions | H0067 |
+| T008 gap-closure push | PASS — `4bf809c..589b7e2 dev -> feat/gpui-kit-fast`; remote ref equals `589b7e2` | H0068 |
+| `origin/main` verification | DISCREPANCY — remote `main` advanced `8d49588..7953e08` via PR #140; local tracking ref updated by fetch | H0068 |
 | Issue #5 evidence comment | PASS — comment posted; issue remains OPEN | H0049 |
 
 ## Failed Attempts
@@ -224,6 +241,10 @@ URLs: `https://github.com/SoufianoDev/aveloop/issues/<n>`.
 | `gh issue close --reason duplicate` | CLI accepts only `completed`/`not planned` | Use the `gh api -X PATCH` route with `state_reason=duplicate` |
 | `find / -name 'SKILL.md' -path '*planning*'` | Exceeded 60 s timeout | Search by directory name or known install roots |
 | Building Rust spike in `/tmp` | `/tmp` is a 3.5 GB `tmpfs` RAM disk; hit 100% full (os error 28) | Build in `~/.cache` or workspace on NVMe SSD, not `/tmp` |
+| `cx.quit()` inside the launch callback | calloop's `LoopSignal::stop()` is reset when `event_loop.run` starts, so the quit is a no-op | Defer the quit: `cx.defer(|cx| cx.quit())` |
+| `cx.read_from_clipboard()` inside `cx.defer` on X11 | Panics `RefCell already borrowed` at `x11/client.rs:1904` | Read the clipboard before the event loop starts |
+| `pkill -f 'Xephyr :99'` | The pattern matched the running shell's own command line and killed it | Filter with `pgrep -x Xephyr` or avoid self-matching patterns |
+| Xephyr started in a separate shell command | Dies when that shell's process group ends | Start Xephyr in the same command as the test, or keep it in a background session |
 
 ## Unresolved Questions and Blockers
 
@@ -242,10 +263,11 @@ URLs: `https://github.com/SoufianoDev/aveloop/issues/<n>`.
 **Environment blockers**
 
 - Windows (T006) and macOS (T007) verification cannot run on this Linux machine.
+- Wayland clipboard reads return `None` in this session; `wl-clipboard` is not installed and no focused external owner could be established. Re-test on a focused Wayland session with `wl-copy`/`wl-paste`.
 
 ## Activity Log (Append-Only)
 
-Entries H0001–H0061 record this session. Pre-handoff work is summarized in **Baseline**, not fabricated here.
+Entries H0001–H0068 record this session. Entry timestamps are as reported by the host clock at the time; ordering is positional and authoritative where timestamps disagree. Pre-handoff work is summarized in **Baseline**, not fabricated here.
 
 - [H0001] [2026-11-22T23:47Z] [continuity] ACTION: Received and accepted the mandatory continuity protocol.
   - Command/tool: user instruction
@@ -673,6 +695,55 @@ Entries H0001–H0061 record this session. Pre-handoff work is summarized in **B
   - Result: `ea07e67`, 4 files, 567 insertions; `dae36d7..ea07e67`; remote equals `ea07e672d740bfb33aea304e19c816786a0c9aaf`
   - Evidence: commit and push output
   - State change: T008 evidence published on the feature branch; `main` untouched
+
+- [H0062] [2026-11-23T14:10Z] [T008] ACTION: Fixed the quit path.
+  - Command/tool: read `gpui-fast-linux` platform `quit`; edit `src/bin/t008_verify.rs`; `cargo build --bin t008_verify`
+  - Target: `src/bin/t008_verify.rs`
+  - Result: `App::quit` calls `platform.quit()` → calloop `LoopSignal::stop()`, which is cleared when `event_loop.run` starts, so a quit inside the launch callback is a no-op. Deferring it with `cx.defer` makes both backends exit with code 0
+  - Evidence: Wayland run exit 0 with `[T008] Automated probe mode: closing application.`
+  - State change: clean exit gap closed
+
+- [H0063] [2026-11-23T14:11Z] [T008] ACTION: Moved the clipboard read back before the event loop.
+  - Command/tool: `AVELOOP_PROBE_EXIT=1` under `DISPLAY=:99`
+  - Target: `src/bin/t008_verify.rs`
+  - Result: reading the clipboard inside `cx.defer` panics on X11 (`RefCell already borrowed`, `x11/client.rs:1904`); reads must happen before the loop starts. The probe now reads early and defers only the quit
+  - Evidence: panic backtrace; corrected probe
+  - State change: probe restructured; read-only mode (`AVELOOP_PROBE_READ_ONLY`) added
+
+- [H0064] [2026-11-23T14:13Z] [T008] ACTION: Verified the X11 session.
+  - Command/tool: `Xephyr :99 -screen 1024x768 -ac`; `env -u WAYLAND_DISPLAY DISPLAY=:99 AVELOOP_PROBE_EXIT=1 ./target/debug/t008_verify`
+  - Target: nested X11 display `:99`
+  - Result: `Programmatic clipboard write & read: PASSED`; window opened; exit 0
+  - Evidence: `/tmp/opencode/t008_x11.log`
+  - State change: X11 configuration verified; only Vulkan notes "No DRI3 support" under Xephyr
+
+- [H0065] [2026-11-23T14:14Z] [T008] ACTION: Verified the real system clipboard round-trip.
+  - Command/tool: app run on `:99` then `DISPLAY=:99 xsel -b -o`; then `printf 'External Clipboard Text' | DISPLAY=:99 xsel -b -i` and `AVELOOP_PROBE_READ_ONLY=1`
+  - Target: X11 clipboard selection
+  - Result: app→external returned `AveLoop T008 Clipboard Verification`; external→app returned `External Clipboard Text`
+  - Evidence: command output in `docs/feasibility/t008-gpui-input.md` §4.3
+  - State change: system clipboard gap closed on X11
+
+- [H0066] [2026-11-23T14:15Z] [T008] ACTION: Recorded the Wayland caveat and completed T008 for Linux.
+  - Command/tool: `./target/debug/t008_verify` (Wayland, automated and read-only); rewrite of `docs/feasibility/t008-gpui-input.md`; `tasks.md` check; `complete.md` regeneration; `gh issue comment 8`
+  - Target: T008 artifacts and Issue #8
+  - Result: Wayland clipboard read returns `None` for both own and external selections (no `wl-clipboard` installed; offers may require focus); T008 marked `[x]`, `complete.md` regenerated byte-identical, `git diff --check` exit 0; Issue #8 has 2 comments and remains OPEN
+  - Evidence: probe logs; `docs/feasibility/t008-gpui-input.md` §4.1 and §5; issue comment URL
+  - State change: T008 complete on Linux with a documented Wayland clipboard limitation; work uncommitted at this point
+
+- [H0067] [2026-11-23T14:28Z] [T008] ACTION: Committed the T008 gap closure.
+  - Command/tool: `git add` on four explicit paths; `git commit`
+  - Target: `docs/feasibility/t008-gpui-input.md`, `specs/001-ave-loop-alpha/{tasks,complete}.md`, `src/bin/t008_verify.rs`
+  - Result: `589b7e2`, 4 files, 99 insertions / 38 deletions; `git diff --cached --check` exit 0; `.planning/` never staged
+  - Evidence: commit output
+  - State change: T008 work committed locally
+
+- [H0068] [2026-11-23T14:32Z] [T008] ACTION: Pushed the branch and fetched the remote.
+  - Command/tool: `git push origin dev:feat/gpui-kit-fast`; `git fetch origin`
+  - Target: `origin`
+  - Result: `4bf809c..589b7e2 dev -> feat/gpui-kit-fast`; remote ref verified at `589b7e2`. Fetch revealed `origin/main` advanced `8d49588..7953e08` via "Merge pull request #140 from SoufianoDev/feat/gpui-kit-fast", which contains `4bf809c` but not `589b7e2`. That merge was not performed in this session
+  - Evidence: push output; `git log --oneline origin/main`; `git diff --stat 8d49588 origin/main`
+  - State change: branch pushed; `main` discrepancy recorded in Current State and the verification table
 
 ## Resume Instructions
 
