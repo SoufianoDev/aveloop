@@ -4,20 +4,20 @@ Canonical continuity record for every agent working on this repository. Read thi
 
 ## Current State
 
-- **Last updated:** 2026-11-23T00:46Z (UTC; host local time is UTC+1)
+- **Last updated:** 2026-11-23T01:18Z (UTC; host local time is UTC+1)
 - **Repository:** `SoufianoDev/aveloop` (`https://github.com/SoufianoDev/aveloop.git`)
 - **Project root:** `/home/soufiano/SoufianoDev/AveLoop`
 - **Active branch:** `main` (tracking `origin/main`)
-- **Last verified HEAD:** `b41648274f71961569b7d6f2cd137a08cb3eee17`
+- **Last verified HEAD:** `2eee689369fefb3967d1d234a53ae95f0067645f`
 - **Working tree:** clean
-- **Active task:** T005 (blocked on host resources)
-- **Current phase:** Phase 2 — Foundational feasibility (blocked)
-- **Overall status:** Phase 1 complete (T001–T004) and recorded; Issues #1–#4 open for owner closure; T005 resource preflight measured 3.5 GB free disk (99% used on `/`) and 1.08 GB available RAM (5.6 GiB swap used); GPUI spike cannot proceed safely without risk of disk exhaustion or OOM crash
-- **Current objective:** report resource measurement and block to user; await user disk cleanup or alternate build environment before starting T005
+- **Active task:** T005 complete; next T008 (or T009)
+- **Current phase:** Phase 2 — Foundational feasibility (in progress)
+- **Overall status:** Phase 1 complete (T001–T004); T005 complete (Linux x86_64 GPUI built and verified with Wayland/Intel Vulkan); Issues #1–#5 open for owner closure
+- **Current objective:** verify GPUI text/window/input capabilities on Linux (T008) or verify GCC/GDB C17/C++20 toolchain (T009)
 
 ## Immediate Next Action
 
-Phase 1 is complete. T005 (GPUI Linux x86_64 spike) resource preflight executed: measured 3.5 GB free disk on `/` (99% full) and 1.08 GB available RAM (swap 5.6/7.4 GiB used). A Rust GPUI build requires substantial disk space (~6–15 GB for debug dependencies/target) and memory for compilation/linking. Per protocol, do not attempt a partial build on insufficient resources. Await user action to free disk space and RAM on host or provide an alternate build environment.
+T005 is verified and closed. Next task on Linux is T008 (GPUI text rendering, keyboard input, focus, clipboard, window resizing, and Wayland/X11 config) or T009 (installed platform C/C++ toolchain builds C17 and C++20 debug binaries with GCC/G++). Windows (T006) and macOS (T007) remain blocked on host architecture.
 
 ## Verified Project State
 
@@ -107,12 +107,12 @@ Verified this session: `f259ead` exists locally and on the remote, the tree is c
 | T002 complete | Authoritative set verified in place; `tasks.md` T002 checked; `complete.md` byte-identical; evidence comment on Issue #2 |
 | T003 complete | `docs/decisions/alpha-baseline.md` (13 approved product, 9 baseline technical, 8 superseded, 9 rejected, 8 deferred); `tasks.md` T003 checked; `complete.md` byte-identical; evidence comment on Issue #3 |
 | T004 complete | Repository audited (10 tracked files, no source); `prototype/index.html` untouched and gitignored; `tasks.md` T004 checked; `complete.md` byte-identical; evidence comment on Issue #4 |
+| T005 complete | Minimal GPUI app built on Linux x86_64, launched on Wayland with Intel Vulkan; `docs/feasibility/t005-gpui-linux.md`; `tasks.md` T005 checked; `complete.md` byte-identical; evidence comment on Issue #5 |
 
 ## Active and Pending Work
 
-- **Phase 3 (active):** stage, commit, and push the continuity checkpoint.
-- **Phase 4 (pending):** deliver the T001 kickoff report. No implementation.
-- **T001 (next task, not started):** establish the project constitution.
+- **Phase 2 (active):** Foundational feasibility tasks (T005 complete; next T008 or T009).
+- **T008 / T009 (next Linux tasks):** GPUI interaction validation or C/C++ toolchain validation.
 
 ## Files Changed
 
@@ -122,9 +122,10 @@ Verified this session: `f259ead` exists locally and on the remote, the tree is c
 | `AGENTS.md` | added | Root agent instructions pointing to `HANDOFF.md` | Committed `353b44e`; remote verified |
 | `.gitignore` | modified | Exclude local `.planning/` metadata | Committed `353b44e`; remote verified |
 | `.specify/memory/constitution.md` | added | T001 project constitution, seven articles | Committed `b046da4`; remote verified |
-| `specs/001-ave-loop-alpha/tasks.md` | modified | Mark T001–T004 complete | Committed `b7419bd`, `0f11257`, `53dd453`, `b416482` |
-| `specs/001-ave-loop-alpha/complete.md` | modified | Regenerated after each task edit | Committed `b7419bd`, `0f11257`, `53dd453`, `b416482`; byte-identical |
+| `specs/001-ave-loop-alpha/tasks.md` | modified | Mark T001–T005 complete | Committed `b7419bd`, `0f11257`, `53dd453`, `b416482`, `2eee689` |
+| `specs/001-ave-loop-alpha/complete.md` | modified | Regenerated after each task edit | Committed `b7419bd`, `0f11257`, `53dd453`, `b416482`, `2eee689`; byte-identical |
 | `docs/decisions/alpha-baseline.md` | added | T003 decisions register | Committed `53dd453`; 88 lines |
+| `docs/feasibility/t005-gpui-linux.md` | added | T005 Linux GPUI feasibility verification report | Committed `2eee689` |
 | `.planning/2026-11-22-aveloop-continuity-t001-kickoff/*` | untracked, ignored | Local planning files | Not tracked by design |
 | `specs/001-ave-loop-alpha/{spec,plan,tasks,complete}.md` | committed in `f259ead` | Authoritative Alpha baseline | Verified clean |
 
@@ -137,6 +138,10 @@ Verified this session: `f259ead` exists locally and on the remote, the tree is c
 | #128 | Duplicate of #104 | CLOSED / DUPLICATE | Retitled, scoped with link, 1 comment |
 | #130 | Duplicate of #108 | CLOSED / DUPLICATE | Retitled, scoped with link, 1 comment |
 | #1 | T001 | OPEN | `phase:setup`, `spec-kit-task`, no prerequisites |
+| #2 | T002 | OPEN | Evidence comment posted |
+| #3 | T003 | OPEN | Evidence comment posted |
+| #4 | T004 | OPEN | Evidence comment posted |
+| #5 | T005 | OPEN | Evidence comment posted; Linux GPUI verified |
 | #118 / #133 | T066 canonical / duplicate | OPEN | #133 marked superseded, not closed |
 | #75 / #93 / #129 / #134 / #79 | Earlier reconciliations | — | Unchanged this session |
 
@@ -188,6 +193,10 @@ URLs: `https://github.com/SoufianoDev/aveloop/issues/<n>`.
 | Issue #4 evidence comment | PASS — 1 comment; issue remains OPEN | H0046 |
 | T004 commit and push | PASS — `b416482`, 2 files, `875e910..b416482`; remote equals HEAD | H0047 |
 | T005 resource preflight | PASS (measured) — 3.5 GB disk, 1.08 GB RAM avail; halted per plan | H0048 |
+| T005 GPUI Linux build | PASS — compiled on NVMe in 5m 42s with patched xattr | H0049 |
+| T005 Wayland runtime launch | PASS — PID 197317 bound to Wayland socket, loaded Intel Vulkan and DRI | H0049 |
+| T005 commit and push | PASS — `2eee689`, 3 files; remote equals HEAD | H0049 |
+| Issue #5 evidence comment | PASS — comment posted; issue remains OPEN | H0049 |
 
 ## Failed Attempts
 
@@ -195,6 +204,7 @@ URLs: `https://github.com/SoufianoDev/aveloop/issues/<n>`.
 |---|---|---|
 | `gh issue close --reason duplicate` | CLI accepts only `completed`/`not planned` | Use the `gh api -X PATCH` route with `state_reason=duplicate` |
 | `find / -name 'SKILL.md' -path '*planning*'` | Exceeded 60 s timeout | Search by directory name or known install roots |
+| Building Rust spike in `/tmp` | `/tmp` is a 3.5 GB `tmpfs` RAM disk; hit 100% full (os error 28) | Build in `~/.cache` or workspace on NVMe SSD, not `/tmp` |
 
 ## Unresolved Questions and Blockers
 
@@ -212,12 +222,11 @@ URLs: `https://github.com/SoufianoDev/aveloop/issues/<n>`.
 
 **Environment blockers**
 
-- GPUI spike (T005) blocked by critically low root disk space (3.5 GB available, 99% used on `/`) and available RAM (1.08 GB available; 5.6 GiB swap already in use). Building GPUI and its crate graph will exhaust disk space or trigger OOM kills.
-- Windows and macOS verification cannot run on this Linux machine.
+- Windows (T006) and macOS (T007) verification cannot run on this Linux machine.
 
 ## Activity Log (Append-Only)
 
-Entries H0001–H0048 record this session. Pre-handoff work is summarized in **Baseline**, not fabricated here.
+Entries H0001–H0049 record this session. Pre-handoff work is summarized in **Baseline**, not fabricated here.
 
 - [H0001] [2026-11-22T23:47Z] [continuity] ACTION: Received and accepted the mandatory continuity protocol.
   - Command/tool: user instruction
@@ -554,6 +563,13 @@ Entries H0001–H0048 record this session. Pre-handoff work is summarized in **B
   - Result: available disk 3.5 GB (99% used on `/dev/nvme0n1p2`), available RAM 1.08 GB (swap 5.6/7.4 GiB used). Rust 1.96.0 and GCC 14.2.0 present.
   - Evidence: shell outputs recorded in findings
   - State change: determined GPUI spike build is unsafe due to imminent disk exhaustion / OOM; stopped per protocol before attempting build.
+
+- [H0049] [2026-11-23T01:17Z] [T005] ACTION: Resolved libc/xattr build blocker, compiled minimal GPUI application on Linux x86_64, and verified Wayland hardware execution.
+  - Command/tool: `cargo build -j 2`, `lsof -p 197317`
+  - Target: `/home/soufiano/.cache/gpui-spike-linux`
+  - Result: binary compiled in 5m 42s (`445M`), ran on Wayland, loaded `libvulkan_intel.so`, opened `/dev/dri/renderD128` and cursor surface without panic
+  - Evidence: `docs/feasibility/t005-gpui-linux.md`, commit `2eee689`, Issue #5 comment
+  - State change: T005 complete; Phase 2 active
 
 ## Resume Instructions
 
