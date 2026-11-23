@@ -8,8 +8,8 @@ Canonical continuity record for every agent working on this repository. Read thi
 - **Repository:** `SoufianoDev/aveloop` (`https://github.com/SoufianoDev/aveloop.git`)
 - **Project root:** `/home/soufiano/SoufianoDev/AveLoop`
 - **Active branch:** `feat/gpui-kit-fast` (2 commits ahead of `main` at `8d49588`)
-- **Last verified HEAD:** `dae36d7` (`docs: record GPUI Kit and Fast commit in handoff`)
-- **Working tree:** not clean — untracked `src/bin/t008_verify.rs` and `tests/t008_interaction_tests.rs`
+- **Last verified HEAD:** `ea07e67` (`test: add T008 interaction verification and evidence`)
+- **Working tree:** clean after the T008 verification commit
 - **Active task:** T008 — evidence recorded; task remains OPEN pending three gaps
 - **Current phase:** Phase 2 — Foundational feasibility (T008 partially verified)
 - **Overall status:** Phase 1 complete (T001–T004); T005 complete; GPUI Kit + Fast integrated (`48f2fc0`); T008 input/focus/resize verified on Linux, system clipboard, clean exit, and X11 still unverified
@@ -245,7 +245,7 @@ URLs: `https://github.com/SoufianoDev/aveloop/issues/<n>`.
 
 ## Activity Log (Append-Only)
 
-Entries H0001–H0060 record this session. Pre-handoff work is summarized in **Baseline**, not fabricated here.
+Entries H0001–H0061 record this session. Pre-handoff work is summarized in **Baseline**, not fabricated here.
 
 - [H0001] [2026-11-22T23:47Z] [continuity] ACTION: Received and accepted the mandatory continuity protocol.
   - Command/tool: user instruction
@@ -666,6 +666,13 @@ Entries H0001–H0060 record this session. Pre-handoff work is summarized in **B
   - Result: environment, build, test output, probe output, per-requirement status table, and three follow-ups
   - Evidence: file created
   - State change: T008 evidence recorded; task intentionally left open
+
+- [H0061] [2026-11-23T15:02Z] [T008] ACTION: Committed and pushed the T008 verification.
+  - Command/tool: `git commit -m "test: add T008 interaction verification and evidence"`; `git push -u origin feat/gpui-kit-fast`
+  - Target: branch `feat/gpui-kit-fast`
+  - Result: `ea07e67`, 4 files, 567 insertions; `dae36d7..ea07e67`; remote equals `ea07e672d740bfb33aea304e19c816786a0c9aaf`
+  - Evidence: commit and push output
+  - State change: T008 evidence published on the feature branch; `main` untouched
 
 ## Resume Instructions
 
