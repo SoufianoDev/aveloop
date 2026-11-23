@@ -4,17 +4,18 @@ Canonical continuity record for every agent working on this repository. Read thi
 
 ## Current State
 
-- **Last updated:** 2026-11-23 (delivery reconciliation)
+- **Last updated:** 2026-11-23 (maintainer reconciliation after review fixes)
 - **Repository:** `SoufianoDev/aveloop` (`https://github.com/SoufianoDev/aveloop.git`)
 - **Project root:** `/home/soufiano/SoufianoDev/AveLoop`
-- **Active branch:** `feat/gpui-kit-fast` in the delivery checkout. The maintainer checkout used `dev` to track that remote branch.
-- **Verified incoming head:** `01d1646` (`docs: record T008 gap closure and remote main move in handoff`), following the T008 gap closure at `589b7e2`.
-- **`main` moved:** `origin/main` is now `7953e08` (`Merge pull request #140 from SoufianoDev/feat/gpui-kit-fast`). It contains `4bf809c` but **not** `589b7e2`. This was not done in this session; it is recorded, not claimed.
-- **Working tree before reconciliation:** clean at `d1a985a`.
+- **Active branch:** `feat/gpui-kit-fast` in the delivery checkout. The maintainer checkout used `dev` to track that remote branch; both now point at `882ea3e`.
+- **Last verified HEAD:** `882ea3e` (`docs: record T008 regression test results in handoff`), pushed and equal to `origin/feat/gpui-kit-fast`
+- **Verified incoming head:** `01d1646` (`docs: record T008 gap closure and remote main move in handoff`), following the T008 gap closure at `589b7e2`; the review-fix commit `23a7147` sits between it and HEAD.
+- **`main` moved:** `origin/main` is now `7953e08` (`Merge pull request #140 from SoufianoDev/feat/gpui-kit-fast`). It contains `4bf809c` but **not** `589b7e2` or later. This was not done in this session; it is recorded, not claimed.
+- **Working tree:** clean
 - **Active task:** T008 — complete for Linux (Wayland and X11); Wayland clipboard read unverified
 - **Current phase:** Phase 2 — Foundational feasibility
 - **Overall status:** Phase 1 complete (T001–T004); T005 complete; GPUI Kit + Fast integrated (`48f2fc0`); T008 complete on Linux with one documented Wayland clipboard caveat. Review fixes passed seven tests and native probe checks in virtual X11 and Wayland displays.
-- **Current objective:** reconcile T008 review fixes with the updated remote handoff; T009 remains the next Linux feasibility task.
+- **Current objective:** T009 remains the next Linux feasibility task
 
 ## Immediate Next Action
 
@@ -233,6 +234,7 @@ URLs: `https://github.com/SoufianoDev/aveloop/issues/<n>`.
 | T008 gap-closure push | PASS — `4bf809c..589b7e2 dev -> feat/gpui-kit-fast`; remote ref equals `589b7e2` | H0068 |
 | `origin/main` verification | DISCREPANCY — remote `main` advanced `8d49588..7953e08` via PR #140; local tracking ref updated by fetch | H0068 |
 | T008 regression tests | PASS — `t008_interaction_tests` 2/2, `domain_tests` 3/3, `presentation_tests` 1/1, run per binary with `CARGO_BUILD_JOBS=1` | H0076 |
+| T008 probe mechanism at HEAD | SUPERSEDED — review fix `23a7147` schedules shutdown on the foreground executor and makes clipboard checks opt-in (`AVELOOP_PROBE_CLIPBOARD=1`); reads still happen during launch | H0077 |
 | Issue #5 evidence comment | PASS — comment posted; issue remains OPEN | H0049 |
 
 ## Failed Attempts
@@ -268,7 +270,7 @@ URLs: `https://github.com/SoufianoDev/aveloop/issues/<n>`.
 
 ## Activity Log (Append-Only)
 
-Entries H0001–H0076 record the project and review sessions. Entry timestamps are as reported by the host clock at the time; ordering is positional and authoritative where timestamps disagree. Pre-handoff work is summarized in **Baseline**, not fabricated here.
+Entries H0001–H0077 record the project and review sessions. Entry timestamps are as reported by the host clock at the time; ordering is positional and authoritative where timestamps disagree. Pre-handoff work is summarized in **Baseline**, not fabricated here.
 
 - [H0001] [2026-11-22T23:47Z] [continuity] ACTION: Received and accepted the mandatory continuity protocol.
   - Command/tool: user instruction
@@ -766,6 +768,8 @@ Entries H0001–H0076 record the project and review sessions. Entry timestamps a
   - Result: t008 2 passed, domain 3 passed, presentation 1 passed; 0 failed in total. The aggregate `cargo test` run was cancelled twice when the OpenCode server restarted mid-build, so the suites were run one binary at a time
   - Evidence: test output; `/tmp/opencode/t008_tests.log` (partial)
   - State change: post-commit regression check recorded; later review fixes at `23a7147` re-validated the same suites at seven tests
+
+- [H0077] [2026-11-23] [T008] VERIFIED-FACT: Review fix `23a7147` rewrote the probe (opt-in clipboard via `AVELOOP_PROBE_CLIPBOARD=1`, shutdown scheduled on the foreground executor) and updated the feasibility report. The earlier `cx.defer` quit description and the unconditional clipboard write no longer describe HEAD; the historical entries are kept as-is and marked superseded in the verification table. HEAD `882ea3e` was pushed after rebasing this handoff entry onto `23a7147`; `origin/feat/gpui-kit-fast` matches, working tree clean.
 
 ## Resume Instructions
 
