@@ -22,7 +22,7 @@
 
 # Phase 1 — Setup
 
-- [ ] T001 Establish the AveLoop project constitution covering Rust-only implementation, shared cross-platform code, modular-monolith boundaries, execution truth, testing, dependency governance, and honest capability reporting.
+- [x] T001 Establish the AveLoop project constitution covering Rust-only implementation, shared cross-platform code, modular-monolith boundaries, execution truth, testing, dependency governance, and honest capability reporting.
 - [ ] T002 Create `specs/001-ave-loop-alpha/` and place the authoritative `spec.md`, `plan.md`, and `tasks.md` artifacts there.
 - [ ] T003 [P] Record approved decisions, superseded proposals, and rejected alternatives in `docs/decisions/alpha-baseline.md`.
 - [ ] T004 Inspect the existing repository and preserve `index.html` as a prototype/reference asset; do not convert it into production UI.
