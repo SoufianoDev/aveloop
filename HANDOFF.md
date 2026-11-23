@@ -232,6 +232,7 @@ URLs: `https://github.com/SoufianoDev/aveloop/issues/<n>`.
 | T008 gap-closure commit | PASS — `589b7e2`, 4 files, 99 insertions / 38 deletions | H0067 |
 | T008 gap-closure push | PASS — `4bf809c..589b7e2 dev -> feat/gpui-kit-fast`; remote ref equals `589b7e2` | H0068 |
 | `origin/main` verification | DISCREPANCY — remote `main` advanced `8d49588..7953e08` via PR #140; local tracking ref updated by fetch | H0068 |
+| T008 regression tests | PASS — `t008_interaction_tests` 2/2, `domain_tests` 3/3, `presentation_tests` 1/1, run per binary with `CARGO_BUILD_JOBS=1` | H0076 |
 | Issue #5 evidence comment | PASS — comment posted; issue remains OPEN | H0049 |
 
 ## Failed Attempts
@@ -267,7 +268,7 @@ URLs: `https://github.com/SoufianoDev/aveloop/issues/<n>`.
 
 ## Activity Log (Append-Only)
 
-Entries H0001–H0075 record the project and review sessions. Entry timestamps are as reported by the host clock at the time; ordering is positional and authoritative where timestamps disagree. Pre-handoff work is summarized in **Baseline**, not fabricated here.
+Entries H0001–H0076 record the project and review sessions. Entry timestamps are as reported by the host clock at the time; ordering is positional and authoritative where timestamps disagree. Pre-handoff work is summarized in **Baseline**, not fabricated here.
 
 - [H0001] [2026-11-22T23:47Z] [continuity] ACTION: Received and accepted the mandatory continuity protocol.
   - Command/tool: user instruction
@@ -758,6 +759,13 @@ Entries H0001–H0075 record the project and review sessions. Entry timestamps a
 - [H0074] [2026-11-23] [delivery rebase] VERIFIED-FACT: All seven tests, the standalone build, formatting and whitespace checks passed. The rebased probe exited normally in Xvfb and nested Weston; X11 external clipboard checks confirmed both directions and that read-only wins when both flags are set.
 
 - [H0075] [2026-11-23] [delivery rebase] VERIFIED-FACT: Remote head `01d1646` changed only this handoff. Kept the incoming history and appended the review and first rebase entries as H0069–H0074 to avoid duplicate IDs. The implementation, tests, feasibility report, and specification files match the previously validated commit `d1a985a`.
+
+- [H0076] [2026-11-23T14:55Z] [T008] ACTION: Re-ran the test suites after the T008 gap-closure commit.
+  - Command/tool: `CARGO_BUILD_JOBS=1 cargo test --test t008_interaction_tests`, then the same for `domain_tests` and `presentation_tests`
+  - Target: test binaries at `589b7e2`
+  - Result: t008 2 passed, domain 3 passed, presentation 1 passed; 0 failed in total. The aggregate `cargo test` run was cancelled twice when the OpenCode server restarted mid-build, so the suites were run one binary at a time
+  - Evidence: test output; `/tmp/opencode/t008_tests.log` (partial)
+  - State change: post-commit regression check recorded; later review fixes at `23a7147` re-validated the same suites at seven tests
 
 ## Resume Instructions
 
