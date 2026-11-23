@@ -53,7 +53,6 @@ jobs:
           cat << 'EOF' > lldb_test.py
           import subprocess, json, shutil
 
-          # Check for lldb-dap in PATH or Xcode toolchain
           lldb_dap_bin = shutil.which("lldb-dap")
           if not lldb_dap_bin:
               res = subprocess.run(["xcrun", "--find", "lldb-dap"], capture_output=True, text=True)
@@ -87,7 +86,6 @@ jobs:
               print(f"supportsStepBack: {body.get('supportsStepBack', False)}")
               p.terminate()
           
-          # Also test standard LLDB CLI batch execution
           print("Testing LLDB CLI batch execution:")
           subprocess.run(["lldb", "--batch", "-o", "b main", "-o", "r", "-o", "bt", "-o", "q", "./c17_test"], check=True)
           EOF
@@ -107,11 +105,11 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
 
       - name: Toolchain Inventory (MSVC & Clang)
-        shell: bash
+        shell: cmd
         run: |
-          which cl
-          cl
-          which clang || true
+          where cl
+          where link
+          where clang || ver
 
       - name: T009 — Windows MSVC C17 and C++20 Debug Builds
         shell: cmd
@@ -134,6 +132,6 @@ jobs:
           dumpbin /HEADERS cxx20_win.exe | findstr /i "cv"
 
       - name: T006 — Windows GPUI Application Build
-        shell: bash
+        shell: cmd
         run: |
           cargo check --workspace --tests
