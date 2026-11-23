@@ -4,20 +4,20 @@ Canonical continuity record for every agent working on this repository. Read thi
 
 ## Current State
 
-- **Last updated:** 2026-11-23T13:15Z (UTC; host local time is UTC+1)
+- **Last updated:** 2026-11-23T14:45Z (UTC; host local time is UTC+1)
 - **Repository:** `SoufianoDev/aveloop` (`https://github.com/SoufianoDev/aveloop.git`)
 - **Project root:** `/home/soufiano/SoufianoDev/AveLoop`
-- **Active branch:** `feat/gpui-kit-fast` (branched from `main` at `8d49588`)
-- **Last verified HEAD:** `48f2fc0e48a49d7b2c6b7a0255b8f0d959da6258`
-- **Working tree:** clean
-- **Active task:** GPUI Kit and GPUI Fast Integration committed on `feat/gpui-kit-fast`
-- **Current phase:** Phase 2 — Foundational feasibility (in progress)
-- **Overall status:** Phase 1 complete (T001–T004); T005 complete; GPUI Kit + Fast integrated and verified; next T008 (text/input validation) or T009 (GCC/GDB C17/C++20 toolchain)
-- **Current objective:** Review and authorize commit of GPUI Kit + Fast integration work on `feat/gpui-kit-fast`
+- **Active branch:** `feat/gpui-kit-fast` (2 commits ahead of `main` at `8d49588`)
+- **Last verified HEAD:** `dae36d7` (`docs: record GPUI Kit and Fast commit in handoff`)
+- **Working tree:** not clean — untracked `src/bin/t008_verify.rs` and `tests/t008_interaction_tests.rs`
+- **Active task:** T008 — evidence recorded; task remains OPEN pending three gaps
+- **Current phase:** Phase 2 — Foundational feasibility (T008 partially verified)
+- **Overall status:** Phase 1 complete (T001–T004); T005 complete; GPUI Kit + Fast integrated (`48f2fc0`); T008 input/focus/resize verified on Linux, system clipboard, clean exit, and X11 still unverified
+- **Current objective:** close the three T008 gaps or proceed to T009
 
 ## Immediate Next Action
 
-Review `docs/feasibility/gpui-kit-fast-integration.md` and authorize staging/committing on branch `feat/gpui-kit-fast`. Proceed with T008 (GPUI text/interaction validation) or T009 (C17/C++20 toolchain verification). Windows (T006) and macOS (T007) remain blocked on host architecture.
+T008 is not marked complete. Close one of the three recorded gaps in `docs/feasibility/t008-gpui-input.md` §5 — system clipboard round-trip, clean process exit, or X11 session — or proceed to T009 (C17/C++20 toolchain verification with the installed GCC 14.2 and GDB 16.2). Do not mark T008 complete until at least the clipboard and exit gaps are resolved. Windows (T006) and macOS (T007) remain blocked on host architecture.
 
 ## Verified Project State
 
@@ -110,6 +110,7 @@ Verified this session: `f259ead` exists locally and on the remote, the tree is c
 | T004 complete | Repository audited (10 tracked files, no source); `prototype/index.html` untouched and gitignored; `tasks.md` T004 checked; `complete.md` byte-identical; evidence comment on Issue #4 |
 | T005 complete | Minimal GPUI app built on Linux x86_64, launched on Wayland with Intel Vulkan; `docs/feasibility/t005-gpui-linux.md`; `tasks.md` T005 checked; `complete.md` byte-identical; evidence comment on Issue #5 |
 | GPUI Kit and GPUI Fast Integration complete | `gpui-kit` v0.10.0 + `gpui-fast` v0.1.17 integrated into AveLoop; Night Owl theme, M3 controls, domain/presentation boundaries; 4 tests pass, clippy clean, Wayland launch verified | `docs/feasibility/gpui-kit-fast-integration.md` |
+| T008 verification (partial) | 2/2 interaction tests pass (focus, typing, backspace, clipboard via UI, resize/reflow); real window opens on Wayland; system clipboard, clean exit, and X11 remain unverified | `docs/feasibility/t008-gpui-input.md`; `src/bin/t008_verify.rs`; `tests/t008_interaction_tests.rs` |
 
 ## Active and Pending Work
 
@@ -131,10 +132,13 @@ Verified this session: `f259ead` exists locally and on the remote, the tree is c
 | `Cargo.toml` / `Cargo.lock` | added | Dependencies pinned to `gpui-kit` v0.10.0 (`gpui-fast` feature) | Uncommitted on `feat/gpui-kit-fast` |
 | `src/lib.rs`, `src/main.rs` | added | Modular monolith lib + bin entry point with compile assertion | Uncommitted on `feat/gpui-kit-fast` |
 | `src/domain/*` | added | Pure Rust domain models (buffer, execution trace, session state) | Uncommitted on `feat/gpui-kit-fast` |
-| `src/presentation/*` | added | GPUI Kit + Fast presentation views and Night Owl theme mapping | Uncommitted on `feat/gpui-kit-fast` |
-| `tests/*` | added | Domain navigation and workspace initialization tests | Uncommitted on `feat/gpui-kit-fast` |
-| `docs/feasibility/gpui-kit-fast-integration.md` | added | Audit, compatibility, integration map, and verification report | Uncommitted on `feat/gpui-kit-fast` |
-| `docs/decisions/alpha-baseline.md` | modified | Record GPUI Kit and GPUI Fast adoption decision | Uncommitted on `feat/gpui-kit-fast` |
+| `src/presentation/*` | added | GPUI Kit + Fast presentation views and Night Owl theme mapping | Committed `48f2fc0` |
+| `tests/domain_tests.rs`, `tests/presentation_tests.rs` | added | Domain navigation and workspace initialization tests | Committed `48f2fc0` |
+| `docs/feasibility/gpui-kit-fast-integration.md` | added | Audit, compatibility, integration map, and verification report | Committed `48f2fc0` |
+| `docs/decisions/alpha-baseline.md` | modified | Record GPUI Kit and GPUI Fast adoption decision | Committed `48f2fc0` |
+| `src/bin/t008_verify.rs` | added | T008 runtime probe: window, display server, clipboard | This commit |
+| `tests/t008_interaction_tests.rs` | added | T008 focus, typing, clipboard, resize tests | This commit |
+| `docs/feasibility/t008-gpui-input.md` | added | T008 evidence with observed output and gaps | This commit |
 | `.planning/2026-11-22-aveloop-continuity-t001-kickoff/*` | untracked, ignored | Local planning files | Not tracked by design |
 | `specs/001-ave-loop-alpha/{spec,plan,tasks,complete}.md` | committed in `f259ead` | Authoritative Alpha baseline | Verified clean |
 
@@ -205,6 +209,12 @@ URLs: `https://github.com/SoufianoDev/aveloop/issues/<n>`.
 | T005 GPUI Linux build | PASS — compiled on NVMe in 5m 42s with patched xattr | H0049 |
 | T005 Wayland runtime launch | PASS — PID 197317 bound to Wayland socket, loaded Intel Vulkan and DRI | H0049 |
 | T005 commit and push | PASS — `2eee689`, 3 files; remote equals HEAD | H0049 |
+| T008 probe compile (first attempt) | FAIL — 4 errors: `font_bold` trait scope, `cleanable`, `PressEnter` struct variant | H0056 |
+| T008 probe compile (fixed) | PASS — `cargo build --bin t008_verify` finished in 57.83s | H0057 |
+| T008 interaction tests | PASS — 2 passed, 0 failed, 0.18s | H0058 |
+| T008 Wayland window | PASS — 720×480 window opened on `wayland-0` | H0059 |
+| T008 clean exit | FAIL — `cx.quit()` did not terminate; killed by 60 s timeout (exit 124) | H0059 |
+| T008 system clipboard | NOT VERIFIED — probe printed no `PASSED` line; read returned nothing | H0059 |
 | Issue #5 evidence comment | PASS — comment posted; issue remains OPEN | H0049 |
 
 ## Failed Attempts
@@ -235,7 +245,7 @@ URLs: `https://github.com/SoufianoDev/aveloop/issues/<n>`.
 
 ## Activity Log (Append-Only)
 
-Entries H0001–H0049 record this session. Pre-handoff work is summarized in **Baseline**, not fabricated here.
+Entries H0001–H0060 record this session. Pre-handoff work is summarized in **Baseline**, not fabricated here.
 
 - [H0001] [2026-11-22T23:47Z] [continuity] ACTION: Received and accepted the mandatory continuity protocol.
   - Command/tool: user instruction
@@ -621,6 +631,41 @@ Entries H0001–H0049 record this session. Pre-handoff work is summarized in **B
   - Result: Scaffolded crate, domain models, presentation layer, Night Owl theme, tests, and documentation committed
   - Evidence: commit SHA on `feat/gpui-kit-fast`
   - State change: feat/gpui-kit-fast branch advanced with verified integration
+
+- [H0056] [2026-11-23T14:52Z] [T008] ACTION: Verified repository state against `HANDOFF.md` and fixed probe compile errors.
+  - Command/tool: `git branch -vv`, `git log`, `git status`, `cargo test`
+  - Target: repository + `src/bin/t008_verify.rs`
+  - Result: HANDOFF was stale (claimed clean tree at `48f2fc0`; actual `dae36d7` with two untracked T008 files). First build failed with 4 errors; fixed by importing `gpui_kit::base::StyledExt`, dropping the non-existent `cleanable`, and matching `InputEvent::PressEnter { .. }`
+  - Evidence: build error output; corrected file
+  - State change: HANDOFF Current State corrected to verified facts
+
+- [H0057] [2026-11-23T14:55Z] [T008] ACTION: Built the T008 probe.
+  - Command/tool: `cargo build --bin t008_verify`
+  - Target: `target/debug/t008_verify`
+  - Result: finished in 57.83s
+  - Evidence: build output
+  - State change: probe executable available
+
+- [H0058] [2026-11-23T14:56Z] [T008] ACTION: Ran the interaction tests.
+  - Command/tool: `cargo test --test t008_interaction_tests -- --nocapture`
+  - Target: `tests/t008_interaction_tests.rs`
+  - Result: 2 passed, 0 failed in 0.18s (focus, typing, backspace, clipboard via UI, resize, reflow)
+  - Evidence: test output
+  - State change: app-level input/focus/clipboard/resize behavior verified
+
+- [H0059] [2026-11-23T14:58Z] [T008] ACTION: Ran the runtime probe.
+  - Command/tool: `AVELOOP_PROBE_EXIT=1 timeout 60 ./target/debug/t008_verify`
+  - Target: host Wayland session
+  - Result: window opened on `wayland-0`; `cx.quit()` did not terminate (exit 124); clipboard block printed no `PASSED` line
+  - Evidence: `/tmp/opencode/t008_probe.log`; `docs/feasibility/t008-gpui-input.md` §4
+  - State change: Wayland window verified; clean exit and system clipboard recorded as unverified
+
+- [H0060] [2026-11-23T15:00Z] [T008] ACTION: Wrote the T008 evidence report.
+  - Command/tool: write
+  - Target: `docs/feasibility/t008-gpui-input.md`
+  - Result: environment, build, test output, probe output, per-requirement status table, and three follow-ups
+  - Evidence: file created
+  - State change: T008 evidence recorded; task intentionally left open
 
 ## Resume Instructions
 
