@@ -1404,7 +1404,7 @@ These are mandatory before production foundation work. They are verification tas
 
 All compiler and debugger verification uses toolchains already installed on each platform. No compiler, debugger, or LLVM distribution is bundled, downloaded, or installed by the project.
 
-- [ ] T005 Verify a minimal GPUI application builds and launches on Linux x86_64; record the exact GPUI revision, Rust toolchain, system dependencies, and runtime result.
+- [x] T005 Verify a minimal GPUI application builds and launches on Linux x86_64; record the exact GPUI revision, Rust toolchain, system dependencies, and runtime result.
 - [ ] T006 [P] Verify the same GPUI application builds and launches on Windows x86_64.
 - [ ] T007 [P] Verify the same GPUI application builds and launches on macOS arm64.
 - [ ] T008 Verify GPUI text rendering, keyboard input, focus, clipboard, window resizing, and required Linux Wayland/X11 configurations across the target matrix.
