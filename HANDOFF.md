@@ -4,16 +4,16 @@ Canonical continuity record for every agent working on this repository. Read thi
 
 ## Current State
 
-- **Last updated:** 2026-11-22T23:58Z (UTC; host local time is UTC+1)
+- **Last updated:** 2026-11-23T00:00Z (UTC; host local time is UTC+1)
 - **Repository:** `SoufianoDev/aveloop` (`https://github.com/SoufianoDev/aveloop.git`)
 - **Project root:** `/home/soufiano/SoufianoDev/AveLoop`
 - **Active branch:** `main` (tracking `origin/main`)
-- **Last verified HEAD:** `4be1b1efa7fc85aa9f2b5d6e953c7ad19450a518`
-- **Working tree:** clean after the continuity checkpoint; T001 artifact now staged for publication
+- **Last verified HEAD:** `b046da4c5adb359a0cb5c702b669065d56f9d463` (T001 constitution checkpoint; the handoff verification update is the next commit on `main`)
+- **Working tree:** clean after the T001 checkpoint
 - **Active task:** T001 — Establish the AveLoop project constitution
-- **Current phase:** T001 artifact created; publication in progress
-- **Overall status:** constitution drafted at `.specify/memory/constitution.md`; T001 checkbox intentionally not marked
-- **Current objective:** publish the constitution and obtain review
+- **Current phase:** T001 artifact published; awaiting review
+- **Overall status:** constitution published; T001 checkbox intentionally not marked
+- **Current objective:** obtain review, then close T001 with evidence
 
 ## Immediate Next Action
 
@@ -114,7 +114,7 @@ Verified this session: `f259ead` exists locally and on the remote, the tree is c
 | `HANDOFF.md` | added | Canonical cross-agent continuity record | Committed `353b44e`; remote verified |
 | `AGENTS.md` | added | Root agent instructions pointing to `HANDOFF.md` | Committed `353b44e`; remote verified |
 | `.gitignore` | modified | Exclude local `.planning/` metadata | Committed `353b44e`; remote verified |
-| `.specify/memory/constitution.md` | added | T001 project constitution, seven articles | Pending commit |
+| `.specify/memory/constitution.md` | added | T001 project constitution, seven articles | Committed `b046da4`; remote verified |
 | `.planning/2026-11-22-aveloop-continuity-t001-kickoff/*` | untracked, ignored | Local planning files | Not tracked by design |
 | `specs/001-ave-loop-alpha/{spec,plan,tasks,complete}.md` | committed in `f259ead` | Authoritative Alpha baseline | Verified clean |
 
@@ -149,6 +149,11 @@ URLs: `https://github.com/SoufianoDev/aveloop/issues/<n>`.
 | Commit | PASS — `353b44e`, 3 files, 294 insertions | H0015 |
 | Push | PASS — `f259ead..353b44e main -> main` | H0016 |
 | Remote verification | PASS — `git ls-remote` and HEAD both `353b44e`; 0/0 | H0017 |
+| Constitution scope | PASS — seven required topics present as Articles I–VII | H0021 |
+| Rule sourcing | PASS — every article cites a `spec.md`/`plan.md` section | H0021 |
+| T001 commit | PASS — `b046da4`, 2 files, 143 insertions | H0023 |
+| T001 push | PASS — `4be1b1e..b046da4 main -> main` | H0024 |
+| T001 remote verification | PASS — remote ref equals HEAD | H0024 |
 
 ## Failed Attempts
 
@@ -178,7 +183,7 @@ URLs: `https://github.com/SoufianoDev/aveloop/issues/<n>`.
 
 ## Activity Log (Append-Only)
 
-Entries H0001–H0018 record this session. Pre-handoff work is summarized in **Baseline**, not fabricated here.
+Entries H0001–H0024 record this session. Pre-handoff work is summarized in **Baseline**, not fabricated here.
 
 - [H0001] [2026-11-22T23:47Z] [continuity] ACTION: Received and accepted the mandatory continuity protocol.
   - Command/tool: user instruction
@@ -326,6 +331,27 @@ Entries H0001–H0018 record this session. Pre-handoff work is summarized in **B
   - Result: 7 articles (Rust-only, shared cross-platform, modular monolith, execution truth, testing, dependency governance, honest capability reporting) plus governance
   - Evidence: file contents; each rule cites a spec/plan section
   - State change: T001 artifact exists; checkbox left unchecked pending review
+
+- [H0022] [2026-11-22T23:59Z] [T001] ACTION: Staged and checked the T001 checkpoint.
+  - Command/tool: `git add .specify/memory/constitution.md HANDOFF.md`; `git diff --cached --check`
+  - Target: index
+  - Result: 2 intended paths staged; check exit 0; no source or manifest changes
+  - Evidence: `git diff --cached --name-status`
+  - State change: ready to commit
+
+- [H0023] [2026-11-22T23:59Z] [T001] ACTION: Committed the constitution.
+  - Command/tool: `git commit -m "docs: establish project constitution (T001)"`
+  - Target: `main`
+  - Result: `b046da4`, 2 files changed, 143 insertions, 8 deletions
+  - Evidence: commit output
+  - State change: local HEAD advanced
+
+- [H0024] [2026-11-23T00:00Z] [T001] ACTION: Pushed and verified the T001 checkpoint.
+  - Command/tool: `git push origin main`; `git ls-remote origin refs/heads/main`
+  - Target: `origin/main`
+  - Result: `4be1b1e..b046da4`; remote ref equals `b046da4c5adb359a0cb5c702b669065d56f9d463`
+  - Evidence: push and ls-remote output
+  - State change: constitution published; T001 awaits review
 
 ## Resume Instructions
 
