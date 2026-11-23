@@ -40,6 +40,7 @@ These are implementation selections required to make the Alpha executable. They 
 | Native GPUI editor for the bounded Alpha editing scope | No embedded browser editor; the editor is part of the product | `plan.md` §3.5 |
 | Tree-sitter for C/C++ syntax parsing/highlighting; no LSP in Alpha | Sufficient for highlighting without an LSP dependency | `plan.md` §8 |
 | Runtime memory visualization limited to debugger-observable/reachable entities and verified events | No allocation history the backend cannot supply | §6.4, `plan.md` §4.5 |
+| GPUI Kit and GPUI Fast adoption (`gpui-kit` v0.10.0 with `gpui-fast` v0.1.17) | Rich component library (M3 compatible) and retained-mode CPU reduction (73-88%) | `docs/feasibility/gpui-kit-fast-integration.md` |
 
 ## Superseded proposals
 
