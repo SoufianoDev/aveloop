@@ -4,22 +4,22 @@ Canonical continuity record for every agent working on this repository. Read thi
 
 ## Current State
 
-- **Last updated:** 2026-11-23 (maintainer reconciliation after review fixes)
+- **Last updated:** 2026-11-24 (T009 Linux verification recorded; ready for T010)
 - **Repository:** `SoufianoDev/aveloop` (`https://github.com/SoufianoDev/aveloop.git`)
 - **Project root:** `/home/soufiano/SoufianoDev/AveLoop`
-- **Active branch:** `feat/gpui-kit-fast` in the delivery checkout. The maintainer checkout used `dev` to track that remote branch; both now point at `882ea3e`.
-- **Last verified HEAD:** `882ea3e` (`docs: record T008 regression test results in handoff`), pushed and equal to `origin/feat/gpui-kit-fast`
+- **Active branch:** `dev` tracking `origin/feat/gpui-kit-fast`.
+- **Last verified HEAD:** `09d9b1f` (`docs: verify T009 C17 and C++20 debug builds on Linux`)
 - **Verified incoming head:** `01d1646` (`docs: record T008 gap closure and remote main move in handoff`), following the T008 gap closure at `589b7e2`; the review-fix commit `23a7147` sits between it and HEAD.
 - **`main` moved:** `origin/main` is now `7953e08` (`Merge pull request #140 from SoufianoDev/feat/gpui-kit-fast`). It contains `4bf809c` but **not** `589b7e2` or later. This was not done in this session; it is recorded, not claimed.
 - **Working tree:** clean
-- **Active task:** T008 — complete for Linux (Wayland and X11); Wayland clipboard read unverified
+- **Active task:** T010 — platform debugger verification on Linux (GDB)
 - **Current phase:** Phase 2 — Foundational feasibility
-- **Overall status:** Phase 1 complete (T001–T004); T005 complete; GPUI Kit + Fast integrated (`48f2fc0`); T008 complete on Linux with one documented Wayland clipboard caveat. Review fixes passed seven tests and native probe checks in virtual X11 and Wayland displays.
-- **Current objective:** T009 remains the next Linux feasibility task
+- **Overall status:** Phase 1 complete (T001–T004); T005 complete; GPUI Kit + Fast integrated (`48f2fc0`); T008 complete on Linux; T009 verified on Linux (Windows/macOS open).
+- **Current objective:** T010 platform debugger verification with GDB on Linux
 
 ## Immediate Next Action
 
-Start T009 (C17/C++20 toolchain verification with the installed GCC 14.2.0 and GDB 16.2). Separately, `589b7e2` exists only on `origin/feat/gpui-kit-fast`; integrating it into `main` needs explicit authorization (a PR, or a direct push). Do not close Issues #1–#8 without explicit authorization. Windows (T006) and macOS (T007) remain blocked on host architecture.
+Start T010 (platform debugger verification on Linux with GDB 16.2: launch, breakpoint, stepping, stack, variables, aggregate children, pointer values, stdout/stderr, termination). Separately, Windows (T006, T009, T010) and macOS (T007, T009, T010) remain blocked on host architecture. Do not close Issues without explicit authorization.
 
 ## Verified Project State
 
@@ -112,12 +112,13 @@ Verified this session: `f259ead` exists locally and on the remote, the tree is c
 | T004 complete | Repository audited (10 tracked files, no source); `prototype/index.html` untouched and gitignored; `tasks.md` T004 checked; `complete.md` byte-identical; evidence comment on Issue #4 |
 | T005 complete | Minimal GPUI app built on Linux x86_64, launched on Wayland with Intel Vulkan; `docs/feasibility/t005-gpui-linux.md`; `tasks.md` T005 checked; `complete.md` byte-identical; evidence comment on Issue #5 |
 | GPUI Kit and GPUI Fast Integration complete | `gpui-kit` v0.10.0 + `gpui-fast` v0.1.17 integrated into AveLoop; Night Owl theme, M3 controls, domain/presentation boundaries; 4 tests pass, clippy clean, Wayland launch verified | `docs/feasibility/gpui-kit-fast-integration.md` |
+| T009 partial (Linux verified) | GCC/G++ 14.2.0, `ld` 2.44, glibc 2.41, GDB 16.2; `-std=c17 -g -O0` and `-std=c++20 -g -O0` builds compile and run with `__STDC_VERSION__=201710` / `__cplusplus=202002`; debug info read by GDB; GNU `typeof` rejected in both modes; modules only via experimental `-fmodules-ts`; linker/runtime prerequisites recorded. Windows and macOS NOT VERIFIED (no host) | `docs/feasibility/t009-cpp-toolchain.md`; Issue #9 comment |
 | T008 complete (Linux) | 2/2 interaction tests pass (focus, typing, backspace, clipboard via UI, resize/reflow); Wayland window opens and exits 0; X11 via Xephyr: clipboard write/read PASSED, window opens, exit 0; external round-trip verified both directions against `xsel`; Wayland clipboard read remains unverified (no `wl-clipboard`; offers need focus) | `docs/feasibility/t008-gpui-input.md`; `src/bin/t008_verify.rs`; `tests/t008_interaction_tests.rs`; Issue #8 comments |
 
 ## Active and Pending Work
 
-- **Phase 2 (active):** Foundational feasibility tasks (T005 and T008 complete; next T009).
-- **T009 (next Linux task):** C17/C++20 toolchain verification with the installed GCC 14.2.0 and GDB 16.2.
+- **Phase 2 (active):** Foundational feasibility tasks (T005 and T008 complete; T009 Linux verified, Windows/macOS blocked; next T010 on Linux).
+- **T009 open part:** Windows (MSVC or MinGW-w64) and macOS (Apple Clang) C17/C++20 debug builds require real hosts.
 - **T008 residual:** Wayland clipboard read returns `None`; re-test with `wl-copy`/`wl-paste` on a focused Wayland session.
 
 ## Files Changed
@@ -139,11 +140,12 @@ Verified this session: `f259ead` exists locally and on the remote, the tree is c
 | `tests/domain_tests.rs`, `tests/presentation_tests.rs` | added | Domain navigation and workspace initialization tests | Committed `48f2fc0` |
 | `docs/feasibility/gpui-kit-fast-integration.md` | added | Audit, compatibility, integration map, and verification report | Committed `48f2fc0` |
 | `docs/decisions/alpha-baseline.md` | modified | Record GPUI Kit and GPUI Fast adoption decision | Committed `48f2fc0` |
-| `src/bin/t008_verify.rs` | added, then modified | T008 runtime probe: window, display server, clipboard; deferred quit, read-only mode | Committed `ea07e67`; gap-closure edits pending commit |
+| `src/bin/t008_verify.rs` | added, then modified | T008 runtime probe: window, display server, clipboard; deferred quit, read-only mode | Committed `ea07e67`; review fixes in `23a7147` |
 | `tests/t008_interaction_tests.rs` | added | T008 focus, typing, clipboard, resize tests | Committed `ea07e67` |
-| `docs/feasibility/t008-gpui-input.md` | added, then rewritten | T008 evidence with per-requirement status and Wayland caveat | Committed `ea07e67`; gap-closure rewrite pending commit |
-| `specs/001-ave-loop-alpha/tasks.md` | modified | T001–T005, T008 checked | T008 check pending commit |
-| `specs/001-ave-loop-alpha/complete.md` | modified | Regenerated after the T008 check | Byte-identical; pending commit |
+| `docs/feasibility/t008-gpui-input.md` | added, then rewritten | T008 evidence with per-requirement status and Wayland caveat | Committed `ea07e67`; updated in `23a7147` |
+| `specs/001-ave-loop-alpha/tasks.md` | modified | T001–T005, T008 checked | Committed `589b7e2` |
+| `specs/001-ave-loop-alpha/complete.md` | modified | Regenerated after the T008 check | Committed `589b7e2`; byte-identical |
+| `docs/feasibility/t009-cpp-toolchain.md` | added | T009 C17/C++20 toolchain evidence, conformance caveats, linker/runtime prerequisites, external research table | Committed `09d9b1f` |
 | `.planning/2026-11-22-aveloop-continuity-t001-kickoff/*` | untracked, ignored | Local planning files | Not tracked by design |
 | `specs/001-ave-loop-alpha/{spec,plan,tasks,complete}.md` | committed in `f259ead` | Authoritative Alpha baseline | Verified clean |
 
@@ -161,6 +163,7 @@ Verified this session: `f259ead` exists locally and on the remote, the tree is c
 | #4 | T004 | OPEN | Evidence comment posted |
 | #5 | T005 | OPEN | Evidence comment posted; Linux GPUI verified |
 | #8 | T008 | OPEN | 2 evidence comments; Linux verified, Wayland clipboard caveat |
+| #9 | T009 | OPEN | Evidence comment: Linux verified, Windows/macOS not verified |
 | PR #140 | `feat/gpui-kit-fast` → `main` | MERGED | Merged by someone other than this session; produced `7953e08` containing `4bf809c` |
 | #118 / #133 | T066 canonical / duplicate | OPEN | #133 marked superseded, not closed |
 | #75 / #93 / #129 / #134 / #79 | Earlier reconciliations | — | Unchanged this session |
@@ -235,6 +238,14 @@ URLs: `https://github.com/SoufianoDev/aveloop/issues/<n>`.
 | `origin/main` verification | DISCREPANCY — remote `main` advanced `8d49588..7953e08` via PR #140; local tracking ref updated by fetch | H0068 |
 | T008 regression tests | PASS — `t008_interaction_tests` 2/2, `domain_tests` 3/3, `presentation_tests` 1/1, run per binary with `CARGO_BUILD_JOBS=1` | H0076 |
 | T008 probe mechanism at HEAD | SUPERSEDED — review fix `23a7147` schedules shutdown on the foreground executor and makes clipboard checks opt-in (`AVELOOP_PROBE_CLIPBOARD=1`); reads still happen during launch | H0077 |
+| T009 toolchain inventory | PASS — gcc/g++ 14.2.0, target `x86_64-linux-gnu`, `ld` 2.44, glibc 2.41, gdb 16.2 | H0079 |
+| T009 C17 debug build | PASS — `-std=c17 -g -O0 -pedantic-errors`, exit 0; `__STDC_VERSION__=201710`; run exit 0 | H0079 |
+| T009 C++20 debug build | PASS — `-std=c++20 -g -O0 -pedantic-errors`, exit 0; `__cplusplus=202002`; concepts, `consteval`, `<=>`, ranges, `span`, `std::format`; run exit 0 | H0079 |
+| T009 debug info | PASS — `file` reports `with debug_info`; GDB breaks on source lines and prints locals | H0079 |
+| T009 GNU extension isolation | PASS — bare `typeof` rejected under `-std=c17` and `-std=c++20` (exit 1) | H0079 |
+| T009 C++20 modules | PASS with caveat — `-fmodules-ts` builds, imports, links, runs (42); `-fmodules` unrecognized on 14.2 | H0079 |
+| T009 linker/runtime | PASS — NEEDED `libstdc++.so.6`, `libm.so.6`, `libgcc_s.so.1`, `libc.so.6`; interpreter `/lib64/ld-linux-x86-64.so.2` | H0079 |
+| T009 Windows/macOS | NOT VERIFIED — no host available; vendor documentation recorded only | H0079 |
 | Issue #5 evidence comment | PASS — comment posted; issue remains OPEN | H0049 |
 
 ## Failed Attempts
@@ -270,7 +281,7 @@ URLs: `https://github.com/SoufianoDev/aveloop/issues/<n>`.
 
 ## Activity Log (Append-Only)
 
-Entries H0001–H0077 record the project and review sessions. Entry timestamps are as reported by the host clock at the time; ordering is positional and authoritative where timestamps disagree. Pre-handoff work is summarized in **Baseline**, not fabricated here.
+Entries H0001–H0079 record the project and review sessions. Entry timestamps are as reported by the host clock at the time; ordering is positional and authoritative where timestamps disagree. Pre-handoff work is summarized in **Baseline**, not fabricated here.
 
 - [H0001] [2026-11-22T23:47Z] [continuity] ACTION: Received and accepted the mandatory continuity protocol.
   - Command/tool: user instruction
@@ -770,6 +781,20 @@ Entries H0001–H0077 record the project and review sessions. Entry timestamps a
   - State change: post-commit regression check recorded; later review fixes at `23a7147` re-validated the same suites at seven tests
 
 - [H0077] [2026-11-23] [T008] VERIFIED-FACT: Review fix `23a7147` rewrote the probe (opt-in clipboard via `AVELOOP_PROBE_CLIPBOARD=1`, shutdown scheduled on the foreground executor) and updated the feasibility report. The earlier `cx.defer` quit description and the unconditional clipboard write no longer describe HEAD; the historical entries are kept as-is and marked superseded in the verification table. HEAD `882ea3e` was pushed after rebasing this handoff entry onto `23a7147`; `origin/feat/gpui-kit-fast` matches, working tree clean.
+
+- [H0078] [2026-11-23T15:51Z] [T009] ACTION: Conducted T009 C17 and C++20 toolchain verification on Linux and wrote report.
+  - Command/tool: `gcc -std=c17 -g -O0 ...`, `g++ -std=c++20 -g -O0 ...`, GDB inspection; write `docs/feasibility/t009-cpp-toolchain.md`; `git commit`
+  - Target: `docs/feasibility/t009-cpp-toolchain.md`
+  - Result: GCC 14.2.0, glibc 2.41, GDB 16.2 verified for C17 and C++20 debug builds on Linux x86_64; Windows and macOS unverified (no host); committed in `09d9b1f`
+  - Evidence: `docs/feasibility/t009-cpp-toolchain.md`; commit `09d9b1f`
+  - State change: T009 verified on Linux; Windows and macOS open
+
+- [H0079] [2026-11-23T15:55Z] [T009] ACTION: Recorded T009 evidence on Issue #9.
+  - Command/tool: `gh issue comment 9`
+  - Target: https://github.com/SoufianoDev/aveloop/issues/9
+  - Result: evidence comment posted; issue #9 remains OPEN awaiting Windows and macOS hosts
+  - Evidence: GitHub issue comment on #9
+  - State change: evidence published; task remains open for Windows/macOS
 
 ## Resume Instructions
 
