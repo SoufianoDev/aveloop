@@ -1,5 +1,6 @@
 use aveloop::presentation::theme;
 use gpui_kit::base::StyledExt;
+use gpui_kit::App;
 use gpui_kit::component::{
     button::Button,
     input::{Input, InputEvent, InputState},
@@ -173,6 +174,15 @@ impl Render for T008VerificationApp {
     }
 }
 
+fn read_clipboard_text(cx: &mut App) -> Option<String> {
+    cx.read_from_clipboard().and_then(|item| {
+        match item.entries().first() {
+            Some(ClipboardEntry::String(s)) => Some(s.text().to_string()),
+            _ => None,
+        }
+    })
+}
+
 fn main() {
     println!("[T008] Starting GPUI interaction verification...");
 
@@ -184,19 +194,29 @@ fn main() {
     const { assert!(gpui_kit::GPUI_FAST, "gpui-fast retained mode required") };
 
     let is_automated = std::env::var("AVELOOP_PROBE_EXIT").is_ok();
+    let read_only = std::env::var("AVELOOP_PROBE_READ_ONLY").is_ok();
 
     gpui_kit::application().run(move |cx| {
         gpui_kit::init(cx);
         theme::apply_night_owl(cx);
 
-        // Native clipboard write/read verification probe
+        // The clipboard must be read before the event loop starts: reading from a
+        // deferred callback panics on X11 ("RefCell already borrowed").
         let probe_text = "AveLoop T008 Clipboard Verification";
-        cx.write_to_clipboard(ClipboardItem::new_string(probe_text.to_string()));
-        if let Some(item) = cx.read_from_clipboard() {
-            if let Some(ClipboardEntry::String(s)) = item.entries().first() {
-                assert_eq!(s.text(), probe_text);
-                println!("[T008] Programmatic clipboard write & read: PASSED");
+        if !read_only {
+            cx.write_to_clipboard(ClipboardItem::new_string(probe_text.to_string()));
+        }
+        match read_clipboard_text(cx).as_deref() {
+            Some(text) if text == probe_text => {
+                println!("[T008] Programmatic clipboard write & read: PASSED")
             }
+            Some(text) if read_only => {
+                println!("[T008] Clipboard read from external owner: {:?}", text)
+            }
+            other if read_only => {
+                println!("[T008] Clipboard read from external owner: FAILED ({:?})", other)
+            }
+            other => println!("[T008] Programmatic clipboard write & read: FAILED ({:?})", other),
         }
 
         let window_options = WindowOptions {
@@ -218,9 +238,14 @@ fn main() {
 
         println!("[T008] Verification window opened successfully.");
 
+        // Defer so the platform event loop is running: a quit issued inside the
+        // launch callback is swallowed by the calloop signal, and Wayland delivers
+        // selection offers only after the loop starts.
         if is_automated {
-            println!("[T008] Automated probe mode: closing application.");
-            cx.quit();
+            cx.defer(move |cx| {
+                println!("[T008] Automated probe mode: closing application.");
+                cx.quit();
+            });
         }
     });
 }

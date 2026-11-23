@@ -1407,7 +1407,7 @@ All compiler and debugger verification uses toolchains already installed on each
 - [x] T005 Verify a minimal GPUI application builds and launches on Linux x86_64; record the exact GPUI revision, Rust toolchain, system dependencies, and runtime result.
 - [ ] T006 [P] Verify the same GPUI application builds and launches on Windows x86_64.
 - [ ] T007 [P] Verify the same GPUI application builds and launches on macOS arm64.
-- [ ] T008 Verify GPUI text rendering, keyboard input, focus, clipboard, window resizing, and required Linux Wayland/X11 configurations across the target matrix.
+- [x] T008 Verify GPUI text rendering, keyboard input, focus, clipboard, window resizing, and required Linux Wayland/X11 configurations across the target matrix.
 - [ ] T009 Verify the installed platform C/C++ toolchain builds C17 and C++20 debug binaries on Linux (GCC/G++), Windows (MSVC or MinGW-w64), and macOS (Apple Clang), documenting each platform's linker/runtime prerequisites.
 - [ ] T010 Verify platform debugger launch, breakpoint, source-level stepping, stack, variables, aggregate children, pointer values, stdout/stderr, and termination on all three platforms: GDB on Linux, LLDB on macOS, the compiler-matched debugger on Windows.
 - [ ] T011 Record actual debugger capabilities per platform and backend (DAP or GDB/MI); explicitly verify that the design does not depend on `supportsStepBack`.
