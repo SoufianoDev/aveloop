@@ -4,20 +4,20 @@ Canonical continuity record for every agent working on this repository. Read thi
 
 ## Current State
 
-- **Last updated:** 2026-11-22T23:53Z (UTC; host local time is UTC+1)
+- **Last updated:** 2026-11-22T23:58Z (UTC; host local time is UTC+1)
 - **Repository:** `SoufianoDev/aveloop` (`https://github.com/SoufianoDev/aveloop.git`)
 - **Project root:** `/home/soufiano/SoufianoDev/AveLoop`
 - **Active branch:** `main` (tracking `origin/main`)
-- **Last verified HEAD:** `353b44e41eb7c0fb3a11fe593fdac31a9418a045` (continuity checkpoint; the handoff verification update is the next commit on `main`)
-- **Working tree:** clean after the continuity checkpoint
-- **Active task:** continuity protocol (complete); next task T001 (not started)
-- **Current phase:** Phase 4 — T001 kickoff report delivered
-- **Overall status:** continuity published; T001 handed off; no implementation started
-- **Current objective:** begin T001 once the constitution path is chosen
+- **Last verified HEAD:** `4be1b1efa7fc85aa9f2b5d6e953c7ad19450a518`
+- **Working tree:** clean after the continuity checkpoint; T001 artifact now staged for publication
+- **Active task:** T001 — Establish the AveLoop project constitution
+- **Current phase:** T001 artifact created; publication in progress
+- **Overall status:** constitution drafted at `.specify/memory/constitution.md`; T001 checkbox intentionally not marked
+- **Current objective:** publish the constitution and obtain review
 
 ## Immediate Next Action
 
-Ask the user to choose the constitution path — `.specify/memory/constitution.md` (Spec Kit default) or `docs/constitution.md` (repo `docs/` convention) — then begin T001 by creating that one file with the seven principles. Do not start any other task and do not mark T001 complete without the artifact and its evidence.
+Obtain review of `.specify/memory/constitution.md`. On approval, mark T001 complete in `tasks.md`, regenerate `complete.md` from the marker structure, and record the evidence on Issue #1.
 
 ## Verified Project State
 
@@ -99,6 +99,7 @@ Verified this session: `f259ead` exists locally and on the remote, the tree is c
 | Planning skill restored and a single active plan created | `.planning/2026-11-22-aveloop-continuity-t001-kickoff/` |
 | Continuity artifacts written | `HANDOFF.md`, `AGENTS.md`, `.gitignore` |
 | Continuity checkpoint published | Commit `353b44e`; remote ref matches |
+| T001 constitution drafted | `.specify/memory/constitution.md`; seven articles, every rule sourced to `spec.md`/`plan.md` |
 
 ## Active and Pending Work
 
@@ -113,6 +114,7 @@ Verified this session: `f259ead` exists locally and on the remote, the tree is c
 | `HANDOFF.md` | added | Canonical cross-agent continuity record | Committed `353b44e`; remote verified |
 | `AGENTS.md` | added | Root agent instructions pointing to `HANDOFF.md` | Committed `353b44e`; remote verified |
 | `.gitignore` | modified | Exclude local `.planning/` metadata | Committed `353b44e`; remote verified |
+| `.specify/memory/constitution.md` | added | T001 project constitution, seven articles | Pending commit |
 | `.planning/2026-11-22-aveloop-continuity-t001-kickoff/*` | untracked, ignored | Local planning files | Not tracked by design |
 | `specs/001-ave-loop-alpha/{spec,plan,tasks,complete}.md` | committed in `f259ead` | Authoritative Alpha baseline | Verified clean |
 
@@ -303,6 +305,27 @@ Entries H0001–H0018 record this session. Pre-handoff work is summarized in **B
   - Result: verification results appended; the commit containing this entry is the next commit on `main` after `353b44e`
   - Evidence: `git log --oneline -2`
   - State change: handoff matches verified state
+
+- [H0019] [2026-11-22T23:56Z] [T001] ACTION: Read the authoritative sections that ground the constitution.
+  - Command/tool: grep + read
+  - Target: `spec.md` §0, §3 (INV-001…010), §11, §14; `plan.md` §2.1–2.3, §7, §8
+  - Result: Rust-only, shared codebase, modular monolith, execution truth, testing, dependency, and honesty rules all have explicit sources
+  - Evidence: file lines cited inside each constitution article
+  - State change: principle text derived from documents, not invented
+
+- [H0020] [2026-11-22T23:57Z] [T001] ACTION: Chose the constitution location.
+  - Command/tool: decision
+  - Target: `.specify/memory/constitution.md`
+  - Result: Spec Kit default, matching the `/speckit.constitution` reference in `tasks.md`
+  - Evidence: `tasks.md` §Execution; no `.specify/` existed before
+  - State change: path unblocked; recorded as AGENT-PROPOSED until user review
+
+- [H0021] [2026-11-22T23:58Z] [T001] ACTION: Wrote the project constitution.
+  - Command/tool: write
+  - Target: `.specify/memory/constitution.md`
+  - Result: 7 articles (Rust-only, shared cross-platform, modular monolith, execution truth, testing, dependency governance, honest capability reporting) plus governance
+  - Evidence: file contents; each rule cites a spec/plan section
+  - State change: T001 artifact exists; checkbox left unchecked pending review
 
 ## Resume Instructions
 
