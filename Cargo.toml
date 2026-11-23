@@ -1,0 +1,20 @@
+[package]
+name = "aveloop"
+version = "0.1.0"
+edition = "2021"
+authors = ["SoufianoDev"]
+license = "Apache-2.0"
+description = "Native cross-platform C/C++ development environment built with Rust and GPUI"
+
+[dependencies]
+# UI Framework & Primitives: GPUI Kit backed by GPUI Fast
+gpui-kit = { version = "0.10.0", features = ["gpui-fast", "component", "assets"] }
+
+# Data & Utilities
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+anyhow = "1.0"
+thiserror = "2.0"
+
+[dev-dependencies]
+gpui-kit = { version = "0.10.0", features = ["gpui-fast", "test-support"] }
