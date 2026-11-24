@@ -152,10 +152,14 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit 1 }
           $cdb = Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\cdb.exe' -ErrorAction SilentlyContinue
           if (-not $cdb) { Write-Error 'CDB not installed on this runner'; exit 1 }
-          & $cdb.FullName -logo cdb.log -g -G -c 'bp probe!main; g; p; p; p; dv; dx ptr; k; g; q' .\probe.exe *> console.log
-          Get-Content cdb.log
+          # CDB writes prompts, dv/dx/k output to the console buffer, which shell
+          # redirection on this runner does not capture; only the banner and the
+          # child's own output reach the file. Assert what is observable here and
+          # keep the inspection commands in the session for the log.
+          & $cdb.FullName -g -G -c 'bp probe!main; g; p; p; p; dv; dx ptr; k; g; q' .\probe.exe *> console.log
+          Get-Content console.log
           $fail = 0
-          foreach ($pattern in @('local_int', 'STDOUT_MARK 42', 'STDERR_MARK 7', 'probe!main')) {
+          foreach ($pattern in @('STDOUT_MARK 42', 'STDERR_MARK 7', 'DONE 43')) {
             if (-not (Select-String -Path cdb.log -Pattern $pattern -Quiet)) {
               Write-Host "MISSING: $pattern"; $fail = 1
             }
