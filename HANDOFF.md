@@ -8,7 +8,7 @@ Canonical continuity record for every agent working on this repository. Read thi
 - **Repository:** `SoufianoDev/aveloop` (`https://github.com/SoufianoDev/aveloop.git`)
 - **Project root:** `/home/soufiano/SoufianoDev/AveLoop`
 - **Active branch:** `dev` tracking `origin/feat/gpui-kit-fast`.
-- **Last verified HEAD:** `9585fb1` (`test(ci): drop the flaky MSVC+CDB job and record it as a residual`), matching `origin/feat/gpui-kit-fast`.
+- **Last verified HEAD:** `9585fb1` (`test(ci): drop the flaky MSVC+CDB job and record it as a residual`) on `origin/feat/gpui-kit-fast`; this HANDOFF update is committed on top.
 - **`main` moved:** `origin/main` is `7953e08` (`Merge pull request #140`). It does not contain `589b7e2` or later. Integration into `main` is not authorized.
 - **Working tree:** only the repository owner's uncommitted edit in `src/presentation/theme.rs`. Left untouched and unstaged.
 - **Active task:** T016–T019 complete; **Phase 2 exit gate met with recorded residuals**.
