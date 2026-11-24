@@ -102,6 +102,66 @@ jobs:
           Write-Error 'No supported Windows compiler-debugger combination found on this runner.'
           exit 1
 
+  windows-msvc-live:
+    name: Windows x86_64 MSVC+CDB (explicit config)
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Explicit MSVC must not be substituted
+        shell: pwsh
+        run: |
+          $env:AVELOOP_WINDOWS_TOOLCHAIN = 'msvc'
+          cargo run --bin t016_verify -- --detect | Tee-Object -FilePath detect.log
+          $line = Select-String -Path detect.log -Pattern '^selection=' | Select-Object -First 1
+          if ($line.Line -ne 'selection=msvc') {
+            Write-Error "explicit msvc was not honoured: $($line.Line)"
+            exit 1
+          }
+
+      - name: Write debugger fixture
+        shell: pwsh
+        run: |
+          @'
+          #include <stdio.h>
+          typedef struct { int value; int pad; } Child;
+          int main(void) {
+              int local_int = 42;
+              Child child = { 7, 0 };
+              Child *ptr = &child;
+              printf("STDOUT_MARK %d\n", local_int);
+              fprintf(stderr, "STDERR_MARK %d\n", ptr->value);
+              local_int += 1;
+              printf("DONE %d\n", local_int);
+              return 0;
+          }
+          '@ | Set-Content -Encoding ascii probe.c
+
+      - name: Live session — CDB
+        shell: pwsh
+        run: |
+          cl /std:c17 /Zi /Od /W4 probe.c /Fe:probe.exe
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          $cdb = Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\cdb.exe' -ErrorAction SilentlyContinue
+          if (-not $cdb) { Write-Error 'CDB not installed on this runner'; exit 1 }
+          & $cdb.FullName -g -G -c 'bp main; g; p; p; p; dv; dx ptr; k; g; q' .\probe.exe *> cdb.log
+          Get-Content cdb.log
+          $fail = 0
+          foreach ($pattern in @('local_int', 'STDOUT_MARK 42', 'STDERR_MARK 7', 'probe!main')) {
+            if (-not (Select-String -Path cdb.log -Pattern $pattern -Quiet)) {
+              Write-Host "MISSING: $pattern"; $fail = 1
+            }
+          }
+          exit $fail
+
   macos-live-debug:
     name: macOS arm64 live debugger
     runs-on: macos-latest
