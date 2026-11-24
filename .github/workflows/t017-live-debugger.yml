@@ -4,7 +4,7 @@ on:
   push:
     branches: [feat/gpui-kit-fast, dev]
     paths:
-      - 'src/bin/t016_verify.rs'
+      - 'verification/T016/t016_verify.rs'
       - '.github/workflows/t017-live-debugger.yml'
   workflow_dispatch:
 
@@ -152,7 +152,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit 1 }
           $cdb = Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\cdb.exe' -ErrorAction SilentlyContinue
           if (-not $cdb) { Write-Error 'CDB not installed on this runner'; exit 1 }
-          & $cdb.FullName -g -G -c 'bp main; g; p; p; p; dv; dx ptr; k; g; q' .\probe.exe *> cdb.log
+          & $cdb.FullName -g -G -c 'bp probe!main; g; p; p; p; dv; dx ptr; k; g; q' .\probe.exe *> cdb.log
           Get-Content cdb.log
           $fail = 0
           foreach ($pattern in @('local_int', 'STDOUT_MARK 42', 'STDERR_MARK 7', 'probe!main')) {
