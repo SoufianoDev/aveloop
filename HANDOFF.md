@@ -146,10 +146,11 @@ Verified this session: `f259ead` exists locally and on the remote, the tree is c
 - **Phase 2:** complete; gate met with residuals recorded in
   `docs/feasibility/t016-t019-gate-closure.md`.
 - **Phase 3:** not started; requires explicit authorization.
-- **Residual 1:** MSVC + CDB scripted variable/stack assertions are not observable under
-  shell redirection on `windows-2022`. The CDB job verifies explicit-configuration
-  honouring, build, launch, and stream capture. MinGW-w64 + GDB is the verified path and
-  the policy default.
+- **Residual 1:** the MSVC + CDB inspection path is not verified end to end. CDB writes
+  prompts and `dv`/`dx`/`k` output to the console buffer, which redirection on
+  `windows-2022` does not capture, and the child's own output reached the captured file
+  inconsistently. The job was removed from CI rather than left flaky. MinGW-w64 + GDB is
+  the verified path and the policy default.
 - **Residual 2:** GPUI input, focus, clipboard, and resize are Linux-verified only;
   macOS and Windows are verified for build and runtime launch.
 - **Residual 3:** Wayland clipboard read returns `None` (no `wl-clipboard`).
@@ -1061,6 +1062,13 @@ Entries H0001–H0099 record the project and review sessions. Entry timestamps a
   - Result: three gaps closed with run links and exact output; matrix rows upgraded only where live evidence exists; T015 verdict kept as the record at `bd4216d` with a dated §8 addendum
   - Evidence: commit `617d49e`; `complete.md` marker blocks equal their sources for all three files
   - State change: Phase 2 gate met with three recorded residuals; Phase 3 awaits authorization
+
+- [H0104] [2026-11-24T03:05Z] [T017] ACTION: Removed the MSVC + CDB job from CI after it proved unreliable.
+  - Session: OpenCode session `ses_df4caf04effevP8U7GoQKRY3ZO` (AI agent: opencode)
+  - Command/tool: runs `45309991450`, `45309261455`, `45308438040`, `45306494934`; edit `.github/workflows/t017-live-debugger.yml`
+  - Result: the job's selection assertion, `cl` build, and CDB launch succeeded, but the child's stream markers reached the captured file in one run and not the next, and CDB console-buffer output is never captured. A green gate cannot depend on that
+  - Evidence: `MISSING: STDOUT_MARK 42` while the same markers appear in the step log; `MISSING: local_int`/`probe!main` in every run
+  - State change: `SUPERSEDES` the CDB scope in H0102; MSVC + CDB is a documented residual, MinGW-w64 + GDB remains the verified Windows path
 
 ## Resume Instructions
 

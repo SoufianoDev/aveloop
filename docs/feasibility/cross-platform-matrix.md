@@ -13,7 +13,7 @@
 | **T005–T007** | GPUI Application Build & Launch | **PASS** (Local Wayland/X11, launched) | **PASS** (window opened, Run 45304616214) | **PASS** (window opened, Run 45304616214) | **VERIFIED** |
 | **T008** | GPUI Text, Input, Clipboard, Resize | **PASS** (Linux interaction tests) | **NOT EXECUTED** — shared-core assumption only | **NOT EXECUTED** — shared-core assumption only | **LINUX VERIFIED** |
 | **T009** | C17 & C++20 Debug Compilation & Run | **PASS** (`-std=c17`, `-std=c++20`) | **PASS** (Clang `-std=c17`, `-std=c++20`) | **PASS** (MSVC `/std:c17`, `/std:c++20`) | **VERIFIED** |
-| **T010** | Debugger Breakpoints, Stepping, Symbols | **PASS** (GDB 16.2 DAP & MI) | **PASS** (LLDB: launch, breakpoint, 4 steps, variables, aggregate, pointer, backtrace, exit, Run 45305339035) | **PASS** (MinGW-w64 + GDB live session, Run 45305339035; MSVC + CDB launch/capture only) | **VERIFIED** |
+| **T010** | Debugger Breakpoints, Stepping, Symbols | **PASS** (GDB 16.2 DAP & MI) | **PASS** (LLDB: launch, breakpoint, 4 steps, variables, aggregate, pointer, backtrace, exit, Run 45305339035) | **PASS** (MinGW-w64 + GDB live session, Run 45305339035; MSVC + CDB not verified end to end) | **VERIFIED** |
 | **T011** | Protocol Negotiation & Reverse-Step | **PASS** (`supportsStepBack: false`) | **PARTIAL** (`lldb-dap` `initialize` response only) | **NOT VERIFIED** (no negotiation) | **LINUX VERIFIED** |
 | **T016** | Windows Compiler-Debugger Pair Selection | n/a | n/a | **PASS** (8/8 checks + real detection, Run 45304616166) | **VERIFIED** |
 | **T017–T018** | Live Debugger Session | **PASS** (T010) | **PASS** (Run 45305339035) | **PASS** (MinGW-w64 + GDB, Run 45305339035) | **VERIFIED** |

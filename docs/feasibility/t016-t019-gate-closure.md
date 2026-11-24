@@ -78,13 +78,16 @@ DONE 43
 Verified: launch, breakpoint, three source-level steps, local variable, aggregate with
 children, pointer dereference, stack frame, both output streams, normal termination.
 
-**MSVC + CDB (explicit configuration):** a second job sets
-`AVELOOP_WINDOWS_TOOLCHAIN=msvc`, asserts the selection is not substituted, builds with
-`cl`, and runs a scripted CDB session. The selection assertion, the build, the launch,
-and capture of both child streams (`STDOUT_MARK 42`, `STDERR_MARK 7`, `DONE 43`) pass.
-CDB writes prompts and `dv`/`dx`/`k` output to the console buffer, which shell
-redirection on this runner does not capture, so the variable and stack assertions are
-not observable there. Recorded as a residual, not as verified behaviour.
+**MSVC + CDB (explicit configuration):** a dedicated job was added, run, and then
+removed. In runs `45306494934` and `45308438040` it verified that explicit
+`AVELOOP_WINDOWS_TOOLCHAIN=msvc` is honoured without substitution, that `cl` builds the
+fixture, and that CDB launches the probe with the child's streams appearing in the step
+log. Scripted assertions could not be made reliable: CDB writes prompts and `dv`/`dx`/`k`
+output to the console buffer, which shell redirection does not capture on `windows-2022`,
+and the child's own output reached the captured file in one run but not the next. The
+job was removed from CI rather than left flaky. **Residual:** the MSVC + CDB inspection
+path is not verified end to end; MinGW-w64 + GDB is the verified Windows path and the
+policy's default preference.
 
 ## T018 — macOS LLDB live session
 
