@@ -47,7 +47,7 @@ All compiler and debugger verification uses toolchains already installed on each
 - [x] T012 Verify process cancellation and child-process cleanup behavior on each OS.
 - [x] T013 [P] Verify Tree-sitter C/C++ grammar integration and license compatibility.
 - [x] T014 Evaluate GPUI text primitives and the required Material 3 component surface; document build/reuse decisions without creating a fork.
-- [ ] T015 Produce the cross-platform feasibility report. Do not proceed to production foundation until every Alpha target has a verified path or the target matrix is explicitly re-approved.
+- [x] T015 Produce the cross-platform feasibility report. Do not proceed to production foundation until every Alpha target has a verified path or the target matrix is explicitly re-approved.
 
 **Gate:** GPUI, compiler, debugger, process control, and required platform prerequisites have evidence on Linux, Windows, and macOS.
 

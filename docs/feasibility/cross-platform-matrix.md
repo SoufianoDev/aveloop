@@ -1,7 +1,7 @@
 # Cross-Platform Feasibility Verification Report (macOS & Windows)
 
 - **Tasks:** T006 (Windows GPUI), T007 (macOS GPUI), T009 (C17 & C++20 toolchains), T010 & T011 (Debugger & Reverse-step independence)
-- **Status:** **VERIFIED** on all platforms (macOS Apple Silicon & Windows x86_64 MSVC via CI matrix run 45292424668, alongside earlier local Linux x86_64 verification).
+- **Status:** **PARTIALLY VERIFIED.** Toolchain (T009), process cancellation (T012) and Tree-sitter (T013) are LIVE on all three targets. GPUI on macOS/Windows is COMPILE-only (`cargo check`), and the debugger rows are PARTIAL (macOS) and FORMAT-ONLY (Windows). See `docs/feasibility/t015-cross-platform-feasibility-report.md` for the corrected evidence levels and the open gaps.
 - **Date:** 2026-11-24
 - **Branch:** `ci/platform-matrix-verification` / `dev`
 - **CI Run Reference:** [GitHub Actions Run 45292424668](https://github.com/SoufianoDev/aveloop/actions/runs/45292424668)
@@ -10,11 +10,11 @@
 
 | Task | Capability | Linux x86_64 (GCC 14.2 / GDB 16.2) | macOS arm64 (Apple Clang / LLDB) | Windows x86_64 (MSVC 19.44 / PDB) | Overall Status |
 |---|---|---|---|---|---|
-| **T005–T007** | GPUI Application Build & Launch | **PASS** (Local Wayland/X11) | **PASS** (Run 45292424668) | **PASS** (Run 45292424668) | **VERIFIED** |
-| **T008** | GPUI Text, Input, Clipboard, Resize | **PASS** (Linux interaction tests) | Verified via GPUI Kit shared core | Verified via GPUI Kit shared core | **VERIFIED** |
+| **T005–T007** | GPUI Application Build & Launch | **PASS** (Local Wayland/X11, launched) | **COMPILE ONLY** (`cargo check`, Run 45292424668) | **COMPILE ONLY** (`cargo check`, Run 45292424668) | **LINUX VERIFIED** |
+| **T008** | GPUI Text, Input, Clipboard, Resize | **PASS** (Linux interaction tests) | **NOT EXECUTED** — shared-core assumption only | **NOT EXECUTED** — shared-core assumption only | **LINUX VERIFIED** |
 | **T009** | C17 & C++20 Debug Compilation & Run | **PASS** (`-std=c17`, `-std=c++20`) | **PASS** (Clang `-std=c17`, `-std=c++20`) | **PASS** (MSVC `/std:c17`, `/std:c++20`) | **VERIFIED** |
-| **T010** | Debugger Breakpoints, Stepping, Symbols | **PASS** (GDB 16.2 DAP & MI) | **PASS** (LLDB batch execution) | **PASS** (PDB CodeView headers) | **VERIFIED** |
-| **T011** | Protocol Negotiation & Reverse-Step | **PASS** (`supportsStepBack: false`) | **PASS** (`supportsStepBack: false`) | **PASS** (Decoupled trace model) | **VERIFIED** |
+| **T010** | Debugger Breakpoints, Stepping, Symbols | **PASS** (GDB 16.2 DAP & MI) | **PARTIAL** (`lldb --batch`: breakpoint, run, backtrace; no stepping/variables/pointers) | **FORMAT ONLY** (`dumpbin` CodeView/PDB header; no debugger launched) | **LINUX VERIFIED** |
+| **T011** | Protocol Negotiation & Reverse-Step | **PASS** (`supportsStepBack: false`) | **PARTIAL** (`lldb-dap` `initialize` response only) | **NOT VERIFIED** (no negotiation) | **LINUX VERIFIED** |
 
 ## 2. Platform Evidence
 

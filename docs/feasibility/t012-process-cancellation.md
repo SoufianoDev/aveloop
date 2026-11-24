@@ -57,7 +57,7 @@ Verified via GitHub Actions CI workflow `.github/workflows/t012-process-cancella
 - `windows-2022` (Windows x86_64, MSVC)
 - `macos-latest` (macOS arm64)
 
-CI run link: _to be populated after push triggers the workflow._
+CI run link: [45294000672](https://github.com/SoufianoDev/aveloop/actions/runs/45294000672) — Linux x86_64, Windows x86_64, macOS arm64 all `success`.
 
 ---
 
