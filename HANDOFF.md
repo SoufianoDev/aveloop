@@ -4,26 +4,26 @@ Canonical continuity record for every agent working on this repository. Read thi
 
 ## Current State
 
-- **Last updated:** 2026-11-24 (T020 cross-platform CI complete; Phase 3 foundation in progress)
+- **Last updated:** 2026-11-24 (T021 architecture boundary check added; T020 CI green)
 - **Repository:** `SoufianoDev/aveloop` (`https://github.com/SoufianoDev/aveloop.git`)
 - **Project root:** `/home/soufiano/SoufianoDev/AveLoop`
 - **Active branch:** `dev` tracking `origin/feat/gpui-kit-fast`.
-- **Last verified HEAD:** `ae1ba21` on `dev` (CI fix commit); `origin/feat/gpui-kit-fast` matched it at push time. Verify again before acting.
+- **Last verified HEAD:** `240f8e9` (T020 documentation commit); verify again before acting.
 - **`main` moved:** `origin/main` is `7953e08` (`Merge pull request #140`). It does not contain `589b7e2` or later. Integration into `main` is not authorized.
-- **Working tree:** owner edit in `src/presentation/theme.rs` (unstaged, leave alone) plus the T020 documentation updates being committed.
-- **Active task:** T020 complete (`.github/workflows/ci.yml`); next unchecked task is T021.
-- **Current phase:** Phase 3 — Native application and architecture foundation (T016–T019 were already complete; T020 now complete; T021–T022 open).
-- **Overall status:** T001–T020 complete as work items. Product CI is green on Linux x86_64, Windows x86_64, and macOS arm64.
-- **Current objective:** Continue Phase 3 with T021 (architecture checks), then T022 (`ave.toml` manifest contract).
+- **Working tree:** owner edit in `src/presentation/theme.rs` (unstaged, leave alone) plus the T021 changes being committed.
+- **Active task:** T021 complete (`tests/architecture_tests.rs`); next unchecked task is T022.
+- **Current phase:** Phase 3 — Native application and architecture foundation (T016–T021 complete; T022 open).
+- **Overall status:** T001–T021 complete as work items. Product CI is green on Linux x86_64, Windows x86_64, and macOS arm64.
+- **Current objective:** T022 — define and validate the initial `ave.toml` manifest contract.
 
 ## Immediate Next Action
 
-**Next task: T021 — add architecture checks that prevent presentation/GPUI and infrastructure/DAP
-types from leaking into domain models.** Implement, validate, mark `tasks.md`, regenerate
-`complete.md`, and synchronize canonical Issue #21 (AGENTS.md rule #12).
+**Next task: T022 — define and validate the initial `ave.toml` manifest contract, versioning,
+relative-path rules, and actionable invalid-project errors.** Implement, validate, mark
+`tasks.md`, regenerate `complete.md`, and synchronize canonical Issue #22 (AGENTS.md rule #12).
 
-**2026-11-24 — USER-CONFIRMED:** "continue (you can use cargo if you need it)" — `cargo`
-commands, commits, and pushes are authorized. Phase 3 implementation has started.
+**2026-11-24 — USER-CONFIRMED:** "continue to the next step" — implementation, `cargo`,
+commits, and pushes are authorized.
 
 **2026-11-24 — VERIFIED-FACT:** T020 complete. `.github/workflows/ci.yml` runs, for Linux
 x86_64 (`ubuntu-22.04`), Windows x86_64 (`windows-2022`), and macOS arm64 (`macos-latest`):
@@ -1175,6 +1175,15 @@ Entries H0001–H0099 record the project and review sessions. Entry timestamps a
   - GitHub: Issue #20 body canonical task line set to `[x]`; evidence comment added (run `45430789249`, Linux dependency requirement, `macos-14` cancellation note). Issue left OPEN per existing repo practice (canonical completed issues #16–#19 are also open).
   - Excluded: `src/presentation/theme.rs` (owner edit, left unstaged), `.planning/` (gitignored)
   - Next: T021 architecture checks
+
+- [H0121] [2026-11-24] [T021] VERIFIED-FACT: architecture boundary check added.
+  - Session: OpenCode session `ses_df4caf04effevP8U7GoQKRY3ZO` (AI agent: opencode)
+  - Artifact: `tests/architecture_tests.rs` (3 tests) — walks `src/domain/**.rs`, strips comments/strings, and fails on forbidden identifiers (`gpui`, `gpui_kit`, `dap`, `tree_sitter`, `tokio`, `reqwest`) and forbidden paths (`std::fs`, `std::process`, `std::net`, `std::env`, `crate::presentation`, `crate::infrastructure`, `crate::platform`, `crate::app`)
+  - Self-checks included: positive fixtures (must flag) and negative fixtures (must not flag), so the scanner cannot silently pass
+  - Known limit (documented in-file): grouped imports such as `use std::{fs, process}` are not expanded; upgrade to a `syn` AST check if the domain starts grouping std imports
+  - Local result: `cargo test --test architecture_tests` 3/3; full `cargo test --lib --tests` 10/10; `cargo fmt --check` and `cargo clippy --lib --tests -- -D warnings` clean
+  - No CI workflow change needed: the product CI already runs `cargo test --lib --tests`
+  - Docs: `tasks.md` T021 `[x]`; `complete.md` tasks block regenerated (1-line diff); Issue #21 canonical task line set to `[x]`
 
 ## Resume Instructions
 
