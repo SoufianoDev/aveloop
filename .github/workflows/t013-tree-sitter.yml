@@ -4,7 +4,7 @@ on:
   push:
     branches: [feat/gpui-kit-fast, dev]
     paths:
-      - 'src/bin/t013_verify.rs'
+      - 'verification/T013/t013_verify.rs'
       - 'Cargo.toml'
       - 'Cargo.lock'
       - '.github/workflows/t013-tree-sitter.yml'

@@ -4,7 +4,7 @@ on:
   push:
     branches: [feat/gpui-kit-fast, dev]
     paths:
-      - 'src/bin/t012_verify.rs'
+      - 'verification/T012/t012_verify.rs'
       - '.github/workflows/t012-process-cancellation.yml'
   workflow_dispatch:
 

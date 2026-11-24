@@ -19,5 +19,21 @@ tree-sitter = "0.27.2"
 tree-sitter-c = "0.24.2"
 tree-sitter-cpp = "0.23.4"
 
+[[bin]]
+name = "t008_verify"
+path = "verification/T008/t008_verify.rs"
+
+[[bin]]
+name = "t012_verify"
+path = "verification/T012/t012_verify.rs"
+
+[[bin]]
+name = "t013_verify"
+path = "verification/T013/t013_verify.rs"
+
+[[bin]]
+name = "t016_verify"
+path = "verification/T016/t016_verify.rs"
+
 [dev-dependencies]
 gpui-kit = { version = "0.10.0", features = ["gpui-fast", "test-support"] }

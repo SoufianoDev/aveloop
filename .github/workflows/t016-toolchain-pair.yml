@@ -4,7 +4,7 @@ on:
   push:
     branches: [feat/gpui-kit-fast, dev]
     paths:
-      - 'src/bin/t016_verify.rs'
+      - 'verification/T016/t016_verify.rs'
       - '.github/workflows/t016-toolchain-pair.yml'
   workflow_dispatch:
 

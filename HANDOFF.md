@@ -123,8 +123,8 @@ Verified this session: `f259ead` exists locally and on the remote, the tree is c
 | T009 complete | C17 and C++20 debug builds verified across Linux (GCC 14.2), macOS (Apple Clang), and Windows (MSVC 19.44) | `docs/feasibility/t009-cpp-toolchain.md`; `docs/feasibility/cross-platform-matrix.md`; Issue #9 comments |
 | T010 complete | Platform debugger launch, breakpoints, stepping, stack, symbols verified across Linux (GDB 16.2), macOS (LLDB), and Windows (MSVC PDB) | `docs/feasibility/t010-debugger-capabilities.md`; `docs/feasibility/cross-platform-matrix.md`; Issue #10 comments |
 | T011 complete | Protocol capabilities negotiated and `supportsStepBack: false` confirmed across Linux (GDB DAP/MI), macOS (LLDB), and Windows | `docs/feasibility/t011-debugger-capabilities-negotiation.md`; `docs/feasibility/cross-platform-matrix.md`; Issue #11 comments |
-| T008 complete (Linux) | 2/2 interaction tests pass (focus, typing, backspace, clipboard via UI, resize/reflow); Wayland window opens and exits 0; X11 via Xephyr: clipboard write/read PASSED, window opens, exit 0; external round-trip verified both directions against `xsel`; Wayland clipboard read remains unverified (no `wl-clipboard`; offers need focus) | `docs/feasibility/t008-gpui-input.md`; `src/bin/t008_verify.rs`; `tests/t008_interaction_tests.rs`; Issue #8 comments |
-| T012 complete (Linux) | 4/4 checks PASS (spawn_and_kill, exit_status_captured, child_does_not_outlive_kill, timeout_then_kill); exit 0; CI dispatched for Windows/macOS | `src/bin/t012_verify.rs`; `docs/feasibility/t012-process-cancellation.md`; Issue #12 comment; commit `e6d0749` |
+| T008 complete (Linux) | 2/2 interaction tests pass (focus, typing, backspace, clipboard via UI, resize/reflow); Wayland window opens and exits 0; X11 via Xephyr: clipboard write/read PASSED, window opens, exit 0; external round-trip verified both directions against `xsel`; Wayland clipboard read remains unverified (no `wl-clipboard`; offers need focus) | `docs/feasibility/t008-gpui-input.md`; `verification/T008/t008_verify.rs`; `tests/t008_interaction_tests.rs`; Issue #8 comments |
+| T012 complete (Linux) | 4/4 checks PASS (spawn_and_kill, exit_status_captured, child_does_not_outlive_kill, timeout_then_kill); exit 0; CI dispatched for Windows/macOS | `verification/T012/t012_verify.rs`; `docs/feasibility/t012-process-cancellation.md`; Issue #12 comment; commit `e6d0749` |
 | T014 complete | Text primitives and the reusable Editor widget evaluated from pinned sources; required M3 surface mapped to `gpui-component` modules; reuse/no-fork decision recorded; follow-ups listed (enable tree-sitter C/C++ features, M3 variant mapping, build timeline and pointer graph) | `docs/feasibility/t014-text-and-m3-surface.md`; Issue #14 comment; commit `8f112bc` |
 | T015 complete (report) | Consolidated cross-platform feasibility report; per-target evidence levels; verified path per Alpha target; three blocking gaps (Windows debugger backend undecided, macOS debugger depth, macOS/Windows GPUI runtime); matrix overclaim corrected | `docs/feasibility/t015-cross-platform-feasibility-report.md`; Issue #15 comment; commit `bd4216d` |
 
@@ -155,14 +155,14 @@ Verified this session: `f259ead` exists locally and on the remote, the tree is c
 | `tests/domain_tests.rs`, `tests/presentation_tests.rs` | added | Domain navigation and workspace initialization tests | Committed `48f2fc0` |
 | `docs/feasibility/gpui-kit-fast-integration.md` | added | Audit, compatibility, integration map, and verification report | Committed `48f2fc0` |
 | `docs/decisions/alpha-baseline.md` | modified | Record GPUI Kit and GPUI Fast adoption decision | Committed `48f2fc0` |
-| `src/bin/t008_verify.rs` | added, then modified | T008 runtime probe: window, display server, clipboard; deferred quit, read-only mode | Committed `ea07e67`; review fixes in `23a7147` |
+| `verification/T008/t008_verify.rs` | added, then modified | T008 runtime probe: window, display server, clipboard; deferred quit, read-only mode | Committed `ea07e67`; review fixes in `23a7147` |
 | `tests/t008_interaction_tests.rs` | added | T008 focus, typing, clipboard, resize tests | Committed `ea07e67` |
 | `docs/feasibility/t008-gpui-input.md` | added, then rewritten | T008 evidence with per-requirement status and Wayland caveat | Committed `ea07e67`; updated in `23a7147` |
 | `docs/feasibility/t009-cpp-toolchain.md` | added | T009 C17/C++20 toolchain evidence, conformance caveats, linker/runtime prerequisites, external research table | Committed `09d9b1f` |
 | `docs/feasibility/t010-debugger-capabilities.md` | added | T010 platform debugger capabilities verification report | Committed `aab8792` |
 | `docs/feasibility/t011-debugger-capabilities-negotiation.md` | added | T011 debugger capabilities negotiation and reverse-step independence report | Committed `ad45702` |
 | `docs/feasibility/cross-platform-matrix.md` | added | T006, T007, T009, T010, T011 cross-platform CI verification report | Committed this session |
-| `src/bin/t012_verify.rs` | added | T012 process cancellation probe (pure std, 4 checks) | Committed `e6d0749` |
+| `verification/T012/t012_verify.rs` | added | T012 process cancellation probe (pure std, 4 checks) | Committed `e6d0749` |
 | `docs/feasibility/t012-process-cancellation.md` | added | T012 evidence report | Committed `e6d0749` |
 | `.github/workflows/t012-process-cancellation.yml` | added | T012 CI workflow (Linux/Windows/macOS) | Committed `e6d0749` |
 | `specs/001-ave-loop-alpha/tasks.md` | modified | Mark T012 `[x]` | Committed `e6d0749` |
@@ -735,7 +735,7 @@ Entries H0001–H0099 record the project and review sessions. Entry timestamps a
 
 - [H0056] [2026-11-23T14:52Z] [T008] ACTION: Verified repository state against `HANDOFF.md` and fixed probe compile errors.
   - Command/tool: `git branch -vv`, `git log`, `git status`, `cargo test`
-  - Target: repository + `src/bin/t008_verify.rs`
+  - Target: repository + `verification/T008/t008_verify.rs`
   - Result: HANDOFF was stale (claimed clean tree at `48f2fc0`; actual `dae36d7` with two untracked T008 files). First build failed with 4 errors; fixed by importing `gpui_kit::base::StyledExt`, dropping the non-existent `cleanable`, and matching `InputEvent::PressEnter { .. }`
   - Evidence: build error output; corrected file
   - State change: HANDOFF Current State corrected to verified facts
@@ -776,15 +776,15 @@ Entries H0001–H0099 record the project and review sessions. Entry timestamps a
   - State change: T008 evidence published on the feature branch; `main` untouched
 
 - [H0062] [2026-11-23T14:10Z] [T008] ACTION: Fixed the quit path.
-  - Command/tool: read `gpui-fast-linux` platform `quit`; edit `src/bin/t008_verify.rs`; `cargo build --bin t008_verify`
-  - Target: `src/bin/t008_verify.rs`
+  - Command/tool: read `gpui-fast-linux` platform `quit`; edit `verification/T008/t008_verify.rs`; `cargo build --bin t008_verify`
+  - Target: `verification/T008/t008_verify.rs`
   - Result: `App::quit` calls `platform.quit()` → calloop `LoopSignal::stop()`, which is cleared when `event_loop.run` starts, so a quit inside the launch callback is a no-op. Deferring it with `cx.defer` makes both backends exit with code 0
   - Evidence: Wayland run exit 0 with `[T008] Automated probe mode: closing application.`
   - State change: clean exit gap closed
 
 - [H0063] [2026-11-23T14:11Z] [T008] ACTION: Moved the clipboard read back before the event loop.
   - Command/tool: `AVELOOP_PROBE_EXIT=1` under `DISPLAY=:99`
-  - Target: `src/bin/t008_verify.rs`
+  - Target: `verification/T008/t008_verify.rs`
   - Result: reading the clipboard inside `cx.defer` panics on X11 (`RefCell already borrowed`, `x11/client.rs:1904`); reads must happen before the loop starts. The probe now reads early and defers only the quit
   - Evidence: panic backtrace; corrected probe
   - State change: probe restructured; read-only mode (`AVELOOP_PROBE_READ_ONLY`) added
@@ -812,7 +812,7 @@ Entries H0001–H0099 record the project and review sessions. Entry timestamps a
 
 - [H0067] [2026-11-23T14:28Z] [T008] ACTION: Committed the T008 gap closure.
   - Command/tool: `git add` on four explicit paths; `git commit`
-  - Target: `docs/feasibility/t008-gpui-input.md`, `specs/001-ave-loop-alpha/{tasks,complete}.md`, `src/bin/t008_verify.rs`
+  - Target: `docs/feasibility/t008-gpui-input.md`, `specs/001-ave-loop-alpha/{tasks,complete}.md`, `verification/T008/t008_verify.rs`
   - Result: `589b7e2`, 4 files, 99 insertions / 38 deletions; `git diff --cached --check` exit 0; `.planning/` never staged
   - Evidence: commit output
   - State change: T008 work committed locally
@@ -910,9 +910,9 @@ Entries H0001–H0099 record the project and review sessions. Entry timestamps a
   - Evidence: git output
   - State change: HANDOFF corrected; no data loss
 
-- [H0087] [2026-11-24T01:02Z] [T012] ACTION: Wrote `src/bin/t012_verify.rs` — pure-std process cancellation probe.
+- [H0087] [2026-11-24T01:02Z] [T012] ACTION: Wrote `verification/T012/t012_verify.rs` — pure-std process cancellation probe.
   - Command/tool: write
-  - Target: `src/bin/t012_verify.rs`
+  - Target: `verification/T012/t012_verify.rs`
   - Result: 4 checks (spawn_and_kill, exit_status_captured, child_does_not_outlive_kill, timeout_then_kill); Unix uses `sleep 60`, Windows uses `cmd /C timeout`
   - Evidence: file created
   - State change: probe binary exists; not yet compiled
@@ -933,7 +933,7 @@ Entries H0001–H0099 record the project and review sessions. Entry timestamps a
 
 - [H0090] [2026-11-24T01:03Z] [T012] ACTION: Marked T012 complete and committed.
   - Command/tool: sed; `git add`; `git commit`; `git push origin dev:feat/gpui-kit-fast`
-  - Target: `tasks.md`, `complete.md`, `src/bin/t012_verify.rs`, `docs/feasibility/t012-process-cancellation.md`, `.github/workflows/t012-process-cancellation.yml`
+  - Target: `tasks.md`, `complete.md`, `verification/T012/t012_verify.rs`, `docs/feasibility/t012-process-cancellation.md`, `.github/workflows/t012-process-cancellation.yml`
   - Result: commit `e6d0749`, 5 files, 251 insertions; pushed `ce821b7..e6d0749`; remote ref verified
   - Evidence: git output
   - State change: T012 published; CI triggered
@@ -961,7 +961,7 @@ Entries H0001–H0099 record the project and review sessions. Entry timestamps a
 
 - [H0094] [2026-11-24T01:25Z] [T013] ACTION: Fixed the T013 probe manifest placement and verified the crates compile and parse on Linux.
   - Command/tool: moved `tree-sitter*` dependencies from `[dev-dependencies]` to `[dependencies]`; `cargo fetch`; `cargo build --bin t013_verify`; `cargo run --bin t013_verify`
-  - Target: `Cargo.toml`, `src/bin/t013_verify.rs`
+  - Target: `Cargo.toml`, `verification/T013/t013_verify.rs`
   - Result: C and C++ parsing plus C/C++ node-kind checks all PASS
   - Evidence: terminal output; pinned crate license manifests are MIT
   - State change: T013 Linux implementation verified; cross-platform CI dispatch remains

@@ -20,7 +20,7 @@ These are prerequisites for T031 (build process execution and cancellation) and 
 
 ---
 
-## Probe: `src/bin/t012_verify.rs`
+## Probe: `verification/T012/t012_verify.rs`
 
 A standalone binary using only `std::process`. No GPUI, no async runtime. Four checks:
 
