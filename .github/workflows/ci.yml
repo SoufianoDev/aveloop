@@ -21,7 +21,7 @@ jobs:
             label: Linux x86_64
           - os: windows-2022
             label: Windows x86_64
-          - os: macos-14
+          - os: macos-latest
             label: macOS arm64
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
