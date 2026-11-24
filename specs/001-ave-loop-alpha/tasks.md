@@ -63,7 +63,7 @@ All compiler and debugger verification uses toolchains already installed on each
 - [x] T017 Create one Cargo package and a minimal native GPUI application that launches on all Alpha targets.
 - [x] T018 Establish the modular-monolith boundaries and composition root; keep domain independent of GPUI, DAP, filesystem, and OS process APIs.
 - [x] T019 Add shared diagnostics, structured logging, error classification, and background-work cancellation conventions.
-- [ ] T020 [P] Add CI build, formatting, lint, and test checks for Linux x86_64, Windows x86_64, and macOS arm64.
+- [x] T020 [P] Add CI build, formatting, lint, and test checks for Linux x86_64, Windows x86_64, and macOS arm64.
 - [ ] T021 Add architecture checks that prevent presentation/GPUI and infrastructure/DAP types from leaking into domain models.
 - [ ] T022 Define and validate the initial `ave.toml` manifest contract, versioning, relative-path rules, and actionable invalid-project errors.
 

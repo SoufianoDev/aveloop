@@ -4,27 +4,35 @@ Canonical continuity record for every agent working on this repository. Read thi
 
 ## Current State
 
-- **Last updated:** 2026-11-24 (GPUI Kit Material documentation and Issue synchronization phase)
+- **Last updated:** 2026-11-24 (T020 cross-platform CI complete; Phase 3 foundation in progress)
 - **Repository:** `SoufianoDev/aveloop` (`https://github.com/SoufianoDev/aveloop.git`)
 - **Project root:** `/home/soufiano/SoufianoDev/AveLoop`
 - **Active branch:** `dev` tracking `origin/feat/gpui-kit-fast`.
-- **Last verified HEAD:** `271b134c95e468b5205315a045accdd4a5dc1be8` on `dev`; the remote feature ref also matches `271b134c95e468b5205315a045accdd4a5dc1be8`.
+- **Last verified HEAD:** `ae1ba21` on `dev` (CI fix commit); `origin/feat/gpui-kit-fast` matched it at push time. Verify again before acting.
 - **`main` moved:** `origin/main` is `7953e08` (`Merge pull request #140`). It does not contain `589b7e2` or later. Integration into `main` is not authorized.
-- **Working tree:** four specification/plan/task/governance updates plus existing owner edits in `src/presentation/theme.rs`; no Cargo or source implementation changes are part of this operation.
-- **Active task:** Phase 17 GPUI Kit Material adoption documentation and Issue synchronization.
-- **Current phase:** Phase 17 complete as a planning/documentation phase; no UI implementation or dependency change started.
-- **Overall status:** T001–T019 complete as work items. Linux, macOS, and Windows each have live evidence for GPUI launch, C/C++ toolchain, debugger session, and process control.
-- **Current objective:** Continue non-Cargo documentation and continuity work only. No implementation or dependency work is authorized.
+- **Working tree:** owner edit in `src/presentation/theme.rs` (unstaged, leave alone) plus the T020 documentation updates being committed.
+- **Active task:** T020 complete (`.github/workflows/ci.yml`); next unchecked task is T021.
+- **Current phase:** Phase 3 — Native application and architecture foundation (T016–T019 were already complete; T020 now complete; T021–T022 open).
+- **Overall status:** T001–T020 complete as work items. Product CI is green on Linux x86_64, Windows x86_64, and macOS arm64.
+- **Current objective:** Continue Phase 3 with T021 (architecture checks), then T022 (`ave.toml` manifest contract).
 
 ## Immediate Next Action
 
-**Stop after the planning/documentation and GitHub synchronization workflow.** Do not implement
-GPUI Kit Material, modify `Cargo.toml` or `Cargo.lock`, download assets, commit, push, create a
-PR, or merge. The next implementation task requires a separate explicit authorization.
+**Next task: T021 — add architecture checks that prevent presentation/GPUI and infrastructure/DAP
+types from leaking into domain models.** Implement, validate, mark `tasks.md`, regenerate
+`complete.md`, and synchronize canonical Issue #21 (AGENTS.md rule #12).
 
-**2026-11-24 — USER-CONFIRMED:** Continue with the non-Cargo handoff/documentation step; do not
-run any `cargo` command. This confirmation does not authorize implementation, dependency changes,
-asset downloads, commits, pushes, or merges.
+**2026-11-24 — USER-CONFIRMED:** "continue (you can use cargo if you need it)" — `cargo`
+commands, commits, and pushes are authorized. Phase 3 implementation has started.
+
+**2026-11-24 — VERIFIED-FACT:** T020 complete. `.github/workflows/ci.yml` runs, for Linux
+x86_64 (`ubuntu-22.04`), Windows x86_64 (`windows-2022`), and macOS arm64 (`macos-latest`):
+`cargo fmt --all -- --check`, `cargo clippy --lib --tests -- -D warnings`,
+`cargo build --lib --bin aveloop`, `cargo test --lib --tests`. Evidence: run `45430789249`, all
+three jobs `success`, head `ae1ba21`. Linux requires `libxkbcommon-dev` +
+`libxkbcommon-x11-dev`. The `macos-14` label was cancelled by GitHub before runner assignment
+(no steps, no logs); `macos-latest` (arm64) is used instead. Issue #20 body synced and evidence
+commented; Issue left OPEN per repo practice.
 
 Phase 17 is complete with:
 
@@ -49,8 +57,8 @@ by route A (CI probes only, no product code):
 Evidence: `docs/feasibility/t016-t019-gate-closure.md`; revised verdict in
 `docs/feasibility/t015-cross-platform-feasibility-report.md` §8.
 
-Do not start Phase 3 without explicit authorization. Do not close Issues. Leave the
-owner's uncommitted `src/presentation/theme.rs` edit alone. Do not push `dev` to `main`.
+Do not close Issues. Leave the owner's uncommitted `src/presentation/theme.rs` edit alone.
+Do not push `dev` to `main`. Do not start T021 until the T020 documentation commit is pushed.
 
 ## Verified Project State
 
@@ -1143,6 +1151,30 @@ Entries H0001–H0099 record the project and review sessions. Entry timestamps a
   - Pre-commit gate: verified Issues #94/#96/#98/#100/#102 carry current T056–T060 text (AGENTS.md rule #12)
   - Result: commit `271b134`; push `1669faf..271b134`; remote `origin/feat/gpui-kit-fast` = `271b134`
   - State change: Phase 17 documentation published; working tree now holds only the owner's `src/presentation/theme.rs` edit
+
+- [H0118] [2026-11-24] [T020] VERIFIED-FACT: product CI workflow added and pushed.
+  - Session: OpenCode session `ses_df4caf04effevP8U7GoQKRY3ZO` (AI agent: opencode)
+  - Command/tool: `cargo fmt --all`, `cargo clippy --lib --tests -- -D warnings`, `cargo build --lib --bin aveloop`, `cargo test --lib --tests`; `git commit`; `git push origin dev:feat/gpui-kit-fast`
+  - Artifact: `.github/workflows/ci.yml` — matrix Linux x86_64 (`ubuntu-22.04`), Windows x86_64 (`windows-2022`), macOS arm64; steps fmt check, clippy `-D warnings`, build, test
+  - Fixes included: removed 3 redundant `AnyWindowHandle::into()` calls in `tests/t008_interaction_tests.rs`; rustfmt applied to `verification/T012/t012_verify.rs` and `verification/T016/t016_verify.rs`
+  - Local result: fmt clean, clippy clean, build ok, 7/7 tests
+  - Commit `d0bbae8`; push `7376090..d0bbae8`
+  - State change: first CI run `45426114219` — Windows success, Linux failed (link), macOS job cancelled with no steps/logs
+
+- [H0119] [2026-11-24] [T020] VERIFIED-FACT: CI link and runner-label fixes; all three OS jobs green.
+  - Session: OpenCode session `ses_df4caf04effevP8U7GoQKRY3ZO` (AI agent: opencode)
+  - Command/tool: `gh api .../jobs/<id>/logs`, `gh run view`, `gh api .../runs/<id>/jobs`, `git commit`, `git push`
+  - Finding 1: Linux failure was `rust-lld: error: unable to find library -lxkbcommon` / `-lxkbcommon-x11` while linking `aveloop`; fmt and clippy had already passed. Fixed with an `apt-get install -y libxkbcommon-dev libxkbcommon-x11-dev` step guarded by `runner.os == 'Linux'` (commit `f0d364c`).
+  - Finding 2: `macos-14` job was cancelled before runner assignment (`runner_name: ""`, `steps: []`, started/completed within 1s, no log blob). The repo's passing workflows use `macos-latest`, which resolves to the same arm64 image; switched to `macos-latest` (commit `ae1ba21`).
+  - Evidence: run `45430789249` (head `ae1ba21`) — Linux success, Windows success, macOS arm64 success
+  - State change: T020 acceptance evidence available
+
+- [H0120] [2026-11-24] [T020] USER-CONFIRMED completion: task marked, derived doc regenerated, Issue #20 synchronized.
+  - Session: OpenCode session `ses_df4caf04effevP8U7GoQKRY3ZO` (AI agent: opencode)
+  - Files: `specs/001-ave-loop-alpha/tasks.md` (T020 `[x]`), `specs/001-ave-loop-alpha/complete.md` (tasks block regenerated; diff is exactly the T020 line), `HANDOFF.md`
+  - GitHub: Issue #20 body canonical task line set to `[x]`; evidence comment added (run `45430789249`, Linux dependency requirement, `macos-14` cancellation note). Issue left OPEN per existing repo practice (canonical completed issues #16–#19 are also open).
+  - Excluded: `src/presentation/theme.rs` (owner edit, left unstaged), `.planning/` (gitignored)
+  - Next: T021 architecture checks
 
 ## Resume Instructions
 
