@@ -4,22 +4,22 @@ Canonical continuity record for every agent working on this repository. Read thi
 
 ## Current State
 
-- **Last updated:** 2026-11-24 (T012 process cancellation verified on Linux; CI dispatched for Windows/macOS)
+- **Last updated:** 2026-11-24 (T012 CI passed on Linux/Windows/macOS; T013 started)
 - **Repository:** `SoufianoDev/aveloop` (`https://github.com/SoufianoDev/aveloop.git`)
 - **Project root:** `/home/soufiano/SoufianoDev/AveLoop`
 - **Active branch:** `dev` tracking `origin/feat/gpui-kit-fast`.
-- **Last verified HEAD:** `e6d0749` (`feat(t012): verify process cancellation and child-process cleanup`), pushed to `origin/feat/gpui-kit-fast`
+- **Last verified HEAD:** `71aaac9` (`docs: update handoff for T012 completion and correct HEAD discrepancy`), matching `origin/feat/gpui-kit-fast`
 - **DISCREPANCY corrected:** Previous HANDOFF recorded HEAD as `ad45702`; actual HEAD at session start was `ce821b7`; corrected here. Repository wins.
 - **`main` moved:** `origin/main` is now `7953e08` (`Merge pull request #140 from SoufianoDev/feat/gpui-kit-fast`). Contains `4bf809c` but not `589b7e2` or later.
-- **Working tree:** clean (T012 commit `e6d0749` pushed)
-- **Active task:** T012 complete (Linux PASS); CI pending for Windows/macOS
+- **Working tree:** dirty; T013 manifest, probe, workflow/report work in progress plus an unrelated theme author edit
+- **Active task:** T013 (T012 complete; all 3 CI legs passed)
 - **Current phase:** Phase 2 — Foundational feasibility
-- **Overall status:** Phase 1 complete (T001–T004); T005–T011 complete; T012 Linux complete, CI dispatched; next T013.
-- **Current objective:** Await T012 CI results (Windows/macOS), then proceed to T013.
+- **Overall status:** Phase 1 complete (T001–T004); T005–T012 complete; T013 in progress; T014–T015 next.
+- **Current objective:** Complete T013 Linux verification, cross-platform CI, evidence report, and task closure.
 
 ## Immediate Next Action
 
-Await CI run for `.github/workflows/t012-process-cancellation.yml` (triggered by push to `feat/gpui-kit-fast`). Once all 3 OS legs pass, record the CI run ID and update this file. Then start T013 (Tree-sitter C/C++ grammar integration and license compatibility). Do not close Issues without explicit authorization.
+T012 CI run `45294000672` passed all 3 OS legs. Continue T013: finish the Tree-sitter report and cross-platform CI, mark T013 complete, post evidence on Issue #13 if review is complete, then proceed to T014. Do not close Issues without explicit authorization.
 
 ## Verified Project State
 
@@ -913,6 +913,27 @@ Entries H0001–H0085 record the project and review sessions. Entry timestamps a
   - Result: comment posted; issue remains OPEN
   - Evidence: https://github.com/SoufianoDev/aveloop/issues/12#issuecomment-7117660234
   - State change: evidence published; closure deferred to owner after CI passes
+
+- [H0092] [2026-11-24T01:23Z] [verification] VERIFIED-FACT: T012 CI run 45294000672 passed Linux, Windows, and macOS; T013 is now authorized to proceed.
+  - Command/tool: `gh run view 45294000672 --json status,conclusion,jobs`
+  - Target: `feat/gpui-kit-fast`
+  - Result: workflow conclusion `success`; all 3 OS jobs succeeded
+  - Evidence: GitHub Actions run 45294000672
+  - State change: T012 waiting condition cleared; Immediate Next Action advanced to T013
+
+- [H0093] [2026-11-24T01:24Z] [T013] DISCREPANCY: The handoff reported a clean feature branch at `e6d0749`, but verified HEAD is `71aaac9` and the working tree has T013 and theme changes.
+  - Command/tool: `git status --short --branch`, `git log`, `git diff --stat`
+  - Target: repository state
+  - Result: HEAD/`origin/feat/gpui-kit-fast` = `71aaac9`; working tree has modified `Cargo.lock`, `Cargo.toml`, `src/presentation/theme.rs` plus untracked T013 workflow and probe
+  - Evidence: shell output
+  - State change: handoff Current State corrected; partial T013 work preserved
+
+- [H0094] [2026-11-24T01:25Z] [T013] ACTION: Fixed the T013 probe manifest placement and verified the crates compile and parse on Linux.
+  - Command/tool: moved `tree-sitter*` dependencies from `[dev-dependencies]` to `[dependencies]`; `cargo fetch`; `cargo build --bin t013_verify`; `cargo run --bin t013_verify`
+  - Target: `Cargo.toml`, `src/bin/t013_verify.rs`
+  - Result: C and C++ parsing plus C/C++ node-kind checks all PASS
+  - Evidence: terminal output; pinned crate license manifests are MIT
+  - State change: T013 Linux implementation verified; cross-platform CI dispatch remains
 
 ## Resume Instructions
 
