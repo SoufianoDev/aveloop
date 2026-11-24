@@ -8,7 +8,7 @@ Canonical continuity record for every agent working on this repository. Read thi
 - **Repository:** `SoufianoDev/aveloop` (`https://github.com/SoufianoDev/aveloop.git`)
 - **Project root:** `/home/soufiano/SoufianoDev/AveLoop`
 - **Active branch:** `dev` tracking `origin/feat/gpui-kit-fast`.
-- **Last verified HEAD:** `240f8e9` (T020 documentation commit); verify again before acting.
+- **Last verified HEAD:** `0e1f9fd` (T021 commit; CI run `45440207497` green). Verify again before acting.
 - **`main` moved:** `origin/main` is `7953e08` (`Merge pull request #140`). It does not contain `589b7e2` or later. Integration into `main` is not authorized.
 - **Working tree:** owner edit in `src/presentation/theme.rs` (unstaged, leave alone) plus the T021 changes being committed.
 - **Active task:** T021 complete (`tests/architecture_tests.rs`); next unchecked task is T022.
@@ -1184,6 +1184,13 @@ Entries H0001–H0099 record the project and review sessions. Entry timestamps a
   - Local result: `cargo test --test architecture_tests` 3/3; full `cargo test --lib --tests` 10/10; `cargo fmt --check` and `cargo clippy --lib --tests -- -D warnings` clean
   - No CI workflow change needed: the product CI already runs `cargo test --lib --tests`
   - Docs: `tasks.md` T021 `[x]`; `complete.md` tasks block regenerated (1-line diff); Issue #21 canonical task line set to `[x]`
+
+- [H0122] [2026-11-24] [T021] VERIFIED-FACT: T021 CI evidence recorded; issue synchronized.
+  - Session: OpenCode session `ses_df4caf04effevP8U7GoQKRY3ZO` (AI agent: opencode)
+  - Commit `0e1f9fd`; pushed `240f8e9..0e1f9fd`
+  - Evidence: CI run `45440207497` (head `0e1f9fd`) concluded `success` — Linux and Windows `success` on the first attempt; macOS job was auto-cancelled after exactly 15 minutes queued with 0 steps and no runner, then passed on `gh run rerun --failed`
+  - GitHub: Issue #21 evidence comment added; issue left OPEN per repo practice
+  - Note: macOS runner capacity is intermittent; a queued macOS job cancelled at 15:00 with `steps: []` is an infrastructure cancellation, not a code failure — rerun the failed job
 
 ## Resume Instructions
 
