@@ -8,7 +8,7 @@ Canonical continuity record for every agent working on this repository. Read thi
 - **Repository:** `SoufianoDev/aveloop` (`https://github.com/SoufianoDev/aveloop.git`)
 - **Project root:** `/home/soufiano/SoufianoDev/AveLoop`
 - **Active branch:** `dev` tracking `origin/feat/gpui-kit-fast`.
-- **Last verified HEAD:** `617d49e` (`docs(t016-t019): record gate closure evidence and revise the gate verdict`); the HANDOFF update recording this state is committed immediately after it.
+- **Last verified HEAD:** `9585fb1` (`test(ci): drop the flaky MSVC+CDB job and record it as a residual`), matching `origin/feat/gpui-kit-fast`.
 - **`main` moved:** `origin/main` is `7953e08` (`Merge pull request #140`). It does not contain `589b7e2` or later. Integration into `main` is not authorized.
 - **Working tree:** only the repository owner's uncommitted edit in `src/presentation/theme.rs`. Left untouched and unstaged.
 - **Active task:** T016–T019 complete; **Phase 2 exit gate met with recorded residuals**.
@@ -1069,6 +1069,13 @@ Entries H0001–H0099 record the project and review sessions. Entry timestamps a
   - Result: the job's selection assertion, `cl` build, and CDB launch succeeded, but the child's stream markers reached the captured file in one run and not the next, and CDB console-buffer output is never captured. A green gate cannot depend on that
   - Evidence: `MISSING: STDOUT_MARK 42` while the same markers appear in the step log; `MISSING: local_int`/`probe!main` in every run
   - State change: `SUPERSEDES` the CDB scope in H0102; MSVC + CDB is a documented residual, MinGW-w64 + GDB remains the verified Windows path
+
+- [H0105] [2026-11-24T03:20Z] [T016–T019] ACTION: Re-ran the verification workflows at `9585fb1`.
+  - Session: OpenCode session `ses_df4caf04effevP8U7GoQKRY3ZO` (AI agent: opencode)
+  - Command/tool: `gh run list`, `gh run view` for each workflow
+  - Result: T017/T018 run `45310701540` success (Windows MinGW-w64 + GDB, macOS LLDB); latest T016 `45308437390`, T019 `45308437334`, T012 `45308437304`, T013 `45308437255` all success
+  - Evidence: job conclusions `success` for both live-debugger jobs
+  - State change: gate evidence current at HEAD `9585fb1`; working tree contains only the owner's `src/presentation/theme.rs` edit
 
 ## Resume Instructions
 
