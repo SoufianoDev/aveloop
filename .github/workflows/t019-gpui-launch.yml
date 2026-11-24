@@ -1,0 +1,51 @@
+name: T019 GPUI runtime launch
+
+on:
+  push:
+    branches: [feat/gpui-kit-fast, dev]
+    paths:
+      - 'src/bin/t008_verify.rs'
+      - '.github/workflows/t019-gpui-launch.yml'
+  workflow_dispatch:
+
+jobs:
+  launch:
+    name: ${{ matrix.label }} GPUI launch
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            label: macOS arm64
+          - os: windows-2022
+            label: Windows x86_64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Launch window and exit (macOS)
+        if: runner.os == 'macOS'
+        env:
+          AVELOOP_PROBE_EXIT: '1'
+        run: |
+          set -o pipefail
+          cargo run --bin t008_verify 2>&1 | tee launch.log
+          grep -q 'Verification window opened successfully' launch.log
+
+      - name: Launch window and exit (Windows)
+        if: runner.os == 'Windows'
+        env:
+          AVELOOP_PROBE_EXIT: '1'
+        shell: pwsh
+        run: |
+          cargo run --bin t008_verify *> launch.log
+          Get-Content launch.log
+          if (-not (Select-String -Path launch.log -Pattern 'Verification window opened successfully' -Quiet)) {
+            Write-Error 'GPUI window did not open'
+            exit 1
+          }

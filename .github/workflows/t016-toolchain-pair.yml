@@ -1,0 +1,32 @@
+name: T016 Windows toolchain pair detection
+
+on:
+  push:
+    branches: [feat/gpui-kit-fast, dev]
+    paths:
+      - 'src/bin/t016_verify.rs'
+      - '.github/workflows/t016-toolchain-pair.yml'
+  workflow_dispatch:
+
+jobs:
+  verify:
+    name: Windows x86_64
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Pair selection checks (four scenarios + explicit config)
+        run: cargo run --bin t016_verify
+
+      - name: Real host detection (informational)
+        run: cargo run --bin t016_verify -- --detect
+
+      - name: MSVC environment detection (informational)
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Real host detection with MSVC on PATH
+        run: cargo run --bin t016_verify -- --detect

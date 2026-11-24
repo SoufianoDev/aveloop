@@ -164,7 +164,15 @@ AveLoop uses the compiler already installed on the platform. It does not bundle,
 
 - **Linux:** existing GCC/G++, or the compiler explicitly selected through project configuration or `CC`/`CXX`. Clang is used only when the user selects it.
 - **macOS:** the active Apple Clang/Clang++ toolchain (`xcrun --find clang`); Command Line Tools are sufficient.
-- **Windows:** existing MSVC (`cl.exe`) or MinGW-w64 GCC/G++.
+- **Windows:** existing MSVC (`cl.exe`) with its compatible debugger (CDB/DbgEng), or existing MinGW-w64 GCC/G++ with GDB.
+
+Windows selection is pair-based, never compiler-only:
+1. Only MinGW-w64 GCC/G++ with GDB complete and compatible → select that pair.
+2. Only MSVC with CDB/DbgEng complete and compatible → select that pair.
+3. Both pairs complete and compatible → prefer MinGW-w64 GCC/G++ with GDB.
+4. Neither pair complete → report that no supported Windows compiler-debugger combination was found; install nothing.
+
+A compiler without its compatible debugger, or a debugger without its compatible compiler, is not a valid pair. Explicit project or user configuration overrides the default preference; when the configured family has no complete pair, report that family as unavailable instead of silently switching. Linux and macOS pairings are fixed by the platform (GCC/GDB, Apple Clang/LLDB).
 
 Standards: C17 (`-std=c17`), C++20 (`-std=c++20`), debug information enabled, low/no optimization in the debug profile. Platform-native linker and runtime prerequisites are documented per OS. Discovery reports executable path, version, target, and required companions; `cc`/`c++` aliases are resolved to the real compiler before capability reporting. Unsupported or mismatched installations produce actionable diagnostics. Verified versions are recorded per platform; there is no single pinned cross-platform compiler version.
 
@@ -172,7 +180,7 @@ Standards: C17 (`-std=c17`), C++20 (`-std=c++20`), debug information enabled, lo
 
 - **Linux:** GDB. Use its DAP interpreter when the installed build provides one (GDB DAP requires Python support); otherwise use GDB/MI through a narrow adapter.
 - **macOS:** LLDB and `lldb-dap` from the active Apple developer toolchain.
-- **Windows:** the debugger matching the selected compiler — Visual Studio debugger interfaces for MSVC, GDB for MinGW-w64.
+- **Windows:** the debugger of the pair selected by §3.3 — CDB/DbgEng for MSVC, GDB for MinGW-w64. Never pair an MSVC-built binary with GDB or a MinGW-built binary with CDB.
 
 DAP capability negotiation happens at session startup and is verified per backend, never assumed. DAP protocol structures stay inside infrastructure. Do not assume `supportsStepBack`. Capture ordered stop observations and reconstruct prior selected states from AveLoop-owned trace data. Source-level stepping is the Alpha granularity. Compiler and debugger discovery are independent.
 

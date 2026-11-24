@@ -1,0 +1,129 @@
+name: T017-T018 live debugger sessions
+
+on:
+  push:
+    branches: [feat/gpui-kit-fast, dev]
+    paths:
+      - 'src/bin/t016_verify.rs'
+      - '.github/workflows/t017-live-debugger.yml'
+  workflow_dispatch:
+
+jobs:
+  windows-live-debug:
+    name: Windows x86_64 live debugger
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Select compiler-debugger pair (spec §7.2)
+        id: pair
+        shell: pwsh
+        run: |
+          cargo run --bin t016_verify -- --detect | Tee-Object -FilePath detect.log
+          $line = Select-String -Path detect.log -Pattern '^selection=' | Select-Object -First 1
+          $selection = ($line.Line -split '=')[1]
+          "selection=$selection" | Out-File -Append $env:GITHUB_OUTPUT
+          Write-Host "selected pair: $selection"
+
+      - name: Write debugger fixture
+        shell: pwsh
+        run: |
+          @'
+          #include <stdio.h>
+          typedef struct { int value; int pad; } Child;
+          int main(void) {
+              int local_int = 42;
+              Child child = { 7, 0 };
+              Child *ptr = &child;
+              printf("STDOUT_MARK %d\n", local_int);
+              fprintf(stderr, "STDERR_MARK %d\n", ptr->value);
+              local_int += 1;
+              printf("DONE %d\n", local_int);
+              return 0;
+          }
+          '@ | Set-Content -Encoding ascii probe.c
+
+      - name: Live session — MSVC + CDB
+        if: steps.pair.outputs.selection == 'msvc'
+        shell: pwsh
+        run: |
+          # cl.exe is already on PATH on this runner image.
+          cl /std:c17 /Zi /Od /W4 probe.c /Fe:probe.exe
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          $cdb = Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\cdb.exe' -ErrorAction SilentlyContinue
+          if (-not $cdb) { Write-Error 'CDB not found on runner'; exit 1 }
+          & $cdb.FullName -g -G -c 'bp main; g; p; ? local_int; ? *ptr; ? ptr->value; k; q' .\probe.exe *> cdb.log
+          Get-Content cdb.log
+          $fail = 0
+          foreach ($pattern in @('local_int = 0n42', 'value = 0n7', 'STDOUT_MARK 42', 'STDERR_MARK 7', 'probe!main')) {
+            if (-not (Select-String -Path cdb.log -Pattern $pattern -Quiet)) {
+              Write-Host "MISSING: $pattern"; $fail = 1
+            }
+          }
+          exit $fail
+
+      - name: Live session — MinGW-w64 + GDB
+        if: steps.pair.outputs.selection == 'mingw'
+        shell: pwsh
+        run: |
+          gcc -std=c17 -g -O0 -o probe.exe probe.c
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          gdb -batch -ex 'break main' -ex run -ex next -ex next -ex 'print local_int' -ex 'print *ptr' -ex 'print ptr->value' -ex bt -ex kill .\probe.exe *> gdb.log
+          Get-Content gdb.log
+          $fail = 0
+          foreach ($pattern in @('\$1 = 42', 'value = 7', 'STDOUT_MARK 42', 'STDERR_MARK 7', '#0')) {
+            if (-not (Select-String -Path gdb.log -Pattern $pattern -Quiet)) {
+              Write-Host "MISSING: $pattern"; $fail = 1
+            }
+          }
+          exit $fail
+
+      - name: No complete pair — report, install nothing
+        if: steps.pair.outputs.selection == 'none'
+        shell: pwsh
+        run: |
+          Write-Error 'No supported Windows compiler-debugger combination found on this runner.'
+          exit 1
+
+  macos-live-debug:
+    name: macOS arm64 live debugger
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Write debugger fixture and build
+        run: |
+          cat > probe.c <<'EOF'
+          #include <stdio.h>
+          typedef struct { int value; int pad; } Child;
+          int main(void) {
+              int local_int = 42;
+              Child child = { 7, 0 };
+              Child *ptr = &child;
+              printf("STDOUT_MARK %d\n", local_int);
+              fprintf(stderr, "STDERR_MARK %d\n", ptr->value);
+              local_int += 1;
+              printf("DONE %d\n", local_int);
+              return 0;
+          }
+          EOF
+          clang -std=c17 -g -O0 -o probe probe.c
+
+      - name: Live session — LLDB
+        run: |
+          set -o pipefail
+          lldb --batch \
+            -o 'b main' -o run -o next -o next \
+            -o 'frame variable local_int' -o 'p *ptr' -o 'p ptr->value' \
+            -o bt -o kill ./probe 2>&1 | tee lldb.log
+          fail=0
+          for pattern in 'local_int = 42' 'value = 7' 'STDOUT_MARK 42' 'STDERR_MARK 7' 'frame #0'; do
+            if ! grep -q -- "$pattern" lldb.log; then echo "MISSING: $pattern"; fail=1; fi
+          done
+          exit $fail

@@ -41,6 +41,7 @@ These are implementation selections required to make the Alpha executable. They 
 | Tree-sitter for C/C++ syntax parsing/highlighting; no LSP in Alpha | Sufficient for highlighting without an LSP dependency | `plan.md` §8 |
 | Runtime memory visualization limited to debugger-observable/reachable entities and verified events | No allocation history the backend cannot supply | §6.4, `plan.md` §4.5 |
 | GPUI Kit and GPUI Fast adoption (`gpui-kit` v0.10.0 with `gpui-fast` v0.1.17) | Rich component library (M3 compatible) and retained-mode CPU reduction (73-88%) | `docs/feasibility/gpui-kit-fast-integration.md` |
+| Windows toolchain selection is pair-based: MinGW-w64 GCC/G++ + GDB, or MSVC + CDB/DbgEng; both complete → prefer MinGW-w64/GDB; neither → report and install nothing; explicit configuration wins and is never silently substituted | A compiler without its compatible debugger cannot deliver a debug session, so compiler-only priority would select an unusable toolchain | USER-CONFIRMED 2026-11-24; §7.2–§7.3, `plan.md` §3.3–§3.4 |
 
 ## Superseded proposals
 

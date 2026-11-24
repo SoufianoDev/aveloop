@@ -516,9 +516,19 @@ AveLoop uses the C/C++ toolchain already present on the user's system. No compil
 Platform defaults:
 - **Linux:** the existing GCC/G++ toolchain when it supports C17/C++20 and debug information. Clang is used only when the user or project selects it.
 - **macOS:** the active Apple Clang/Clang++ toolchain from Xcode or the Xcode Command Line Tools.
-- **Windows:** the existing compatible MSVC (`cl.exe`) or MinGW-w64 GCC/G++ toolchain.
+- **Windows:** a complete, compatible compiler-debugger pair: MSVC (`cl.exe`) with its compatible debugger (CDB/DbgEng), or MinGW-w64 GCC/G++ with GDB.
 
-Selection order is: explicit project configuration, then `CC`/`CXX`, then the platform default discovered on `PATH`. `cc` and `c++` are resolved to the actual compiler behind the alias before capabilities are reported. Compiler discovery and debugger discovery are independent; a GCC-built program may be debugged by GDB, and an Apple-Clang-built program by Apple's LLDB.
+Selection order is: explicit project configuration, then `CC`/`CXX`, then the platform default discovered on `PATH`. `cc` and `c++` are resolved to the actual compiler behind the alias before capabilities are reported. Compiler discovery and debugger discovery are separate probes, but a selection is valid only when the pair is complete: a compiler without its compatible debugger, or a debugger without its compatible compiler, is not a usable toolchain.
+
+On Windows the selection rules are:
+1. If only MinGW-w64 GCC/G++ with GDB is complete and compatible, select it.
+2. If only MSVC with its compatible debugger (CDB/DbgEng) is complete and compatible, select it.
+3. If both pairs are complete and compatible, prefer MinGW-w64 GCC/G++ with GDB.
+4. If neither pair is complete, report that no supported Windows compiler-debugger combination was found. Do not install or download anything.
+
+Explicit user or project toolchain configuration overrides the default preference. If the explicitly configured family has no complete compatible pair, report that family as unavailable; do not silently substitute the other family.
+
+On Linux and macOS the pairing is fixed by the platform (GCC with GDB, Apple Clang with LLDB), so the completeness rule applies without a preference order.
 
 A toolchain is considered supported only after the compiler, debugger adapter, debug symbols, launch, capture, and navigation workflow pass the platform smoke test. Verified compiler versions are recorded per platform rather than pinned to one cross-platform reference version.
 
@@ -527,7 +537,7 @@ A toolchain is considered supported only after the compiler, debugger adapter, d
 The debugger is the one that matches the selected platform toolchain:
 - **Linux:** GDB, using its DAP interpreter when the installed build provides one (GDB DAP requires Python support), otherwise GDB/MI.
 - **macOS:** the LLDB and `lldb-dap` shipped with the active Apple developer toolchain.
-- **Windows:** the debugger compatible with the selected compiler environment — the Visual Studio debugger interfaces for MSVC, GDB for MinGW-w64.
+- **Windows:** the debugger of the compiler-debugger pair selected by the §7.2 rules — the Visual Studio debugger interfaces (CDB/DbgEng) for MSVC, GDB for MinGW-w64.
 
 DAP is a protocol, not a debugger. A backend that exposes only a different machine interface is reached through a narrow adapter inside infrastructure. Capabilities are negotiated at session start and verified per backend; no capability is assumed because a protocol defines a related message.
 
@@ -981,7 +991,15 @@ AveLoop uses the compiler already installed on the platform. It does not bundle,
 
 - **Linux:** existing GCC/G++, or the compiler explicitly selected through project configuration or `CC`/`CXX`. Clang is used only when the user selects it.
 - **macOS:** the active Apple Clang/Clang++ toolchain (`xcrun --find clang`); Command Line Tools are sufficient.
-- **Windows:** existing MSVC (`cl.exe`) or MinGW-w64 GCC/G++.
+- **Windows:** existing MSVC (`cl.exe`) with its compatible debugger (CDB/DbgEng), or existing MinGW-w64 GCC/G++ with GDB.
+
+Windows selection is pair-based, never compiler-only:
+1. Only MinGW-w64 GCC/G++ with GDB complete and compatible → select that pair.
+2. Only MSVC with CDB/DbgEng complete and compatible → select that pair.
+3. Both pairs complete and compatible → prefer MinGW-w64 GCC/G++ with GDB.
+4. Neither pair complete → report that no supported Windows compiler-debugger combination was found; install nothing.
+
+A compiler without its compatible debugger, or a debugger without its compatible compiler, is not a valid pair. Explicit project or user configuration overrides the default preference; when the configured family has no complete pair, report that family as unavailable instead of silently switching. Linux and macOS pairings are fixed by the platform (GCC/GDB, Apple Clang/LLDB).
 
 Standards: C17 (`-std=c17`), C++20 (`-std=c++20`), debug information enabled, low/no optimization in the debug profile. Platform-native linker and runtime prerequisites are documented per OS. Discovery reports executable path, version, target, and required companions; `cc`/`c++` aliases are resolved to the real compiler before capability reporting. Unsupported or mismatched installations produce actionable diagnostics. Verified versions are recorded per platform; there is no single pinned cross-platform compiler version.
 
@@ -989,7 +1007,7 @@ Standards: C17 (`-std=c17`), C++20 (`-std=c++20`), debug information enabled, lo
 
 - **Linux:** GDB. Use its DAP interpreter when the installed build provides one (GDB DAP requires Python support); otherwise use GDB/MI through a narrow adapter.
 - **macOS:** LLDB and `lldb-dap` from the active Apple developer toolchain.
-- **Windows:** the debugger matching the selected compiler — Visual Studio debugger interfaces for MSVC, GDB for MinGW-w64.
+- **Windows:** the debugger of the pair selected by §3.3 — CDB/DbgEng for MSVC, GDB for MinGW-w64. Never pair an MSVC-built binary with GDB or a MinGW-built binary with CDB.
 
 DAP capability negotiation happens at session startup and is verified per backend, never assumed. DAP protocol structures stay inside infrastructure. Do not assume `supportsStepBack`. Capture ordered stop observations and reconstruct prior selected states from AveLoop-owned trace data. Source-level stepping is the Alpha granularity. Compiler and debugger discovery are independent.
 
@@ -1417,6 +1435,10 @@ All compiler and debugger verification uses toolchains already installed on each
 - [x] T013 [P] Verify Tree-sitter C/C++ grammar integration and license compatibility.
 - [x] T014 Evaluate GPUI text primitives and the required Material 3 component surface; document build/reuse decisions without creating a fork.
 - [x] T015 Produce the cross-platform feasibility report. Do not proceed to production foundation until every Alpha target has a verified path or the target matrix is explicitly re-approved.
+- [ ] T016 Implement the Windows compiler-debugger pair detection policy (MinGW-w64 GCC/G++ with GDB, or MSVC with CDB/DbgEng; both complete → prefer MinGW-w64/GDB; neither → report and install nothing; explicit configuration respected and never silently substituted) and validate all four scenarios in Windows CI.
+- [ ] T017 Verify a live Windows debugger session with the detected pair: launch, breakpoint, source-level stepping, stack, variables, aggregate children, pointer values, stdout/stderr separation, and termination.
+- [ ] T018 Complete macOS LLDB live verification: source-level stepping, variables, aggregate children, pointer values, stdout/stderr separation, and termination (launch, breakpoint, and backtrace already proven).
+- [ ] T019 Verify the GPUI application launches and renders on Windows and macOS at runtime, not only via `cargo check`.
 
 **Gate:** GPUI, compiler, debugger, process control, and required platform prerequisites have evidence on Linux, Windows, and macOS.
 
