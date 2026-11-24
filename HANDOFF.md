@@ -8,7 +8,7 @@ Canonical continuity record for every agent working on this repository. Read thi
 - **Repository:** `SoufianoDev/aveloop` (`https://github.com/SoufianoDev/aveloop.git`)
 - **Project root:** `/home/soufiano/SoufianoDev/AveLoop`
 - **Active branch:** `dev` tracking `origin/feat/gpui-kit-fast`.
-- **Last verified HEAD:** `1669fafbdf9530c518cb653be3bc8b13e38af30b` on `dev`; the remote feature ref also matches `1669fafbdf9530c518cb653be3bc8b13e38af30b`.
+- **Last verified HEAD:** `271b134c95e468b5205315a045accdd4a5dc1be8` on `dev`; the remote feature ref also matches `271b134c95e468b5205315a045accdd4a5dc1be8`.
 - **`main` moved:** `origin/main` is `7953e08` (`Merge pull request #140`). It does not contain `589b7e2` or later. Integration into `main` is not authorized.
 - **Working tree:** four specification/plan/task/governance updates plus existing owner edits in `src/presentation/theme.rs`; no Cargo or source implementation changes are part of this operation.
 - **Active task:** Phase 17 GPUI Kit Material adoption documentation and Issue synchronization.
@@ -1134,6 +1134,15 @@ Entries H0001–H0099 record the project and review sessions. Entry timestamps a
     - AveLoop baseline confirmed: gpui-kit 0.10.0, gpui-base 0.10.0 (lock), gpui-fast 0.1.17, rustc 1.96.0; `gpui-kit-material` absent from `Cargo.lock`
   - Documentation corrections applied: `plan.md` §8 (issue count + 0.3.0 note), `docs/feasibility/t014-text-and-m3-surface.md` (0.3.0 note), `docs/decisions/alpha-baseline.md` (0.3.0 note); `complete.md` regenerated and all three blocks re-verified equal to sources
   - State change: adoption decision re-validated against live sources; no implementation, dependency, lockfile, or git commit changed (no-Cargo constraint still holds)
+
+- [H0117] [2026-11-24] [commit] USER-CONFIRMED: committed and pushed the pending documentation/governance files to `origin/feat/gpui-kit-fast`.
+  - Session: OpenCode session `ses_df4caf04effevP8U7GoQKRY3ZO` (AI agent: opencode)
+  - Command/tool: `git add` (9 explicit paths), `git commit`, `git push origin dev:feat/gpui-kit-fast`
+  - Scope: `.specify/memory/constitution.md`, `AGENTS.md`, `HANDOFF.md`, `docs/decisions/alpha-baseline.md`, `docs/feasibility/t014-text-and-m3-surface.md`, `specs/001-ave-loop-alpha/{spec,plan,tasks,complete}.md`
+  - Excluded: `src/presentation/theme.rs` (owner edit, left unstaged), `.planning/` (gitignored)
+  - Pre-commit gate: verified Issues #94/#96/#98/#100/#102 carry current T056–T060 text (AGENTS.md rule #12)
+  - Result: commit `271b134`; push `1669faf..271b134`; remote `origin/feat/gpui-kit-fast` = `271b134`
+  - State change: Phase 17 documentation published; working tree now holds only the owner's `src/presentation/theme.rs` edit
 
 ## Resume Instructions
 
