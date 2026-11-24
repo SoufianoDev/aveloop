@@ -4,28 +4,36 @@ Canonical continuity record for every agent working on this repository. Read thi
 
 ## Current State
 
-- **Last updated:** 2026-11-24 (T015 report delivered; Phase 2 exit gate NOT met — user decision required)
+- **Last updated:** 2026-11-24 (T016–T019 gate closure verified in CI)
 - **Repository:** `SoufianoDev/aveloop` (`https://github.com/SoufianoDev/aveloop.git`)
 - **Project root:** `/home/soufiano/SoufianoDev/AveLoop`
 - **Active branch:** `dev` tracking `origin/feat/gpui-kit-fast`.
-- **Last verified HEAD:** `bd4216d` (`docs(t015): consolidate cross-platform feasibility evidence and gate verdict`), pushed to `origin/feat/gpui-kit-fast`
-- **DISCREPANCY corrected:** HANDOFF recorded HEAD as `71aaac9`; verified HEAD at this session start was `c4f653a`. Later corrected to `8f112bc` and now `bd4216d`. Repository wins.
-- **`main` moved:** `origin/main` is now `7953e08` (`Merge pull request #140 from SoufianoDev/feat/gpui-kit-fast`). Contains `4bf809c` but not `589b7e2` or later.
-- **Working tree:** one uncommitted edit by the repository owner in `src/presentation/theme.rs` (Night Owl theme author string). Not produced by an agent; left untouched and unstaged.
-- **Active task:** T015 report complete; **Phase 2 exit gate NOT met**
-- **Current phase:** Phase 2 — Foundational feasibility (blocked at the exit gate)
-- **Overall status:** Phase 1 complete; T005–T015 complete as work items; production foundation must not start until the gate is resolved or the target matrix is explicitly re-approved.
-- **Current objective:** Obtain a user decision on the gate (close the three gaps, or re-baseline Alpha).
+- **Last verified HEAD:** `617d49e` (`docs(t016-t019): record gate closure evidence and revise the gate verdict`); the HANDOFF update recording this state is committed immediately after it.
+- **`main` moved:** `origin/main` is `7953e08` (`Merge pull request #140`). It does not contain `589b7e2` or later. Integration into `main` is not authorized.
+- **Working tree:** only the repository owner's uncommitted edit in `src/presentation/theme.rs`. Left untouched and unstaged.
+- **Active task:** T016–T019 complete; **Phase 2 exit gate met with recorded residuals**.
+- **Current phase:** Phase 2 closed by evidence; Phase 3 (production foundation) not started.
+- **Overall status:** T001–T019 complete as work items. Linux, macOS, and Windows each have live evidence for GPUI launch, C/C++ toolchain, debugger session, and process control.
+- **Current objective:** Authorization to start Phase 3, or a decision to close the recorded residuals first.
 
 ## Immediate Next Action
 
-**Blocked on a user decision — do not start Phase 3.** `docs/feasibility/t015-cross-platform-feasibility-report.md` records three blocking gaps:
+**Gate met; awaiting authorization to start Phase 3.** The three T015 gaps were closed
+by route A (CI probes only, no product code):
 
-1. **G1 (architectural):** no Windows debugger backend is chosen. Only `dumpbin` PDB evidence exists. Choose GDB/MinGW-w64, CDB plus an AveLoop-owned adapter, or a commercial adapter. This decision also decides whether the Windows toolchain stays MSVC or moves to MinGW-w64.
-2. **G2:** macOS debugger depth (stepping, variables, pointers, aggregate children, stdout/stderr, termination) not exercised.
-3. **G3:** macOS/Windows GPUI runtime not executed; `cargo check` only.
+1. **G1 Windows debugger backend:** user-confirmed pair-based selection is implemented
+   and validated (T016, run 45304616166, 8/8 checks plus real detection on
+   `windows-2022` = MinGW-w64 + GDB); a live MinGW-w64 + GDB session is verified
+   (T017, run 45305339035).
+2. **G2 macOS debugger depth:** full LLDB session verified (T018, run 45305339035).
+3. **G3 macOS/Windows GPUI runtime:** real window opened and exited on both runners
+   (T019, run 45304616214).
 
-Recommended: option A — extend feasibility CI with live launch/debugger probes (CI scripts and one probe binary; no product code). Do not close Issues without explicit authorization. Leave the owner's uncommitted `src/presentation/theme.rs` edit alone.
+Evidence: `docs/feasibility/t016-t019-gate-closure.md`; revised verdict in
+`docs/feasibility/t015-cross-platform-feasibility-report.md` §8.
+
+Do not start Phase 3 without explicit authorization. Do not close Issues. Leave the
+owner's uncommitted `src/presentation/theme.rs` edit alone. Do not push `dev` to `main`.
 
 ## Verified Project State
 
@@ -127,14 +135,28 @@ Verified this session: `f259ead` exists locally and on the remote, the tree is c
 | T012 complete (Linux) | 4/4 checks PASS (spawn_and_kill, exit_status_captured, child_does_not_outlive_kill, timeout_then_kill); exit 0; CI dispatched for Windows/macOS | `verification/T012/t012_verify.rs`; `docs/feasibility/t012-process-cancellation.md`; Issue #12 comment; commit `e6d0749` |
 | T014 complete | Text primitives and the reusable Editor widget evaluated from pinned sources; required M3 surface mapped to `gpui-component` modules; reuse/no-fork decision recorded; follow-ups listed (enable tree-sitter C/C++ features, M3 variant mapping, build timeline and pointer graph) | `docs/feasibility/t014-text-and-m3-surface.md`; Issue #14 comment; commit `8f112bc` |
 | T015 complete (report) | Consolidated cross-platform feasibility report; per-target evidence levels; verified path per Alpha target; three blocking gaps (Windows debugger backend undecided, macOS debugger depth, macOS/Windows GPUI runtime); matrix overclaim corrected | `docs/feasibility/t015-cross-platform-feasibility-report.md`; Issue #15 comment; commit `bd4216d` |
+| T016 complete | Windows compiler-debugger pair selection implemented (MinGW-w64 + GDB / MSVC + CDB, both → MinGW, neither → report, explicit config never substituted); 8/8 CI checks; real detection on `windows-2022` selects `C:\mingw64\bin\gcc.exe` + `gdb.exe` | `verification/T016/t016_verify.rs`; `.github/workflows/t016-toolchain-pair.yml`; run 45304616166 |
+| T017 complete | Live Windows debugger session with the detected pair: breakpoint at `probe.c:4`, three steps to line 7, `$1 = 42`, `$2 = {value = 7, pad = 0}`, `#0 main () at probe.c:7`, both streams, normal exit | `.github/workflows/t017-live-debugger.yml`; run 45305339035 |
+| T018 complete | Live macOS LLDB session: steps across lines 4→7, `(int) local_int = 42`, `(Child) (value = 7, pad = 0)`, `frame #0`, both streams, `Process exited with status = 0` | `.github/workflows/t017-live-debugger.yml`; run 45305339035 |
+| T019 complete | GPUI window opened and exited cleanly on `windows-2022` and `macos-latest` (`AVELOOP_PROBE_EXIT=1`, `t008_verify`) | `.github/workflows/t019-gpui-launch.yml`; run 45304616214 |
+| Verification scripts relocated | Probes moved from `src/bin/` to `verification/T0XX/`; four explicit `[[bin]]` targets; CI path filters and recorded paths updated | commit `0f2d6e4`; HANDOFF H0100 |
 
 ## Active and Pending Work
 
-- **Phase 2 (blocked at exit gate):** T005–T015 complete as work items; the gate itself is NOT met.
-- **Gate decision (next):** choose gap closure (option A, recommended) or re-baseline the Alpha target; G1 (Windows debugger backend) must be answered either way.
-- **Phase 3:** must not start until the gate is resolved or explicitly re-approved.
-- **T014 follow-ups:** enable `tree-sitter-c`/`tree-sitter-cpp` passthrough features, map M3 variant names, build the execution timeline and pointer graph, and stress-test the editor (large files, IME per OS).
-- **T008 residual:** Wayland clipboard read returns `None`; re-test with `wl-copy`/`wl-paste` on a focused Wayland session.
+- **Phase 2:** complete; gate met with residuals recorded in
+  `docs/feasibility/t016-t019-gate-closure.md`.
+- **Phase 3:** not started; requires explicit authorization.
+- **Residual 1:** MSVC + CDB scripted variable/stack assertions are not observable under
+  shell redirection on `windows-2022`. The CDB job verifies explicit-configuration
+  honouring, build, launch, and stream capture. MinGW-w64 + GDB is the verified path and
+  the policy default.
+- **Residual 2:** GPUI input, focus, clipboard, and resize are Linux-verified only;
+  macOS and Windows are verified for build and runtime launch.
+- **Residual 3:** Wayland clipboard read returns `None` (no `wl-clipboard`).
+- **T014 follow-ups:** enable `tree-sitter-c`/`tree-sitter-cpp` passthrough features, map
+  M3 variant names, build the execution timeline and pointer graph, stress-test the
+  editor.
+- **Integration:** `origin/main` lacks `589b7e2` and later; no merge authorized.
 
 ## Files Changed
 
@@ -175,6 +197,13 @@ Verified this session: `f259ead` exists locally and on the remote, the tree is c
 | `docs/feasibility/t012-process-cancellation.md` | modified | Populated CI run 45294000672 | Committed `bd4216d` |
 | `specs/001-ave-loop-alpha/tasks.md` | modified | Mark T015 `[x]` | Committed `bd4216d` |
 | `specs/001-ave-loop-alpha/complete.md` | modified | Regenerated after the T015 check; all three blocks verified equal to their sources | Committed `bd4216d` |
+| `verification/T016/t016_verify.rs` | added, then moved | T016 pair-selection probe: four scenarios, explicit-config cases, `--detect` | Committed `d8fec92`; moved to `verification/` in `69d8218` |
+| `.github/workflows/t016-toolchain-pair.yml`, `t017-live-debugger.yml`, `t019-gpui-launch.yml` | added | Windows pair detection, live Windows/macOS debugger sessions, GPUI runtime launch | Committed `d8fec92`; CDB scope in `2ef042b` |
+| `Cargo.toml` | modified | Four explicit `[[bin]]` targets for the relocated probes | Committed `0f2d6e4` |
+| `docs/feasibility/t016-t019-gate-closure.md` | added | Gate-closure evidence with run links, exact session output, residuals | Committed `617d49e` |
+| `docs/feasibility/cross-platform-matrix.md` | modified | Rows upgraded only where live evidence exists; T016–T019 rows and §2.3 added | Committed `617d49e` |
+| `docs/feasibility/t015-cross-platform-feasibility-report.md` | modified | §8 addendum with the revised gate verdict; original verdict preserved | Committed `617d49e` |
+| `specs/001-ave-loop-alpha/tasks.md` | modified | Mark T016–T019 `[x]` | Committed `617d49e` |
 | `.planning/2026-11-22-aveloop-continuity-t001-kickoff/*` | untracked, ignored | Local planning files | Not tracked by design |
 | `specs/001-ave-loop-alpha/{spec,plan,tasks,complete}.md` | committed in `f259ead` | Authoritative Alpha baseline | Verified clean |
 
@@ -336,7 +365,8 @@ URLs: `https://github.com/SoufianoDev/aveloop/issues/<n>`.
 - GDB DAP live handshake and capability negotiation.
 - GDB/MI inspection depth.
 - `lldb-dap` with Command Line Tools only.
-- MSVC debugger integration without the IDE.
+- MSVC debugger scripted inspection output cannot be captured under redirection on
+  `windows-2022`; only launch, build, and stream capture are asserted there.
 - macOS/Windows install sizes; GDB/LLDB RSS.
 
 **Environment blockers**
@@ -995,6 +1025,42 @@ Entries H0001–H0099 record the project and review sessions. Entry timestamps a
   - Result: **gate NOT met.** Verified LIVE on all three targets: T009 toolchain, T012 cancellation, T013 Tree-sitter. Linux-only LIVE: GPUI launch/input/clipboard/resize, full GDB DAP/MI surface, capability negotiation. Gaps: G1 Windows debugger backend undecided (only `dumpbin` PDB evidence; MSVC DAP ships only in Visual Studio), G2 macOS debugger depth (breakpoint/launch/backtrace only), G3 macOS/Windows GPUI compile-only.
   - Corrections: `cross-platform-matrix.md` had marked T008/T010/T011 VERIFIED on macOS/Windows on the strength of `cargo check`, `lldb --batch`, and `dumpbin`; rows corrected to evidence levels. `t012-process-cancellation.md` CI link populated.
   - State change: T015 marked `[x]` as a delivered report; gate remains open and blocks Phase 3; Issue #15 comment posted; commit `bd4216d` pushed
+
+- [H0100] [2026-11-24] [verification] ACTION: Reorganized temporary task-specific verification scripts out of `src/bin/` into task-scoped `verification/<TASK-ID>/` directories per the task-scoped temporary structure requirement.
+  - Session: OpenCode session `ses_df4caf04effevP8U7GoQKRY3ZO` (AI agent: opencode)
+  - Command/tool: `git mv` for each script; edits to `Cargo.toml`, all 5 CI workflow `paths:` triggers, `HANDOFF.md`, and `docs/feasibility/t012-process-cancellation.md`
+  - Targets moved:
+    - `src/bin/t008_verify.rs` → `verification/T008/t008_verify.rs` (T008 GPUI input/clipboard probe)
+    - `src/bin/t012_verify.rs` → `verification/T012/t012_verify.rs` (T012 process cancellation probe)
+    - `src/bin/t013_verify.rs` → `verification/T013/t013_verify.rs` (T013 Tree-sitter grammar probe)
+    - `src/bin/t016_verify.rs` → `verification/T016/t016_verify.rs` (T016 Windows toolchain pair probe)
+  - Left in place (permanent tests, not moved): `tests/t008_interaction_tests.rs`, `tests/domain_tests.rs`, `tests/presentation_tests.rs`
+  - `Cargo.toml` gained four `[[bin]]` entries pointing to `verification/T0XX/t0XX_verify.rs`
+  - All 5 CI workflows updated to watch `verification/T0XX/` paths instead of `src/bin/`
+  - `HANDOFF.md` path references updated (13 replacements)
+  - `src/bin/` is now empty; no `src/bin/` references remain in tracked files
+  - Result: `cargo check --bin t008_verify --bin t012_verify --bin t013_verify --bin t016_verify` passes; `src/bin/` removed as a directory
+  - Evidence: `git status --short` shows staged renames + unstaged reference updates; `grep -rn 'src/bin/'` returns no matches outside `.planning/`
+  - State change: temporary verification scripts now live under `verification/T008/`, `verification/T012/`, `verification/T013/`, `verification/T016/`; `src/bin/` directory removed
+
+- [H0101] [2026-11-24T02:15Z] [T016–T019] ACTION: Recovered the CI defect that blocked the T016–T019 verification.
+  - Session: OpenCode session `ses_df4caf04effevP8U7GoQKRY3ZO` (AI agent: opencode)
+  - Command/tool: `git log --name-only`, `git show --stat`, `cargo run --bin t016_verify`
+  - Result: the probes had been moved to `verification/T0XX/` but `Cargo.toml` still had no `[[bin]]` entries on the remote, so `cargo run --bin t016_verify` failed with "no bin target named". Committed the pending registration and path-filter updates as `0f2d6e4`
+  - Evidence: `cargo run --bin t016_verify` → 8/8 checks passed; runs 45308437390 (T016) and 45308437334 (T019) success
+  - State change: CI resolves the probes again; T016 and T019 re-verified on the new layout
+
+- [H0102] [2026-11-24T02:30Z] [T017] ACTION: Scoped the MSVC + CDB job to observable assertions.
+  - Command/tool: three CI iterations (`45306494934`, `45308438040`, `45309261455`); `-logo` and shell redirection both attempted
+  - Result: CDB writes prompts and `dv`/`dx`/`k` output to the console buffer, which redirection on `windows-2022` does not capture; only the banner and the child's own stdout/stderr reach the file. The job now asserts explicit-configuration honouring, build, launch, and stream capture, and keeps the inspection commands in the session log
+  - Evidence: `STDOUT_MARK 42`, `STDERR_MARK 7`, `DONE 43` captured; `local_int`/`probe!main` never appear in the captured file
+  - State change: residual recorded in `docs/feasibility/t016-t019-gate-closure.md`; MinGW-w64 + GDB remains the verified Windows path
+
+- [H0103] [2026-11-24T02:40Z] [T016–T019] ACTION: Published the gate-closure evidence and revised verdict.
+  - Command/tool: write `docs/feasibility/t016-t019-gate-closure.md`; edit `cross-platform-matrix.md`, `t015-cross-platform-feasibility-report.md`; check `tasks.md` T016–T019; regenerate `complete.md`
+  - Result: three gaps closed with run links and exact output; matrix rows upgraded only where live evidence exists; T015 verdict kept as the record at `bd4216d` with a dated §8 addendum
+  - Evidence: commit `617d49e`; `complete.md` marker blocks equal their sources for all three files
+  - State change: Phase 2 gate met with three recorded residuals; Phase 3 awaits authorization
 
 ## Resume Instructions
 
