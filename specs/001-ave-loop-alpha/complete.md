@@ -809,6 +809,7 @@ These sources inform the implementation plan; they do not override the product r
 - Night Owl: https://github.com/sdras/night-owl-vscode-theme
 - Python Tutor: https://pythontutor.com/
 - AveLoop UI prototype: repository/project `index.html` supplied with this conversation.
+
 <!-- END spec.md -->
 
 
@@ -1360,6 +1361,7 @@ No commits, pushes, PRs, repository creation, fork creation, or upstream modific
 ## 11. Plan completion definition
 
 The plan is complete when the tasks in `tasks.md` are implemented and verified, all Alpha acceptance criteria are satisfied on the three target OSes, and the remaining known limitations are published. The existence of the three documents alone is not completion.
+
 <!-- END plan.md -->
 
 
@@ -1413,7 +1415,7 @@ All compiler and debugger verification uses toolchains already installed on each
 - [x] T011 Record actual debugger capabilities per platform and backend (DAP or GDB/MI); explicitly verify that the design does not depend on `supportsStepBack`.
 - [x] T012 Verify process cancellation and child-process cleanup behavior on each OS.
 - [x] T013 [P] Verify Tree-sitter C/C++ grammar integration and license compatibility.
-- [ ] T014 Evaluate GPUI text primitives and the required Material 3 component surface; document build/reuse decisions without creating a fork.
+- [x] T014 Evaluate GPUI text primitives and the required Material 3 component surface; document build/reuse decisions without creating a fork.
 - [ ] T015 Produce the cross-platform feasibility report. Do not proceed to production foundation until every Alpha target has a verified path or the target matrix is explicitly re-approved.
 
 **Gate:** GPUI, compiler, debugger, process control, and required platform prerequisites have evidence on Linux, Windows, and macOS.
@@ -1565,4 +1567,5 @@ Use the current Spec Kit workflow:
 9. `/speckit.converge` — compare implementation against artifacts and append remaining work as appropriate.
 
 The current documents have been structured according to this workflow, but `/speckit.analyze` has **not** been executed against the repository. Do not claim an analysis pass until the command has actually run.
+
 <!-- END tasks.md -->
