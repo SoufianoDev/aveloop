@@ -55,12 +55,14 @@ The product prefers a smaller, accurate visualization over a visually complete b
 
 AveLoop is a:
 
-- Native desktop IDE for C17 and C++20 in Alpha.
+- General-purpose, multi-language native desktop IDE; C17 and C++20 are the Alpha language set.
 - Visual execution and runtime-inspection environment.
 - Recorded execution timeline and state navigator.
 - Source, stack, variable, memory, pointer, and output visualizer.
 
 AveLoop is not a general-purpose visual programming language, cloud IDE, or replacement for every feature of a mature commercial IDE.
+
+Workspace management, language integration, build-system handling, and debugger backends are separate, extensible responsibilities. Alpha implements only C17 and C++20; adding another language must not require redesigning the workspace, project, or project-configuration model.
 
 ## 1.4 Intended users
 
@@ -84,10 +86,11 @@ The Alpha is successful only if this workflow works on Linux, Windows, and macOS
 ### A. Native desktop shell and project workflow
 - Native Rust/GPUI desktop application.
 - One shared application codebase for Linux, Windows, and macOS.
-- Open a local project directory.
-- Create a minimal AveLoop project.
+- Open any local directory as a workspace without requiring an AveLoop manifest.
+- Recognize an existing build-system descriptor (for example `CMakeLists.txt`, `Cargo.toml`, `go.mod`) without modifying or replacing it.
+- Create an optional AveLoop project overlay (`ave.toml`) when a workspace needs build or run settings that no native descriptor provides.
 - Open, edit, and save source files.
-- Maintain a clear current-project/current-file context.
+- Maintain a clear current-workspace/current-project/current-file context.
 - Report missing or incompatible toolchains.
 
 ### B. Source editor
@@ -177,7 +180,8 @@ These are deliberate scope boundaries, not unfinished promises:
 
 ## 2.3 Out of scope
 
-- Go or any second implementation language.
+- Any implementation language other than Rust for AveLoop itself, and any target language beyond C17/C++20 in Alpha. Additional target languages are deferred, not architecturally excluded (§1.3).
+- Build or test execution through CMake, Cargo, Go modules, or another native descriptor. Alpha recognizes those files as project descriptors but does not drive them.
 - JavaScript/HTML/CSS production UI.
 - WebView-based application UI.
 - CodeMirror 5 or a browser editor embedded in the native app.
@@ -234,11 +238,14 @@ If the backend cannot establish a value, target, allocation lifetime, or source 
 # 4. Users and primary workflows
 
 ## US-01 — Create/open a project
-A user creates a project or opens a local project directory, selects a C or C++ source file, and sees the project and file context.
+A user opens a local directory as a workspace, or creates/opens a project with an optional AveLoop configuration, then selects a source file and sees the workspace, project, and file context.
 
 **Acceptance criteria**
-- The app can create and reopen a minimal project.
-- Invalid/missing project metadata produces an actionable error.
+- Opening an ordinary directory never requires an AveLoop manifest and never modifies the directory.
+- A workspace that contains a recognized native build-system descriptor opens as a project and reports that descriptor.
+- `ave.toml` is optional; when present it adds build/run settings and does not replace a native descriptor.
+- The app can create a workspace, add an optional `ave.toml`, and reopen it.
+- Invalid or unsupported project metadata produces an actionable error.
 - File paths are handled correctly on all three target OSes.
 - The application does not silently modify source files during project opening.
 
@@ -328,7 +335,7 @@ Priority: **P0** = Alpha critical; **P1** = Alpha usability requirement; **P2** 
 
 | ID | Requirement | Priority |
 |---|---|---|
-| FR-001 | The application shall create and open a local AveLoop project. | P0 |
+| FR-001 | The application shall open any local directory as a workspace and shall create or open a project without requiring an AveLoop manifest. | P0 |
 | FR-002 | The application shall open, edit, and save C and C++ source files. | P0 |
 | FR-003 | The editor shall provide cursor movement, selection, text insertion/deletion, undo/redo, and clipboard operations. | P0 |
 | FR-004 | The editor shall display line numbers and syntax highlighting for C17 and C++20. | P0 |
@@ -336,6 +343,8 @@ Priority: **P0** = Alpha critical; **P1** = Alpha usability requirement; **P2** 
 | FR-006 | The editor shall distinguish the source revision used by a trace from the current buffer revision. | P0 |
 | FR-007 | The editor shall display execution source locations only when provided by the recorded session. | P0 |
 | FR-008 | Source changes shall mark the trace mapping stale. | P0 |
+| FR-009 | The application shall treat `ave.toml` as an optional overlay that adds build and run settings and shall never require it to browse or edit a workspace. | P0 |
+| FR-010 | The application shall recognize existing build-system descriptors (`CMakeLists.txt`, `Cargo.toml`, `go.mod`, and similar) and shall not modify, replace, or silently reinterpret them. | P0 |
 
 ## 5.2 Build and execution
 

@@ -286,30 +286,48 @@ The Heap panel is an **observable object view**, not a process-wide allocator ma
 
 ---
 
-## 5. Project configuration
+## 5. Workspace and project configuration
 
-Alpha uses a small explicit project manifest, `ave.toml`, rather than requiring CMake or a general build-system implementation.
+### 5.1 Workspace first
 
-The initial manifest contract:
-- Project format version.
-- Project name.
-- Language (`c` or `cpp`).
-- Entry source file.
-- Additional source files.
-- Include directories.
-- Preprocessor definitions.
-- Explicit extra compiler/linker arguments.
-- Program arguments.
-- Working directory.
+A workspace is any local directory the user opens. Opening, browsing, and editing never require an AveLoop-specific file and never modify the directory. A workspace becomes a *project* only when a build/run descriptor is resolved for it.
 
-Defaults:
-- C uses C17.
-- C++ uses C++20.
-- Debug profile is selected by default.
-- The compiler is discovered locally.
-- No implicit package manager, network fetch, or toolchain installation.
+### 5.2 Project descriptors
 
-Unknown manifest keys and unsupported versions must be reported clearly. Paths are resolved relative to the project root unless explicitly documented otherwise.
+A descriptor tells AveLoop how to build and run a project. Sources are pluggable and resolved in this order:
+
+1. **Native build-system descriptor** — `CMakeLists.txt`, `Cargo.toml`, `go.mod`, `Makefile`, and similar. Alpha detects and reports it; it does not drive it.
+2. **AveLoop overlay** — an optional `ave.toml` supplying build/run settings where no supported descriptor exists, or overriding specific settings.
+3. **No descriptor** — the workspace opens in edit-only mode; that is not an error.
+
+`ave.toml` must never replace, re-encode, or mirror a native descriptor. When a native descriptor is present, `ave.toml` may only add settings that descriptor cannot express.
+
+### 5.3 `ave.toml` (optional overlay)
+
+Owned settings: format version, display name, entry source file, additional source files, optional language override for ambiguous files, include directories, preprocessor definitions, extra compiler and linker arguments, program arguments, working directory.
+
+Rules:
+- Unknown keys and unsupported versions are reported clearly.
+- Paths are resolved relative to the workspace root unless documented otherwise.
+- The file is optional; its absence is not an error.
+- In Alpha the overlay is the supported way to build C17/C++20 programs directly. Native-descriptor builds arrive post-Alpha.
+
+### 5.4 Languages
+
+Languages are registered integrations, not a closed enum in the project model. A language owns its file-extension mapping, highlighting, language-standard flag, and default build/run recipe. Alpha registers C17 and C++20 only. Generic workspace, project, and configuration types carry a language identifier; adding Rust or Go later adds a registration rather than changing the model or the `ave.toml` schema.
+
+### 5.5 Separation of responsibilities
+
+| Responsibility | Owner |
+|---|---|
+| Opened directory, file tree, buffers | workspace |
+| Descriptor resolution and precedence | `application` (ports) |
+| Descriptor detection (`CMakeLists.txt`, `Cargo.toml`, `go.mod`) | `infrastructure/build_system` |
+| Overlay contract | `domain/project`; I/O in `infrastructure/project` |
+| Language registration and file-to-language mapping | `domain` (registry) + `infrastructure` |
+| Compiler and debugger discovery/invocation | `infrastructure/toolchain`, `infrastructure/debugger` |
+
+Defaults: C uses C17, C++ uses C++20, the debug profile is selected by default, the compiler is discovered locally, and no package manager, network fetch, or toolchain installation is performed.
 
 ---
 
@@ -375,11 +393,11 @@ Work:
 
 ### Phase 4 — Project workflow and native editor
 
-**Outcome:** users can create/open a project, edit C/C++ source, save, and configure a build.
+**Outcome:** users can open a workspace or project, edit C/C++ source, save, and configure a build.
 
 Work:
-- `ave.toml` parsing/validation.
-- Project/file navigation.
+- Workspace/project model and descriptor resolution, including the optional `ave.toml` overlay parsing/validation.
+- Workspace/file navigation.
 - Native GPUI text editor.
 - Tree-sitter highlighting.
 - Editing operations, undo/redo, clipboard, line numbers.

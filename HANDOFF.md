@@ -4,27 +4,40 @@ Canonical continuity record for every agent working on this repository. Read thi
 
 ## Current State
 
-- **Last updated:** 2026-11-24 (T022 `ave.toml` manifest contract complete; Phase 3 done)
+- **Last updated:** 2026-11-24 (architecture review: multi-language workspace/project model; T022 reopened)
 - **Repository:** `SoufianoDev/aveloop` (`https://github.com/SoufianoDev/aveloop.git`)
 - **Project root:** `/home/soufiano/SoufianoDev/AveLoop`
 - **Active branch:** `dev` tracking `origin/feat/gpui-kit-fast`.
-- **Last verified HEAD:** `c2106dc` (T021 evidence commit); verify again before acting.
+- **Last verified HEAD:** `a58f8f5` (T022 evidence commit); verify again before acting.
 - **`main` moved:** `origin/main` is `7953e08` (`Merge pull request #140`). It does not contain `589b7e2` or later. Integration into `main` is not authorized.
-- **Working tree:** owner edit in `src/presentation/theme.rs` (unstaged, leave alone) plus the T022 changes being committed.
-- **Active task:** T022 complete (`src/domain/project/manifest.rs`); next unchecked task is T023.
-- **Current phase:** Phase 3 complete (T016–T022); next is Phase 4 — User Story 1.
-- **Overall status:** T001–T022 complete as work items. Product CI is green on Linux x86_64, Windows x86_64, and macOS arm64.
-- **Current objective:** T023 — create/open project use cases and cross-platform project/source path handling.
+- **Working tree:** owner edit in `src/presentation/theme.rs` (unstaged, leave alone) plus the in-progress architecture-review edits to `spec.md`, `plan.md`, `tasks.md`, `complete.md`, and this file.
+- **Active task:** T022 reopened under the redefined workspace/project + optional-overlay contract. The committed `src/domain/project/manifest.rs` (`591e09c`) predates the definition and must be revised to it.
+- **Current phase:** Phase 3 code is green (T016–T021 complete); T022 is open again because its definition changed.
+- **Overall status:** T001–T021 complete as work items. T022's earlier completion is `SUPERSEDED` by the architecture review. Product CI is green on Linux x86_64, Windows x86_64, and macOS arm64.
+- **Current objective:** revise the project model to workspace-first with an optional `ave.toml` overlay.
 
 ## Immediate Next Action
 
-**Next task: T023 [US1] — implement create/open project use cases and cross-platform
-project/source path handling.** Implement, validate, mark `tasks.md`, regenerate `complete.md`,
-and synchronize canonical Issue #23 (AGENTS.md rule #12).
+**Next task: T022 (redefined) — revise the workspace/project model and the optional `ave.toml`
+overlay contract.** Replace the closed `Language` enum and the "manifest is the project
+definition" framing in `src/domain/project/manifest.rs`, add the workspace/project descriptor
+model from `plan.md` §5, validate, mark `tasks.md`, regenerate `complete.md`, and synchronize
+canonical Issue #22 (AGENTS.md rule #12).
 
-**2026-11-24 — USER-CONFIRMED:** "continue to the next step" — implementation, `cargo`,
-commits, and pushes are authorized. Phase 3 is complete; Phase 4 has not otherwise been
-re-scoped.
+**2026-11-24 — USER-CONFIRMED:** "AveLoop is intended to be a general-purpose, multi-language
+IDE, not a C/C++-specific IDE." C and C++ are Alpha scope only; the architecture must admit
+future languages without redesign. Workspace independence, native-manifest compatibility, and
+separation of workspace / project discovery / language integration / build system / debug
+backend are explicit product requirements.
+
+**2026-11-24 — AGENT-PROPOSED (awaiting approval):** the concrete design recorded in `plan.md`
+§5 — workspace = any directory (no manifest, never modified); project = workspace plus a
+resolved descriptor; descriptor precedence native build-system descriptor (detected and
+reported only in Alpha) → optional `ave.toml` overlay → none (edit-only, not an error);
+`ave.toml` owns only overlay settings and never mirrors a native descriptor; languages are a
+registry keyed by identifier rather than a closed enum. The user asked for this decision to be
+established and documented, but rule #4 still applies: these specifics are not yet
+user-confirmed requirements.
 
 **2026-11-24 — VERIFIED-FACT:** T020 complete. `.github/workflows/ci.yml` runs, for Linux
 x86_64 (`ubuntu-22.04`), Windows x86_64 (`windows-2022`), and macOS arm64 (`macos-latest`):
@@ -1210,6 +1223,19 @@ Entries H0001–H0099 record the project and review sessions. Entry timestamps a
   - Evidence: CI run `45451552111` (head `591e09c`) — Linux, Windows, and macOS arm64 all `success` on the first attempt
   - GitHub: Issue #22 evidence comment added; issue left OPEN per repo practice
   - State change: Phase 3 complete (T016–T022); next task T023 (Phase 4, US1)
+
+- [H0125] [2026-11-24] [T022] USER-CONFIRMED + AGENT-PROPOSED: architecture reframed AveLoop as a multi-language IDE; T022 reopened.
+  - Session: OpenCode session `ses_df4caf04effevP8U7GoQKRY3ZO` (AI agent: opencode)
+  - Provenance: the product direction is USER-CONFIRMED; the concrete model in `plan.md` §5 is AGENT-PROPOSED and not yet user-confirmed
+  - `ave.toml` verdict: keep it, optional, as an overlay only. It owns entry point, extra sources, optional language override, include dirs, defines, extra compiler/linker args, program args, and working directory. It must never replace, re-encode, or mirror `CMakeLists.txt`, `Cargo.toml`, `go.mod`, or another native descriptor.
+  - Workspace: any opened directory; no manifest required; never modified. Project: workspace with a resolved descriptor. Descriptor precedence: native build-system descriptor (detected/reported in Alpha, not driven) → optional `ave.toml` → none (edit-only, not an error).
+  - Languages: registry keyed by identifier; Alpha registers C17 and C++20 only. No closed `Language { C, Cpp }` enum in generic types. No Rust/Go or extra build-system implementation.
+  - Doc changes: `spec.md` §1.3 product category + separation paragraph, §2.1 A scope bullets, §2.3 out-of-scope clarification (implementation language vs target language; no native-descriptor builds), US-01, FR-001 rewritten, FR-009 (overlay optional) and FR-010 (native descriptors recognized, never modified) added, coverage row moved to FR-001–010.
+  - `plan.md` §5 replaced: 5.1 workspace first, 5.2 descriptor precedence, 5.3 overlay contract, 5.4 language registry, 5.5 responsibility table; Phase 4 wording now workspace/project + optional overlay.
+  - `tasks.md`: T022 unchecked and redefined (workspace/project model + optional overlay); T023, T028, T030 reworded; `complete.md` regenerated from all three sources.
+  - GitHub sync (resolved by the `Spec Kit task` field, never by issue number): #22 redefined (title, scope, criteria, task line), #23 reworded (title, scope, criteria, task line), #28 reworded (title, scope, task line), #30 reworded (scope, task line). All four canonical task lines verified string-identical to `tasks.md`. All issues left OPEN.
+  - Code state: `src/domain/project/manifest.rs` and `tests/manifest_tests.rs` from `591e09c` are NOT reverted. They still encode the superseded contract (closed `Language` enum, `ave.toml` as the project definition) and must be revised as the first step of the redefined T022.
+  - Not done on purpose: no Rust/Go integration, no CMake/Cargo/go.mod detection implementation, no source-code edits outside the project model, no task marked complete on documentation grounds.
 
 ## Resume Instructions
 

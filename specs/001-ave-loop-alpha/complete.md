@@ -62,12 +62,14 @@ The product prefers a smaller, accurate visualization over a visually complete b
 
 AveLoop is a:
 
-- Native desktop IDE for C17 and C++20 in Alpha.
+- General-purpose, multi-language native desktop IDE; C17 and C++20 are the Alpha language set.
 - Visual execution and runtime-inspection environment.
 - Recorded execution timeline and state navigator.
 - Source, stack, variable, memory, pointer, and output visualizer.
 
 AveLoop is not a general-purpose visual programming language, cloud IDE, or replacement for every feature of a mature commercial IDE.
+
+Workspace management, language integration, build-system handling, and debugger backends are separate, extensible responsibilities. Alpha implements only C17 and C++20; adding another language must not require redesigning the workspace, project, or project-configuration model.
 
 ## 1.4 Intended users
 
@@ -91,10 +93,11 @@ The Alpha is successful only if this workflow works on Linux, Windows, and macOS
 ### A. Native desktop shell and project workflow
 - Native Rust/GPUI desktop application.
 - One shared application codebase for Linux, Windows, and macOS.
-- Open a local project directory.
-- Create a minimal AveLoop project.
+- Open any local directory as a workspace without requiring an AveLoop manifest.
+- Recognize an existing build-system descriptor (for example `CMakeLists.txt`, `Cargo.toml`, `go.mod`) without modifying or replacing it.
+- Create an optional AveLoop project overlay (`ave.toml`) when a workspace needs build or run settings that no native descriptor provides.
 - Open, edit, and save source files.
-- Maintain a clear current-project/current-file context.
+- Maintain a clear current-workspace/current-project/current-file context.
 - Report missing or incompatible toolchains.
 
 ### B. Source editor
@@ -184,7 +187,8 @@ These are deliberate scope boundaries, not unfinished promises:
 
 ## 2.3 Out of scope
 
-- Go or any second implementation language.
+- Any implementation language other than Rust for AveLoop itself, and any target language beyond C17/C++20 in Alpha. Additional target languages are deferred, not architecturally excluded (§1.3).
+- Build or test execution through CMake, Cargo, Go modules, or another native descriptor. Alpha recognizes those files as project descriptors but does not drive them.
 - JavaScript/HTML/CSS production UI.
 - WebView-based application UI.
 - CodeMirror 5 or a browser editor embedded in the native app.
@@ -241,11 +245,14 @@ If the backend cannot establish a value, target, allocation lifetime, or source 
 # 4. Users and primary workflows
 
 ## US-01 — Create/open a project
-A user creates a project or opens a local project directory, selects a C or C++ source file, and sees the project and file context.
+A user opens a local directory as a workspace, or creates/opens a project with an optional AveLoop configuration, then selects a source file and sees the workspace, project, and file context.
 
 **Acceptance criteria**
-- The app can create and reopen a minimal project.
-- Invalid/missing project metadata produces an actionable error.
+- Opening an ordinary directory never requires an AveLoop manifest and never modifies the directory.
+- A workspace that contains a recognized native build-system descriptor opens as a project and reports that descriptor.
+- `ave.toml` is optional; when present it adds build/run settings and does not replace a native descriptor.
+- The app can create a workspace, add an optional `ave.toml`, and reopen it.
+- Invalid or unsupported project metadata produces an actionable error.
 - File paths are handled correctly on all three target OSes.
 - The application does not silently modify source files during project opening.
 
@@ -335,7 +342,7 @@ Priority: **P0** = Alpha critical; **P1** = Alpha usability requirement; **P2** 
 
 | ID | Requirement | Priority |
 |---|---|---|
-| FR-001 | The application shall create and open a local AveLoop project. | P0 |
+| FR-001 | The application shall open any local directory as a workspace and shall create or open a project without requiring an AveLoop manifest. | P0 |
 | FR-002 | The application shall open, edit, and save C and C++ source files. | P0 |
 | FR-003 | The editor shall provide cursor movement, selection, text insertion/deletion, undo/redo, and clipboard operations. | P0 |
 | FR-004 | The editor shall display line numbers and syntax highlighting for C17 and C++20. | P0 |
@@ -343,6 +350,8 @@ Priority: **P0** = Alpha critical; **P1** = Alpha usability requirement; **P2** 
 | FR-006 | The editor shall distinguish the source revision used by a trace from the current buffer revision. | P0 |
 | FR-007 | The editor shall display execution source locations only when provided by the recorded session. | P0 |
 | FR-008 | Source changes shall mark the trace mapping stale. | P0 |
+| FR-009 | The application shall treat `ave.toml` as an optional overlay that adds build and run settings and shall never require it to browse or edit a workspace. | P0 |
+| FR-010 | The application shall recognize existing build-system descriptors (`CMakeLists.txt`, `Cargo.toml`, `go.mod`, and similar) and shall not modify, replace, or silently reinterpret them. | P0 |
 
 ## 5.2 Build and execution
 
@@ -1156,30 +1165,48 @@ The Heap panel is an **observable object view**, not a process-wide allocator ma
 
 ---
 
-## 5. Project configuration
+## 5. Workspace and project configuration
 
-Alpha uses a small explicit project manifest, `ave.toml`, rather than requiring CMake or a general build-system implementation.
+### 5.1 Workspace first
 
-The initial manifest contract:
-- Project format version.
-- Project name.
-- Language (`c` or `cpp`).
-- Entry source file.
-- Additional source files.
-- Include directories.
-- Preprocessor definitions.
-- Explicit extra compiler/linker arguments.
-- Program arguments.
-- Working directory.
+A workspace is any local directory the user opens. Opening, browsing, and editing never require an AveLoop-specific file and never modify the directory. A workspace becomes a *project* only when a build/run descriptor is resolved for it.
 
-Defaults:
-- C uses C17.
-- C++ uses C++20.
-- Debug profile is selected by default.
-- The compiler is discovered locally.
-- No implicit package manager, network fetch, or toolchain installation.
+### 5.2 Project descriptors
 
-Unknown manifest keys and unsupported versions must be reported clearly. Paths are resolved relative to the project root unless explicitly documented otherwise.
+A descriptor tells AveLoop how to build and run a project. Sources are pluggable and resolved in this order:
+
+1. **Native build-system descriptor** — `CMakeLists.txt`, `Cargo.toml`, `go.mod`, `Makefile`, and similar. Alpha detects and reports it; it does not drive it.
+2. **AveLoop overlay** — an optional `ave.toml` supplying build/run settings where no supported descriptor exists, or overriding specific settings.
+3. **No descriptor** — the workspace opens in edit-only mode; that is not an error.
+
+`ave.toml` must never replace, re-encode, or mirror a native descriptor. When a native descriptor is present, `ave.toml` may only add settings that descriptor cannot express.
+
+### 5.3 `ave.toml` (optional overlay)
+
+Owned settings: format version, display name, entry source file, additional source files, optional language override for ambiguous files, include directories, preprocessor definitions, extra compiler and linker arguments, program arguments, working directory.
+
+Rules:
+- Unknown keys and unsupported versions are reported clearly.
+- Paths are resolved relative to the workspace root unless documented otherwise.
+- The file is optional; its absence is not an error.
+- In Alpha the overlay is the supported way to build C17/C++20 programs directly. Native-descriptor builds arrive post-Alpha.
+
+### 5.4 Languages
+
+Languages are registered integrations, not a closed enum in the project model. A language owns its file-extension mapping, highlighting, language-standard flag, and default build/run recipe. Alpha registers C17 and C++20 only. Generic workspace, project, and configuration types carry a language identifier; adding Rust or Go later adds a registration rather than changing the model or the `ave.toml` schema.
+
+### 5.5 Separation of responsibilities
+
+| Responsibility | Owner |
+|---|---|
+| Opened directory, file tree, buffers | workspace |
+| Descriptor resolution and precedence | `application` (ports) |
+| Descriptor detection (`CMakeLists.txt`, `Cargo.toml`, `go.mod`) | `infrastructure/build_system` |
+| Overlay contract | `domain/project`; I/O in `infrastructure/project` |
+| Language registration and file-to-language mapping | `domain` (registry) + `infrastructure` |
+| Compiler and debugger discovery/invocation | `infrastructure/toolchain`, `infrastructure/debugger` |
+
+Defaults: C uses C17, C++ uses C++20, the debug profile is selected by default, the compiler is discovered locally, and no package manager, network fetch, or toolchain installation is performed.
 
 ---
 
@@ -1245,11 +1272,11 @@ Work:
 
 ### Phase 4 — Project workflow and native editor
 
-**Outcome:** users can create/open a project, edit C/C++ source, save, and configure a build.
+**Outcome:** users can open a workspace or project, edit C/C++ source, save, and configure a build.
 
 Work:
-- `ave.toml` parsing/validation.
-- Project/file navigation.
+- Workspace/project model and descriptor resolution, including the optional `ave.toml` overlay parsing/validation.
+- Workspace/file navigation.
 - Native GPUI text editor.
 - Tree-sitter highlighting.
 - Editing operations, undo/redo, clipboard, line numbers.
@@ -1533,7 +1560,7 @@ All compiler and debugger verification uses toolchains already installed on each
 - [x] T019 Add shared diagnostics, structured logging, error classification, and background-work cancellation conventions.
 - [x] T020 [P] Add CI build, formatting, lint, and test checks for Linux x86_64, Windows x86_64, and macOS arm64.
 - [x] T021 Add architecture checks that prevent presentation/GPUI and infrastructure/DAP types from leaking into domain models.
-- [x] T022 Define and validate the initial `ave.toml` manifest contract, versioning, relative-path rules, and actionable invalid-project errors.
+- [ ] T022 Define and validate the workspace/project model and the optional `ave.toml` overlay contract: a workspace opens without a manifest, a native build-system descriptor is recognized and never replaced, and versioning, relative-path rules, and actionable invalid-project errors apply only when the overlay exists.
 
 **Gate:** one shared application builds and launches on all targets; module boundaries are real and tested rather than represented by empty folders.
 
@@ -1541,12 +1568,12 @@ All compiler and debugger verification uses toolchains already installed on each
 
 # Phase 4 — User Story 1: Project workflow and native source editing
 
-- [ ] T023 [US1] Implement create/open project use cases and cross-platform project/source path handling.
+- [ ] T023 [US1] Implement open-workspace and create/open-project use cases with cross-platform project/source path handling: opening a workspace requires no manifest, an optional `ave.toml` is read through a port, and a recognized native descriptor is reported rather than driven.
 - [ ] T024 [US1] Implement native GPUI workspace composition for editor, visualization, inspector, transport, and output regions.
 - [ ] T025 [US1] Implement the bounded native editor: text input, cursor, selection, editing, undo/redo, clipboard, line numbers, save, and unsaved state.
 - [ ] T026 [US1] Integrate Tree-sitter C/C++ parsing and syntax highlighting.
 - [ ] T027 [US1] Bind buffers to source revisions; preserve trace provenance and mark a trace stale when its source diverges.
-- [ ] T028 [US1] Verify create/open/edit/save/reopen and keyboard/focus behavior on all three platforms.
+- [ ] T028 [US1] Verify open-workspace/create-project/edit/save/reopen and keyboard/focus behavior on all three platforms.
 
 **Acceptance:** users can create/open a project and edit/save C17 and C++20 source in the native application on all Alpha targets.
 
@@ -1555,7 +1582,7 @@ All compiler and debugger verification uses toolchains already installed on each
 # Phase 5 — User Story 2: Build and launch real C/C++ programs
 
 - [ ] T029 [US2] Implement platform C/C++ compiler discovery — project configuration, `CC`/`CXX`, `cc`/`c++` alias resolution, GCC/G++, Apple Clang, MSVC, MinGW-w64 — with version/target reporting and platform prerequisite diagnostics.
-- [ ] T030 [US2] Implement deterministic C17/C++20 compiler command construction from `ave.toml` for the discovered compiler family, including debug profile and provenance.
+- [ ] T030 [US2] Implement deterministic C17/C++20 compiler command construction from the resolved project configuration (the `ave.toml` overlay in Alpha) for the discovered compiler family, including debug profile and provenance.
 - [ ] T031 [US2] Implement build process execution, cancellation, stdout/stderr capture, exit status, and cleanup.
 - [ ] T032 [US2] Map compiler diagnostics to source locations where available and distinguish build, launch, and runtime failures.
 - [ ] T033 [US2] Implement explicit launch consent and clear disclosure that Alpha programs run locally with the user's OS permissions and are not sandboxed.
@@ -1641,7 +1668,7 @@ All compiler and debugger verification uses toolchains already installed on each
 
 | Requirement group | Task coverage |
 |---|---|
-| Project/source FR-001–008 | T022–T028 |
+| Project/source FR-001–010 | T022–T028 |
 | Build/execute FR-020–028 | T029–T034 |
 | Trace FR-040–050 | T035–T042 |
 | Selected state FR-060–065 | T039–T050 |

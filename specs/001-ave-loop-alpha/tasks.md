@@ -65,7 +65,7 @@ All compiler and debugger verification uses toolchains already installed on each
 - [x] T019 Add shared diagnostics, structured logging, error classification, and background-work cancellation conventions.
 - [x] T020 [P] Add CI build, formatting, lint, and test checks for Linux x86_64, Windows x86_64, and macOS arm64.
 - [x] T021 Add architecture checks that prevent presentation/GPUI and infrastructure/DAP types from leaking into domain models.
-- [x] T022 Define and validate the initial `ave.toml` manifest contract, versioning, relative-path rules, and actionable invalid-project errors.
+- [ ] T022 Define and validate the workspace/project model and the optional `ave.toml` overlay contract: a workspace opens without a manifest, a native build-system descriptor is recognized and never replaced, and versioning, relative-path rules, and actionable invalid-project errors apply only when the overlay exists.
 
 **Gate:** one shared application builds and launches on all targets; module boundaries are real and tested rather than represented by empty folders.
 
@@ -73,12 +73,12 @@ All compiler and debugger verification uses toolchains already installed on each
 
 # Phase 4 — User Story 1: Project workflow and native source editing
 
-- [ ] T023 [US1] Implement create/open project use cases and cross-platform project/source path handling.
+- [ ] T023 [US1] Implement open-workspace and create/open-project use cases with cross-platform project/source path handling: opening a workspace requires no manifest, an optional `ave.toml` is read through a port, and a recognized native descriptor is reported rather than driven.
 - [ ] T024 [US1] Implement native GPUI workspace composition for editor, visualization, inspector, transport, and output regions.
 - [ ] T025 [US1] Implement the bounded native editor: text input, cursor, selection, editing, undo/redo, clipboard, line numbers, save, and unsaved state.
 - [ ] T026 [US1] Integrate Tree-sitter C/C++ parsing and syntax highlighting.
 - [ ] T027 [US1] Bind buffers to source revisions; preserve trace provenance and mark a trace stale when its source diverges.
-- [ ] T028 [US1] Verify create/open/edit/save/reopen and keyboard/focus behavior on all three platforms.
+- [ ] T028 [US1] Verify open-workspace/create-project/edit/save/reopen and keyboard/focus behavior on all three platforms.
 
 **Acceptance:** users can create/open a project and edit/save C17 and C++20 source in the native application on all Alpha targets.
 
@@ -87,7 +87,7 @@ All compiler and debugger verification uses toolchains already installed on each
 # Phase 5 — User Story 2: Build and launch real C/C++ programs
 
 - [ ] T029 [US2] Implement platform C/C++ compiler discovery — project configuration, `CC`/`CXX`, `cc`/`c++` alias resolution, GCC/G++, Apple Clang, MSVC, MinGW-w64 — with version/target reporting and platform prerequisite diagnostics.
-- [ ] T030 [US2] Implement deterministic C17/C++20 compiler command construction from `ave.toml` for the discovered compiler family, including debug profile and provenance.
+- [ ] T030 [US2] Implement deterministic C17/C++20 compiler command construction from the resolved project configuration (the `ave.toml` overlay in Alpha) for the discovered compiler family, including debug profile and provenance.
 - [ ] T031 [US2] Implement build process execution, cancellation, stdout/stderr capture, exit status, and cleanup.
 - [ ] T032 [US2] Map compiler diagnostics to source locations where available and distinguish build, launch, and runtime failures.
 - [ ] T033 [US2] Implement explicit launch consent and clear disclosure that Alpha programs run locally with the user's OS permissions and are not sandboxed.
@@ -173,7 +173,7 @@ All compiler and debugger verification uses toolchains already installed on each
 
 | Requirement group | Task coverage |
 |---|---|
-| Project/source FR-001–008 | T022–T028 |
+| Project/source FR-001–010 | T022–T028 |
 | Build/execute FR-020–028 | T029–T034 |
 | Trace FR-040–050 | T035–T042 |
 | Selected state FR-060–065 | T039–T050 |
