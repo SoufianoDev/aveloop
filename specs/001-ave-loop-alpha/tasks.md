@@ -44,7 +44,7 @@ All compiler and debugger verification uses toolchains already installed on each
 - [x] T009 Verify the installed platform C/C++ toolchain builds C17 and C++20 debug binaries on Linux (GCC/G++), Windows (MSVC or MinGW-w64), and macOS (Apple Clang), documenting each platform's linker/runtime prerequisites.
 - [x] T010 Verify platform debugger launch, breakpoint, source-level stepping, stack, variables, aggregate children, pointer values, stdout/stderr, and termination on all three platforms: GDB on Linux, LLDB on macOS, the compiler-matched debugger on Windows.
 - [x] T011 Record actual debugger capabilities per platform and backend (DAP or GDB/MI); explicitly verify that the design does not depend on `supportsStepBack`.
-- [ ] T012 Verify process cancellation and child-process cleanup behavior on each OS.
+- [x] T012 Verify process cancellation and child-process cleanup behavior on each OS.
 - [ ] T013 [P] Verify Tree-sitter C/C++ grammar integration and license compatibility.
 - [ ] T014 Evaluate GPUI text primitives and the required Material 3 component surface; document build/reuse decisions without creating a fork.
 - [ ] T015 Produce the cross-platform feasibility report. Do not proceed to production foundation until every Alpha target has a verified path or the target matrix is explicitly re-approved.
