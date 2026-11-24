@@ -1237,6 +1237,13 @@ Entries H0001–H0099 record the project and review sessions. Entry timestamps a
   - Code state: `src/domain/project/manifest.rs` and `tests/manifest_tests.rs` from `591e09c` are NOT reverted. They still encode the superseded contract (closed `Language` enum, `ave.toml` as the project definition) and must be revised as the first step of the redefined T022.
   - Not done on purpose: no Rust/Go integration, no CMake/Cargo/go.mod detection implementation, no source-code edits outside the project model, no task marked complete on documentation grounds.
 
+- [H0126] [2026-11-24] [T022] VERIFIED-FACT: architecture-review document set committed and CI green.
+  - Session: OpenCode session `ses_df4caf04effevP8U7GoQKRY3ZO` (AI agent: opencode)
+  - Commit `544a264`; pushed `a58f8f5..544a264`; only `spec.md`, `plan.md`, `tasks.md`, `complete.md`, `HANDOFF.md` staged (owner's `src/presentation/theme.rs` left unstaged, `.planning/` never staged)
+  - Evidence: CI run `45455892960` (head `544a264`) — Linux, Windows, and macOS arm64 all `success`
+  - Issue verification: each canonical task line in #22/#23/#28/#30 was compared as a whole string against `tasks.md` and matched; all issues remain OPEN
+  - State change: no task is marked complete. T022 is the next task under its redefined contract.
+
 ## Resume Instructions
 
 1. Read repository-level agent instructions (`AGENTS.md`).
