@@ -48,10 +48,10 @@ All compiler and debugger verification uses toolchains already installed on each
 - [x] T013 [P] Verify Tree-sitter C/C++ grammar integration and license compatibility.
 - [x] T014 Evaluate GPUI text primitives and the required Material 3 component surface; document build/reuse decisions without creating a fork.
 - [x] T015 Produce the cross-platform feasibility report. Do not proceed to production foundation until every Alpha target has a verified path or the target matrix is explicitly re-approved.
-- [ ] T016 Implement the Windows compiler-debugger pair detection policy (MinGW-w64 GCC/G++ with GDB, or MSVC with CDB/DbgEng; both complete → prefer MinGW-w64/GDB; neither → report and install nothing; explicit configuration respected and never silently substituted) and validate all four scenarios in Windows CI.
-- [ ] T017 Verify a live Windows debugger session with the detected pair: launch, breakpoint, source-level stepping, stack, variables, aggregate children, pointer values, stdout/stderr separation, and termination.
-- [ ] T018 Complete macOS LLDB live verification: source-level stepping, variables, aggregate children, pointer values, stdout/stderr separation, and termination (launch, breakpoint, and backtrace already proven).
-- [ ] T019 Verify the GPUI application launches and renders on Windows and macOS at runtime, not only via `cargo check`.
+- [x] T016 Implement the Windows compiler-debugger pair detection policy (MinGW-w64 GCC/G++ with GDB, or MSVC with CDB/DbgEng; both complete → prefer MinGW-w64/GDB; neither → report and install nothing; explicit configuration respected and never silently substituted) and validate all four scenarios in Windows CI.
+- [x] T017 Verify a live Windows debugger session with the detected pair: launch, breakpoint, source-level stepping, stack, variables, aggregate children, pointer values, stdout/stderr separation, and termination.
+- [x] T018 Complete macOS LLDB live verification: source-level stepping, variables, aggregate children, pointer values, stdout/stderr separation, and termination (launch, breakpoint, and backtrace already proven).
+- [x] T019 Verify the GPUI application launches and renders on Windows and macOS at runtime, not only via `cargo check`.
 
 **Gate:** GPUI, compiler, debugger, process control, and required platform prerequisites have evidence on Linux, Windows, and macOS.
 
@@ -59,10 +59,10 @@ All compiler and debugger verification uses toolchains already installed on each
 
 # Phase 3 — Native application and architecture foundation
 
-- [ ] T016 Pin the Rust toolchain, exact GPUI revision, and direct dependency versions; establish reproducible Cargo metadata and lockfile policy.
-- [ ] T017 Create one Cargo package and a minimal native GPUI application that launches on all Alpha targets.
-- [ ] T018 Establish the modular-monolith boundaries and composition root; keep domain independent of GPUI, DAP, filesystem, and OS process APIs.
-- [ ] T019 Add shared diagnostics, structured logging, error classification, and background-work cancellation conventions.
+- [x] T016 Pin the Rust toolchain, exact GPUI revision, and direct dependency versions; establish reproducible Cargo metadata and lockfile policy.
+- [x] T017 Create one Cargo package and a minimal native GPUI application that launches on all Alpha targets.
+- [x] T018 Establish the modular-monolith boundaries and composition root; keep domain independent of GPUI, DAP, filesystem, and OS process APIs.
+- [x] T019 Add shared diagnostics, structured logging, error classification, and background-work cancellation conventions.
 - [ ] T020 [P] Add CI build, formatting, lint, and test checks for Linux x86_64, Windows x86_64, and macOS arm64.
 - [ ] T021 Add architecture checks that prevent presentation/GPUI and infrastructure/DAP types from leaking into domain models.
 - [ ] T022 Define and validate the initial `ave.toml` manifest contract, versioning, relative-path rules, and actionable invalid-project errors.

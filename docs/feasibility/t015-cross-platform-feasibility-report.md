@@ -100,3 +100,28 @@ git show origin/ci/platform-matrix-verification:.github/workflows/feasibility-cr
 gh run view 45294000672 --json jobs --jq '.jobs[] | "\(.name) \(.conclusion)"'
 gh run view 45297491219 --json jobs --jq '.jobs[] | "\(.name) \(.conclusion)"'
 ```
+
+## 8. Addendum (2026-11-24): gate re-evaluation after T016–T019
+
+The verdict in §6 is the record at `bd4216d`. Route A (close the gaps) was chosen by the
+user, and T016–T019 closed the three blocking gaps with CI evidence. No product code
+changed.
+
+| Gap | Closure | Evidence |
+|---|---|---|
+| G1 Windows debugger backend undecided | Pair-based policy user-confirmed and implemented; real detection on `windows-2022` selects MinGW-w64 + GDB; live session verified | T016 run 45304616166 (8/8 + detection); T017 run 45305339035 |
+| G2 macOS debugger depth | Full LLDB session: launch, breakpoint, four steps, variables, aggregate, pointer, backtrace, streams, clean exit | T018 run 45305339035 |
+| G3 macOS/Windows GPUI runtime | Real window opened and exited on both runners | T019 run 45304616214 |
+
+**Revised gate verdict:** met for the Alpha target matrix, with these recorded residuals:
+
+1. MSVC + CDB scripted variable/stack assertions are not observable under shell
+   redirection on `windows-2022`; the CDB job verifies explicit-configuration
+   honouring, build, launch, and stream capture only. MinGW-w64 + GDB is the verified
+   Windows path and the policy's default preference.
+2. GPUI input, focus, clipboard, and resize remain Linux-verified only; macOS and
+   Windows are verified for build and runtime launch.
+3. The Wayland clipboard read remains unverified (no `wl-clipboard`), as recorded in §4.
+
+Detail: `docs/feasibility/t016-t019-gate-closure.md`; matrix:
+`docs/feasibility/cross-platform-matrix.md`.
