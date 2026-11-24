@@ -11,15 +11,15 @@ Canonical continuity record for every agent working on this repository. Read thi
 - **Last verified HEAD:** `71aaac9` (`docs: update handoff for T012 completion and correct HEAD discrepancy`), matching `origin/feat/gpui-kit-fast`
 - **DISCREPANCY corrected:** Previous HANDOFF recorded HEAD as `ad45702`; actual HEAD at session start was `ce821b7`; corrected here. Repository wins.
 - **`main` moved:** `origin/main` is now `7953e08` (`Merge pull request #140 from SoufianoDev/feat/gpui-kit-fast`). Contains `4bf809c` but not `589b7e2` or later.
-- **Working tree:** dirty; T013 manifest, probe, workflow/report work in progress plus an unrelated theme author edit
-- **Active task:** T013 (T012 complete; all 3 CI legs passed)
+- **Working tree:** T013 commit pushed; unrelated theme author edit remains uncommitted
+- **Active task:** T013 complete; T014 next
 - **Current phase:** Phase 2 — Foundational feasibility
-- **Overall status:** Phase 1 complete (T001–T004); T005–T012 complete; T013 in progress; T014–T015 next.
-- **Current objective:** Complete T013 Linux verification, cross-platform CI, evidence report, and task closure.
+- **Overall status:** Phase 1 complete (T001–T004); T005–T013 complete; T014–T015 next.
+- **Current objective:** Await Issue #13 evidence comment and proceed to T014 text/M3 feasibility evaluation.
 
 ## Immediate Next Action
 
-T012 CI run `45294000672` passed all 3 OS legs. Continue T013: finish the Tree-sitter report and cross-platform CI, mark T013 complete, post evidence on Issue #13 if review is complete, then proceed to T014. Do not close Issues without explicit authorization.
+T013 CI run `45297491219` passed all 3 OS legs. Post evidence on Issue #13 and record T013 closure, then start T014 (GPUI text primitives and Material 3 component surface). Do not close Issues without explicit authorization.
 
 ## Verified Project State
 
@@ -934,6 +934,13 @@ Entries H0001–H0085 record the project and review sessions. Entry timestamps a
   - Result: C and C++ parsing plus C/C++ node-kind checks all PASS
   - Evidence: terminal output; pinned crate license manifests are MIT
   - State change: T013 Linux implementation verified; cross-platform CI dispatch remains
+
+- [H0095] [2026-11-24T01:32Z] [T013] VERIFIED-FACT: GitHub Actions run 45297491219 passed Linux, Windows, and macOS at commit `e94620b`.
+  - Command/tool: `gh run view 45297491219 --json status,conclusion,jobs`; `gh issue comment 13`
+  - Target: T013 workflow and Issue #13
+  - Result: all 3 OS jobs succeeded; evidence comment posted
+  - Evidence: https://github.com/SoufianoDev/aveloop/issues/13#issuecomment-7118170354
+  - State change: T013 complete; next task is T014
 
 ## Resume Instructions
 

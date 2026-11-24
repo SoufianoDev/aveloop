@@ -1,6 +1,6 @@
 # T013 Tree-sitter C/C++ Grammar Integration
 
-- **Status:** Linux verified; Windows and macOS CI verification pending.
+- **Status:** VERIFIED on Linux, Windows, and macOS.
 - **Date:** 2026-11-24
 - **Branch:** `feat/gpui-kit-fast`
 
@@ -30,3 +30,5 @@ The `.github/workflows/t013-tree-sitter.yml` workflow builds and runs `t013_veri
 - Linux x86_64
 - Windows x86_64
 - macOS arm64
+
+GitHub Actions run `45297491219` passed all three legs at commit `e94620b`.
