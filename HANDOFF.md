@@ -4,22 +4,28 @@ Canonical continuity record for every agent working on this repository. Read thi
 
 ## Current State
 
-- **Last updated:** 2026-11-24 (T014 evaluated; T015 next)
+- **Last updated:** 2026-11-24 (T015 report delivered; Phase 2 exit gate NOT met — user decision required)
 - **Repository:** `SoufianoDev/aveloop` (`https://github.com/SoufianoDev/aveloop.git`)
 - **Project root:** `/home/soufiano/SoufianoDev/AveLoop`
 - **Active branch:** `dev` tracking `origin/feat/gpui-kit-fast`.
-- **Last verified HEAD:** `8f112bc` (`docs: evaluate T014 GPUI text primitives and M3 component surface`), pushed to `origin/feat/gpui-kit-fast`
-- **DISCREPANCY corrected:** HANDOFF recorded HEAD as `71aaac9`; verified HEAD at this session start was `c4f653a` (`docs(t013): record cross-platform Tree-sitter verification`). Repository wins.
+- **Last verified HEAD:** `bd4216d` (`docs(t015): consolidate cross-platform feasibility evidence and gate verdict`), pushed to `origin/feat/gpui-kit-fast`
+- **DISCREPANCY corrected:** HANDOFF recorded HEAD as `71aaac9`; verified HEAD at this session start was `c4f653a`. Later corrected to `8f112bc` and now `bd4216d`. Repository wins.
 - **`main` moved:** `origin/main` is now `7953e08` (`Merge pull request #140 from SoufianoDev/feat/gpui-kit-fast`). Contains `4bf809c` but not `589b7e2` or later.
 - **Working tree:** one uncommitted edit by the repository owner in `src/presentation/theme.rs` (Night Owl theme author string). Not produced by an agent; left untouched and unstaged.
-- **Active task:** T014 complete; T015 next
-- **Current phase:** Phase 2 — Foundational feasibility
-- **Overall status:** Phase 1 complete (T001–T004); T005–T014 complete; T015 next.
-- **Current objective:** Produce the consolidated cross-platform feasibility report (T015).
+- **Active task:** T015 report complete; **Phase 2 exit gate NOT met**
+- **Current phase:** Phase 2 — Foundational feasibility (blocked at the exit gate)
+- **Overall status:** Phase 1 complete; T005–T015 complete as work items; production foundation must not start until the gate is resolved or the target matrix is explicitly re-approved.
+- **Current objective:** Obtain a user decision on the gate (close the three gaps, or re-baseline Alpha).
 
 ## Immediate Next Action
 
-Start T015 (consolidated cross-platform feasibility report). Do not proceed to production foundation work until every Alpha target has a verified path or the target matrix is explicitly re-approved. Do not close Issues without explicit authorization. Leave the owner's uncommitted `src/presentation/theme.rs` edit alone.
+**Blocked on a user decision — do not start Phase 3.** `docs/feasibility/t015-cross-platform-feasibility-report.md` records three blocking gaps:
+
+1. **G1 (architectural):** no Windows debugger backend is chosen. Only `dumpbin` PDB evidence exists. Choose GDB/MinGW-w64, CDB plus an AveLoop-owned adapter, or a commercial adapter. This decision also decides whether the Windows toolchain stays MSVC or moves to MinGW-w64.
+2. **G2:** macOS debugger depth (stepping, variables, pointers, aggregate children, stdout/stderr, termination) not exercised.
+3. **G3:** macOS/Windows GPUI runtime not executed; `cargo check` only.
+
+Recommended: option A — extend feasibility CI with live launch/debugger probes (CI scripts and one probe binary; no product code). Do not close Issues without explicit authorization. Leave the owner's uncommitted `src/presentation/theme.rs` edit alone.
 
 ## Verified Project State
 
@@ -120,11 +126,13 @@ Verified this session: `f259ead` exists locally and on the remote, the tree is c
 | T008 complete (Linux) | 2/2 interaction tests pass (focus, typing, backspace, clipboard via UI, resize/reflow); Wayland window opens and exits 0; X11 via Xephyr: clipboard write/read PASSED, window opens, exit 0; external round-trip verified both directions against `xsel`; Wayland clipboard read remains unverified (no `wl-clipboard`; offers need focus) | `docs/feasibility/t008-gpui-input.md`; `src/bin/t008_verify.rs`; `tests/t008_interaction_tests.rs`; Issue #8 comments |
 | T012 complete (Linux) | 4/4 checks PASS (spawn_and_kill, exit_status_captured, child_does_not_outlive_kill, timeout_then_kill); exit 0; CI dispatched for Windows/macOS | `src/bin/t012_verify.rs`; `docs/feasibility/t012-process-cancellation.md`; Issue #12 comment; commit `e6d0749` |
 | T014 complete | Text primitives and the reusable Editor widget evaluated from pinned sources; required M3 surface mapped to `gpui-component` modules; reuse/no-fork decision recorded; follow-ups listed (enable tree-sitter C/C++ features, M3 variant mapping, build timeline and pointer graph) | `docs/feasibility/t014-text-and-m3-surface.md`; Issue #14 comment; commit `8f112bc` |
+| T015 complete (report) | Consolidated cross-platform feasibility report; per-target evidence levels; verified path per Alpha target; three blocking gaps (Windows debugger backend undecided, macOS debugger depth, macOS/Windows GPUI runtime); matrix overclaim corrected | `docs/feasibility/t015-cross-platform-feasibility-report.md`; Issue #15 comment; commit `bd4216d` |
 
 ## Active and Pending Work
 
-- **Phase 2 (active):** Foundational feasibility tasks T005–T014 complete; T015 is the phase exit gate.
-- **T015 (next):** Consolidated cross-platform feasibility report; every Alpha target must have a verified path or the matrix must be re-approved before Phase 2 production foundation work.
+- **Phase 2 (blocked at exit gate):** T005–T015 complete as work items; the gate itself is NOT met.
+- **Gate decision (next):** choose gap closure (option A, recommended) or re-baseline the Alpha target; G1 (Windows debugger backend) must be answered either way.
+- **Phase 3:** must not start until the gate is resolved or explicitly re-approved.
 - **T014 follow-ups:** enable `tree-sitter-c`/`tree-sitter-cpp` passthrough features, map M3 variant names, build the execution timeline and pointer graph, and stress-test the editor (large files, IME per OS).
 - **T008 residual:** Wayland clipboard read returns `None`; re-test with `wl-copy`/`wl-paste` on a focused Wayland session.
 
@@ -162,6 +170,11 @@ Verified this session: `f259ead` exists locally and on the remote, the tree is c
 | `docs/feasibility/t014-text-and-m3-surface.md` | added | T014 text-primitive evaluation, editor reuse analysis, M3 surface mapping, decisions | Committed `8f112bc` |
 | `specs/001-ave-loop-alpha/tasks.md` | modified | Mark T014 `[x]` | Committed `8f112bc` |
 | `specs/001-ave-loop-alpha/complete.md` | modified | Regenerated after the T014 check; all three blocks verified equal to their sources | Committed `8f112bc` |
+| `docs/feasibility/t015-cross-platform-feasibility-report.md` | added | T015 consolidated report: evidence levels, per-target paths, gap register, gate verdict, decision options | Committed `bd4216d` |
+| `docs/feasibility/cross-platform-matrix.md` | modified | Corrected T005–T007/T008/T010/T011 overclaims to COMPILE / NOT EXECUTED / PARTIAL / FORMAT ONLY | Committed `bd4216d` |
+| `docs/feasibility/t012-process-cancellation.md` | modified | Populated CI run 45294000672 | Committed `bd4216d` |
+| `specs/001-ave-loop-alpha/tasks.md` | modified | Mark T015 `[x]` | Committed `bd4216d` |
+| `specs/001-ave-loop-alpha/complete.md` | modified | Regenerated after the T015 check; all three blocks verified equal to their sources | Committed `bd4216d` |
 | `.planning/2026-11-22-aveloop-continuity-t001-kickoff/*` | untracked, ignored | Local planning files | Not tracked by design |
 | `specs/001-ave-loop-alpha/{spec,plan,tasks,complete}.md` | committed in `f259ead` | Authoritative Alpha baseline | Verified clean |
 
@@ -187,6 +200,7 @@ Verified this session: `f259ead` exists locally and on the remote, the tree is c
 | #12 | T012 | OPEN | Evidence comment posted; Linux 4/4 PASS; CI pending Windows/macOS |
 | #13 | T013 | OPEN | Evidence comment posted; all 3 CI OS legs passed |
 | #14 | T014 | OPEN | Evidence comment posted; evaluation complete, runtime UI unverified |
+| #15 | T015 | OPEN | Evidence comment posted; gate verdict NOT met, decision options listed |
 | PR #140 | `feat/gpui-kit-fast` → `main` | MERGED | Merged by someone other than this session; produced `7953e08` containing `4bf809c` |
 | #118 / #133 | T066 canonical / duplicate | OPEN | #133 marked superseded, not closed |
 | #75 / #93 / #129 / #134 / #79 | Earlier reconciliations | — | Unchanged this session |
@@ -293,6 +307,11 @@ URLs: `https://github.com/SoufianoDev/aveloop/issues/<n>`.
 | T014 tree-sitter features | NOT ENABLED — `tree-sitter-c`/`tree-sitter-cpp` passthrough exists and both crates are already in `Cargo.lock`; enabling deferred to the editor task | H0097 |
 | T014 `complete.md` regeneration | PASS — all three marker blocks equal to `spec.md`, `plan.md`, `tasks.md` | H0097 |
 | Issue #14 evidence comment | PASS — comment posted; issue remains OPEN | H0097 |
+| T015 evidence inventory | PASS — 3 CI runs re-checked: 45292424668 (matrix), 45294000672 (T012, 3/3 success), 45297491219 (T013, 3/3 success) | H0099 |
+| T015 gate verdict | **FAIL (gate not met)** — G1 Windows debugger backend undecided, G2 macOS debugger depth, G3 macOS/Windows GPUI runtime unexecuted | H0099 |
+| T015 matrix correction | PASS — T005–T007/T008/T010/T011 rows now state COMPILE / NOT EXECUTED / PARTIAL / FORMAT ONLY; CI workflow inspected to confirm what actually ran | H0099 |
+| T015 `complete.md` regeneration | PASS — all three marker blocks equal to their sources | H0099 |
+| Issue #15 evidence comment | PASS — comment posted; issue remains OPEN | H0099 |
 
 ## Failed Attempts
 
@@ -327,7 +346,7 @@ URLs: `https://github.com/SoufianoDev/aveloop/issues/<n>`.
 
 ## Activity Log (Append-Only)
 
-Entries H0001–H0097 record the project and review sessions. Entry timestamps are as reported by the host clock at the time; ordering is positional and authoritative where timestamps disagree. Pre-handoff work is summarized in **Baseline**, not fabricated here.
+Entries H0001–H0099 record the project and review sessions. Entry timestamps are as reported by the host clock at the time; ordering is positional and authoritative where timestamps disagree. Pre-handoff work is summarized in **Baseline**, not fabricated here.
 
 - [H0001] [2026-11-22T23:47Z] [continuity] ACTION: Received and accepted the mandatory continuity protocol.
   - Command/tool: user instruction
@@ -964,6 +983,18 @@ Entries H0001–H0097 record the project and review sessions. Entry timestamps a
   - Result: text shaping/layout/hit-testing/caret/IME/metrics confirmed present; `Editor`/`EditorState` reuse confirmed with gutter, diagnostics, folding, display map, search and tree-sitter C/C++ mapping; required Alpha surface mapped to component modules; timeline and pointer graph recorded as product-specific; reuse/no-fork decision recorded; `tree-sitter-c`/`tree-sitter-cpp` passthrough exists but is not enabled
   - Evidence: file and line references in the report; `tree-sitter-c 0.24.2` and `tree-sitter-cpp 0.23.4` already in `Cargo.lock`
   - State change: T014 marked `[x]`; `complete.md` regenerated and all three blocks verified equal to their sources; Issue #14 comment posted; commit `8f112bc`
+
+- [H0098] [2026-11-24] [state] ACTION: Re-verified repository state before T015.
+  - Command/tool: `git log --oneline -3`, `git status --short`, `gh run list`
+  - Result: HEAD `cb0159d` matches `origin/feat/gpui-kit-fast`; working tree holds only the owner's `src/presentation/theme.rs` edit; T012 CI (45294000672) and T013 CI (45297491219) both succeeded on all three OS legs
+  - State change: none; T015 authorized to start
+
+- [H0099] [2026-11-24] [T015] ACTION: Produced the consolidated cross-platform feasibility report and issued the gate verdict.
+  - Command/tool: read every `docs/feasibility/*.md`; `gh run view --json jobs`; `git show origin/ci/platform-matrix-verification:.github/workflows/feasibility-cross-platform.yml`
+  - Target: `docs/feasibility/t015-cross-platform-feasibility-report.md`
+  - Result: **gate NOT met.** Verified LIVE on all three targets: T009 toolchain, T012 cancellation, T013 Tree-sitter. Linux-only LIVE: GPUI launch/input/clipboard/resize, full GDB DAP/MI surface, capability negotiation. Gaps: G1 Windows debugger backend undecided (only `dumpbin` PDB evidence; MSVC DAP ships only in Visual Studio), G2 macOS debugger depth (breakpoint/launch/backtrace only), G3 macOS/Windows GPUI compile-only.
+  - Corrections: `cross-platform-matrix.md` had marked T008/T010/T011 VERIFIED on macOS/Windows on the strength of `cargo check`, `lldb --batch`, and `dumpbin`; rows corrected to evidence levels. `t012-process-cancellation.md` CI link populated.
+  - State change: T015 marked `[x]` as a delivered report; gate remains open and blocks Phase 3; Issue #15 comment posted; commit `bd4216d` pushed
 
 ## Resume Instructions
 
