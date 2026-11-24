@@ -1204,6 +1204,13 @@ Entries H0001–H0099 record the project and review sessions. Entry timestamps a
   - Docs: `tasks.md` T022 `[x]`; `complete.md` regenerated (1-line diff); Issue #22 canonical task line set to `[x]`
   - Note: no user-facing manifest documentation was written (no docs surface exists yet); the contract is defined by the code and tests
 
+- [H0124] [2026-11-24] [T022] VERIFIED-FACT: T022 CI evidence recorded.
+  - Session: OpenCode session `ses_df4caf04effevP8U7GoQKRY3ZO` (AI agent: opencode)
+  - Commit `591e09c`; pushed `c2106dc..591e09c`
+  - Evidence: CI run `45451552111` (head `591e09c`) — Linux, Windows, and macOS arm64 all `success` on the first attempt
+  - GitHub: Issue #22 evidence comment added; issue left OPEN per repo practice
+  - State change: Phase 3 complete (T016–T022); next task T023 (Phase 4, US1)
+
 ## Resume Instructions
 
 1. Read repository-level agent instructions (`AGENTS.md`).
