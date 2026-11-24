@@ -4,26 +4,27 @@ Canonical continuity record for every agent working on this repository. Read thi
 
 ## Current State
 
-- **Last updated:** 2026-11-24 (T021 architecture boundary check added; T020 CI green)
+- **Last updated:** 2026-11-24 (T022 `ave.toml` manifest contract complete; Phase 3 done)
 - **Repository:** `SoufianoDev/aveloop` (`https://github.com/SoufianoDev/aveloop.git`)
 - **Project root:** `/home/soufiano/SoufianoDev/AveLoop`
 - **Active branch:** `dev` tracking `origin/feat/gpui-kit-fast`.
-- **Last verified HEAD:** `0e1f9fd` (T021 commit; CI run `45440207497` green). Verify again before acting.
+- **Last verified HEAD:** `c2106dc` (T021 evidence commit); verify again before acting.
 - **`main` moved:** `origin/main` is `7953e08` (`Merge pull request #140`). It does not contain `589b7e2` or later. Integration into `main` is not authorized.
-- **Working tree:** owner edit in `src/presentation/theme.rs` (unstaged, leave alone) plus the T021 changes being committed.
-- **Active task:** T021 complete (`tests/architecture_tests.rs`); next unchecked task is T022.
-- **Current phase:** Phase 3 — Native application and architecture foundation (T016–T021 complete; T022 open).
-- **Overall status:** T001–T021 complete as work items. Product CI is green on Linux x86_64, Windows x86_64, and macOS arm64.
-- **Current objective:** T022 — define and validate the initial `ave.toml` manifest contract.
+- **Working tree:** owner edit in `src/presentation/theme.rs` (unstaged, leave alone) plus the T022 changes being committed.
+- **Active task:** T022 complete (`src/domain/project/manifest.rs`); next unchecked task is T023.
+- **Current phase:** Phase 3 complete (T016–T022); next is Phase 4 — User Story 1.
+- **Overall status:** T001–T022 complete as work items. Product CI is green on Linux x86_64, Windows x86_64, and macOS arm64.
+- **Current objective:** T023 — create/open project use cases and cross-platform project/source path handling.
 
 ## Immediate Next Action
 
-**Next task: T022 — define and validate the initial `ave.toml` manifest contract, versioning,
-relative-path rules, and actionable invalid-project errors.** Implement, validate, mark
-`tasks.md`, regenerate `complete.md`, and synchronize canonical Issue #22 (AGENTS.md rule #12).
+**Next task: T023 [US1] — implement create/open project use cases and cross-platform
+project/source path handling.** Implement, validate, mark `tasks.md`, regenerate `complete.md`,
+and synchronize canonical Issue #23 (AGENTS.md rule #12).
 
 **2026-11-24 — USER-CONFIRMED:** "continue to the next step" — implementation, `cargo`,
-commits, and pushes are authorized.
+commits, and pushes are authorized. Phase 3 is complete; Phase 4 has not otherwise been
+re-scoped.
 
 **2026-11-24 — VERIFIED-FACT:** T020 complete. `.github/workflows/ci.yml` runs, for Linux
 x86_64 (`ubuntu-22.04`), Windows x86_64 (`windows-2022`), and macOS arm64 (`macos-latest`):
@@ -1191,6 +1192,17 @@ Entries H0001–H0099 record the project and review sessions. Entry timestamps a
   - Evidence: CI run `45440207497` (head `0e1f9fd`) concluded `success` — Linux and Windows `success` on the first attempt; macOS job was auto-cancelled after exactly 15 minutes queued with 0 steps and no runner, then passed on `gh run rerun --failed`
   - GitHub: Issue #21 evidence comment added; issue left OPEN per repo practice
   - Note: macOS runner capacity is intermittent; a queued macOS job cancelled at 15:00 with `steps: []` is an infrastructure cancellation, not a code failure — rerun the failed job
+
+- [H0123] [2026-11-24] [T022] VERIFIED-FACT: `ave.toml` manifest contract implemented and tested; Phase 3 complete.
+  - Session: OpenCode session `ses_df4caf04effevP8U7GoQKRY3ZO` (AI agent: opencode)
+  - Artifact: `src/domain/project/manifest.rs` (+ `project/mod.rs`, `domain/mod.rs` re-exports) and `tests/manifest_tests.rs` (7 tests)
+  - Contract keys: `version`, `name`, `language` (`c`/`cpp`), `entry`, `sources`, `include_dirs`, `defines`, `compiler_args`, `linker_args`, `program_args`, `working_directory`; `#[serde(deny_unknown_fields)]` rejects unknown keys
+  - Rules: `SUPPORTED_FORMAT_VERSION = 1` checked via a version probe before the full parse so an unsupported version reports version support rather than a field mismatch; every path must be relative and contain no `..`
+  - Errors (thiserror): `Invalid(message)` for TOML/unknown-key/unknown-language, `UnsupportedVersion`, `AbsolutePath`, `EscapingPath`, each with an actionable message
+  - Dependency: `toml = "1.2"` added as a direct dependency; version `1.2.2` was already in `Cargo.lock` as a transitive dependency, so no new version was introduced
+  - Local: 17/17 tests (3 architecture + 4 domain + 7 manifest + 1 presentation + 2 t008), fmt and clippy `-D warnings` clean; the T021 scanner confirms the new domain module imports nothing forbidden
+  - Docs: `tasks.md` T022 `[x]`; `complete.md` regenerated (1-line diff); Issue #22 canonical task line set to `[x]`
+  - Note: no user-facing manifest documentation was written (no docs surface exists yet); the contract is defined by the code and tests
 
 ## Resume Instructions
 

@@ -1533,7 +1533,7 @@ All compiler and debugger verification uses toolchains already installed on each
 - [x] T019 Add shared diagnostics, structured logging, error classification, and background-work cancellation conventions.
 - [x] T020 [P] Add CI build, formatting, lint, and test checks for Linux x86_64, Windows x86_64, and macOS arm64.
 - [x] T021 Add architecture checks that prevent presentation/GPUI and infrastructure/DAP types from leaking into domain models.
-- [ ] T022 Define and validate the initial `ave.toml` manifest contract, versioning, relative-path rules, and actionable invalid-project errors.
+- [x] T022 Define and validate the initial `ave.toml` manifest contract, versioning, relative-path rules, and actionable invalid-project errors.
 
 **Gate:** one shared application builds and launches on all targets; module boundaries are real and tested rather than represented by empty folders.
 
