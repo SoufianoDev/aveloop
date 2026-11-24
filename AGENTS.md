@@ -13,5 +13,6 @@ Applies to every coding agent and every session in this repository.
 9. **Never commit secrets** to `HANDOFF.md` or anywhere else.
 10. **Product authority** is `specs/001-ave-loop-alpha/spec.md`, `plan.md`, and `tasks.md`. `complete.md` is derived — regenerate it, never edit it independently.
 11. **Do not start a task before the current one is authorized and handed off.** The next task is identified in `HANDOFF.md` → Immediate Next Action.
+12. **Whenever `tasks.md` is modified, reconcile every affected task with its canonical GitHub Issue in the same workflow.** Synchronize the title, scope, prerequisites, and completion criteria. Resolve mappings using the Spec Kit task field; never infer them from issue numbering.
 
 Full protocol: `HANDOFF.md`.

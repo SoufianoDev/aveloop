@@ -4,19 +4,36 @@ Canonical continuity record for every agent working on this repository. Read thi
 
 ## Current State
 
-- **Last updated:** 2026-11-24 (T016–T019 gate closure verified in CI)
+- **Last updated:** 2026-11-24 (GPUI Kit Material documentation and Issue synchronization phase)
 - **Repository:** `SoufianoDev/aveloop` (`https://github.com/SoufianoDev/aveloop.git`)
 - **Project root:** `/home/soufiano/SoufianoDev/AveLoop`
 - **Active branch:** `dev` tracking `origin/feat/gpui-kit-fast`.
-- **Last verified HEAD:** `9585fb1` (`test(ci): drop the flaky MSVC+CDB job and record it as a residual`) on `origin/feat/gpui-kit-fast`; this HANDOFF update is committed on top.
+- **Last verified HEAD:** `1669fafbdf9530c518cb653be3bc8b13e38af30b` on `dev`; the remote feature ref also matches `1669fafbdf9530c518cb653be3bc8b13e38af30b`.
 - **`main` moved:** `origin/main` is `7953e08` (`Merge pull request #140`). It does not contain `589b7e2` or later. Integration into `main` is not authorized.
-- **Working tree:** only the repository owner's uncommitted edit in `src/presentation/theme.rs`. Left untouched and unstaged.
-- **Active task:** T016–T019 complete; **Phase 2 exit gate met with recorded residuals**.
-- **Current phase:** Phase 2 closed by evidence; Phase 3 (production foundation) not started.
+- **Working tree:** four specification/plan/task/governance updates plus existing owner edits in `src/presentation/theme.rs`; no Cargo or source implementation changes are part of this operation.
+- **Active task:** Phase 17 GPUI Kit Material adoption documentation and Issue synchronization.
+- **Current phase:** Phase 17 complete as a planning/documentation phase; no UI implementation or dependency change started.
 - **Overall status:** T001–T019 complete as work items. Linux, macOS, and Windows each have live evidence for GPUI launch, C/C++ toolchain, debugger session, and process control.
-- **Current objective:** Authorization to start Phase 3, or a decision to close the recorded residuals first.
+- **Current objective:** Continue non-Cargo documentation and continuity work only. No implementation or dependency work is authorized.
 
 ## Immediate Next Action
+
+**Stop after the planning/documentation and GitHub synchronization workflow.** Do not implement
+GPUI Kit Material, modify `Cargo.toml` or `Cargo.lock`, download assets, commit, push, create a
+PR, or merge. The next implementation task requires a separate explicit authorization.
+
+**2026-11-24 — USER-CONFIRMED:** Continue with the non-Cargo handoff/documentation step; do not
+run any `cargo` command. This confirmation does not authorize implementation, dependency changes,
+asset downloads, commits, pushes, or merges.
+
+Phase 17 is complete with:
+
+- Verified upstream release `gpui-kit-material 0.2.0`.
+- Rust 1.98 MSRV recorded; installed Rust 1.96 remains a planning-time incompatibility.
+- GPUI Fast 0.1.16 exact feature excluded; AveLoop remains on 0.1.17.
+- `full` + `serde` approved as the baseline feature policy; `embedded-symbols` excluded.
+- Canonical Issues #94, #96, #98, #100, #102 synchronized.
+- Duplicates #116, #124, #125, #126, #127 linked by comments and left open.
 
 **Gate met; awaiting authorization to start Phase 3.** The three T015 gaps were closed
 by route A (CI probes only, no product code):
@@ -1076,6 +1093,47 @@ Entries H0001–H0099 record the project and review sessions. Entry timestamps a
   - Result: T017/T018 run `45310701540` success (Windows MinGW-w64 + GDB, macOS LLDB); latest T016 `45308437390`, T019 `45308437334`, T012 `45308437304`, T013 `45308437255` all success
   - Evidence: job conclusions `success` for both live-debugger jobs
   - State change: gate evidence current at HEAD `9585fb1`; working tree contains only the owner's `src/presentation/theme.rs` edit
+
+- [H0106] [2026-11-24T03:49Z] [Phase 17] VERIFIED-FACT: External and repository research confirms `gpui-kit-material 0.2.0`, published 2026-11-18, edition 2024, Rust 1.98 MSRV, MIT AND Apache-2.0, and upstream dependencies on GPUI Kit/Base 0.10.0. The exact GPUI Fast 0.1.16 optional feature conflicts with AveLoop's GPUI Fast 0.1.17 baseline and is excluded. `full` + `serde` are the baseline feature policy; `embedded-symbols` is excluded for the approximately 51 MB asset bundle.
+- [H0107] [2026-11-24T03:49Z] [Phase 17] ACTION: Updated the authoritative design-system sections in `spec.md`, `plan.md`, `tasks.md`, the T014 dated addendum, the alpha decisions register, the constitution, and root `AGENTS.md`. Regenerated `complete.md` and verified every marker block equals its source. `git diff --check` passed.
+- [H0108] [2026-11-24T03:49Z] [Phase 17] ACTION: Synchronized canonical GitHub Issues #94, #96, #98, #100, #102 using their `Spec Kit task` fields. Added duplicate-link comments to #116, #124, #125, #126, #127 and left all duplicates open. No Issue was closed.
+- [H0109] [2026-11-24T03:49Z] [Phase 17] VERIFIED-FACT: Final repository verification shows only the planned documentation/governance files plus the pre-existing owner edit in `src/presentation/theme.rs`. `Cargo.toml` and `Cargo.lock` remain unchanged. No implementation, assets, fork, commit, push, PR, or merge was performed.
+
+- [H0110] [2026-11-24T04:07Z] [Full task reconciliation] VERIFIED-FACT: GitHub contains 138 task-bearing Issue records representing 71 `Spec Kit task` IDs. The lowest open Issue per task ID was used as the canonical record.
+- [H0111] [2026-11-24T04:07Z] [Full task reconciliation] ACTION: Updated all 71 canonical Issue bodies with exact source task definitions from `specs/001-ave-loop-alpha/tasks.md`, replacing stale scope text and retaining existing useful acceptance criteria where present.
+- [H0112] [2026-11-24T04:07Z] [Full task reconciliation] VERIFIED-FACT: Re-fetched the canonical Issues and verified 71/71 exact task-line matches. Canonical mapping: T001→#1 through T034→#34, T035→#36, T036→#53, T037→#55, T038→#57, T039→#59, T040→#60, T041→#61, T042→#62, T043→#63, T044→#74, T045→#76, T046→#78, T047→#80, T048→#81, T049→#83, T050→#85, T051→#87, T052→#88, T053→#89, T054→#91, T055→#92, T056→#94, T057→#96, T058→#98, T059→#100, T060→#102, T061→#104, T062→#106, T063→#108, T064→#115, T065→#117, T066→#118, T067→#119, T068→#120, T069→#121, T070→#122, T071→#123.
+
+- [H0113] [2026-11-24T04:39Z] [Non-Cargo continuation] USER-CONFIRMED: continue the non-Cargo handoff/documentation step. Explicitly prohibited: every `cargo` command, implementation changes, dependency or lockfile changes, asset downloads, commits, pushes, PRs, and merges.
+- [H0114] [2026-11-24T04:39Z] [Non-Cargo continuation] AGENT-PROPOSED: update continuity state to retain the no-Cargo constraint and stop after read-only repository/derived-artifact validation unless the user names a specific documentation task.
+
+- [H0115] [2026-11-24] [detection] ACTION: Detected and validated all working-tree changes. No-Cargo constraint confirmed (H0113/H0114).
+  - Session: OpenCode session `ses_df4caf04effevP8U7GoQKRY3ZO` (AI agent: opencode)
+  - Command/tool: `git status`, `git diff`, `git log`, complete.md marker-block diffs against spec.md/plan.md/tasks.md
+  - Changes detected (all unstaged, nothing committed):
+    1. `specs/001-ave-loop-alpha/spec.md` — §8.3.1 Component source added; §8 baseline updated with GPUI Kit Material 0.2.0 dependency decision; T056–T060 references updated
+    2. `specs/001-ave-loop-alpha/plan.md` — §3.6 Design system rewritten for upstream GPUI Kit Material; §8 baseline dependency decision added
+    3. `specs/001-ave-loop-alpha/tasks.md` — T056–T060 rewritten for upstream gpui-kit-material adoption
+    4. `specs/001-ave-loop-alpha/complete.md` — Regenerated; all three marker blocks (spec.md, plan.md, tasks.md) verified equal to their sources
+    5. `docs/feasibility/t014-text-and-m3-surface.md` — §8 dated addendum (2026-11-24) with GPUI Kit Material adoption decisions and uncertainties
+    6. `docs/decisions/alpha-baseline.md` — GPUI Kit Material adoption decision row added; fork prohibition added to superseded proposals
+    7. `.specify/memory/constitution.md` — GPUI Material fork rule updated to allow consuming upstream crate, prohibit local fork/vendored modification
+    8. `AGENTS.md` — Rule #12 added: reconcile tasks.md changes with canonical GitHub Issues
+    9. `HANDOFF.md` — Activity log H0100–H0115 (this session's entries)
+    10. `src/presentation/theme.rs` — Pre-existing owner edit (Night Owl author string); LEFT UNTOUCHED per protocol
+  - Validation: complete.md marker blocks match sources; spec.md/plan.md consistent within each doc's own structure; Cargo.toml/Cargo.lock unchanged; no implementation or dependency changes present
+  - HEAD: `1669faf` on `dev`, matches `origin/feat/gpui-kit-fast`; clean remote sync
+  - State change: Phase 17 documentation complete; gate met; Phase 3 awaiting explicit authorization; no commit/push performed (prohibited by no-Cargo constraint)
+
+- [H0116] [2026-11-24] [dependency research] VERIFIED-FACT: Live web research (scrapling MCP) confirms the GPUI Kit Material decision and found a newer upstream release.
+  - Session: OpenCode session `ses_df4caf04effevP8U7GoQKRY3ZO` (AI agent: opencode)
+  - Command/tool: `scrapling` `make_request` against crates.io API (`/crates/gpui-kit-material`, `/0.2.0`, `/0.3.0/dependencies`, `/0.2.0/dependencies`), GitHub REST API (`/repos/mizorewww/gpui-kit-material`, open-issue search), and local `Cargo.toml`/`Cargo.lock`/`rustc --version`
+  - Findings:
+    - `0.2.0` confirmed: published 2026-11-18T15:02Z; MSRV 1.98; edition 2024; license MIT AND Apache-2.0; deps gpui-kit `^0.10.0`, gpui-base `^0.10.0`, optional `gpui-fast = "=0.1.16"`, `chrono ^0.4.38` (pickers); `default = ["full","serde","embedded-symbols","gpui-fast"]`
+    - **NEW** `0.3.0` published 2026-11-24T09:49Z: requires gpui-kit `^0.11.0` + gpui-base `^0.11.0`, optional `gpui-fast = "=0.1.19"`, `gpui-material-symbols ^0.3`, `jiff ^1.0` (pickers). Incompatible with AveLoop's 0.10.0 baseline → 0.2.0 pin confirmed correct; 0.3.0 not adopted.
+    - Repo now: 45★, 7 forks, **1 open issue** (was 2), not archived, pushed 2026-11-24T09:44Z
+    - AveLoop baseline confirmed: gpui-kit 0.10.0, gpui-base 0.10.0 (lock), gpui-fast 0.1.17, rustc 1.96.0; `gpui-kit-material` absent from `Cargo.lock`
+  - Documentation corrections applied: `plan.md` §8 (issue count + 0.3.0 note), `docs/feasibility/t014-text-and-m3-surface.md` (0.3.0 note), `docs/decisions/alpha-baseline.md` (0.3.0 note); `complete.md` regenerated and all three blocks re-verified equal to sources
+  - State change: adoption decision re-validated against live sources; no implementation, dependency, lockfile, or git commit changed (no-Cargo constraint still holds)
 
 ## Resume Instructions
 

@@ -141,11 +141,11 @@ All compiler and debugger verification uses toolchains already installed on each
 
 # Phase 9 — User Story 6: Material 3, Night Owl, and accessibility
 
-- [ ] T056 [US6] Define Material 3 semantic tokens and map the Night Owl palette to application-wide roles.
-- [ ] T057 [P] [US6] Implement shared typography, shape, spacing, elevation, focus, and state-layer primitives.
-- [ ] T058 [US6] Implement the required GPUI-native generic components and product-specific visualization components using the same token system.
-- [ ] T059 [US6] Apply Night Owl consistently across editor chrome, workspace, panels, dialogs, console, timeline, and visualizations.
-- [ ] T060 [US6] Complete responsive layout, keyboard-only, visible-focus, contrast, non-color status, and accessibility review.
+- [ ] T056 [US6] Define Material 3 semantic tokens and map the Night Owl palette to application-wide roles using upstream GPUI Kit Material's theme and semantic-token facilities. Preserve GPUI Kit and GPUI Fast, avoid a second generic theme-token system, and do not replace Night Owl with the upstream default palette.
+- [ ] T057 [P] [US6] Reuse upstream Material 3 visual primitives (typography, shapes, elevation, focus, state layers, layout metrics, and motion) from GPUI Kit Material where appropriate. Implement only necessary AveLoop-specific adaptations and keep specialized execution views AveLoop-owned.
+- [ ] T058 [US6] Integrate upstream `gpui-kit-material` as the primary Material library: preserve existing GPUI Kit infrastructure, verify GPUI Fast 0.1.17 compatibility (no `gpui-fast = "=0.1.16"` duplicate), verify Rust MSRV 1.98 compatibility, use minimal Cargo features (`default-features = false`, `features = ["full", "serde"]`), no unnecessary embedded asset bundles, reuse generic upstream components, add small AveLoop wrappers, implement custom Execution Timeline and Pointer Graph components, and add component and integration tests.
+- [ ] T059 [US6] Apply Night Owl across the application using the shared Material semantic theme system (map Night Owl palette into upstream Material 3 semantic roles; do not replace Night Owl with the upstream default palette).
+- [ ] T060 [US6] Complete responsive layout, keyboard-only navigation, visible focus, contrast, non-color status, motion behavior, state indication, and native platform interaction accessibility review.
 
 **Acceptance:** the UI is a coherent Material 3 implementation with Night Owl, not a collection of unrelated default controls.
 

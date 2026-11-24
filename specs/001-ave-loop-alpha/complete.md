@@ -605,7 +605,48 @@ Material Design 3 is the actual design system, not an inspiration label. It gove
 - Motion.
 - Focus and accessibility behavior.
 
+### 8.3.1 Component source
+
+Generic Material 3 components are obtained from the upstream `gpui-kit-material` library (GPUI-native Material 3 component system built on GPUI Kit), not reimplemented in AveLoop. AveLoop:
+
+- Uses upstream GPUI Kit Material as the primary source of generic Material 3 components (buttons, inputs, menus, dialogs, navigation, feedback, progress, containment, pickers, shapes, window chrome, adaptive components, dynamic color).
+- Keeps GPUI Kit as the underlying component and interaction infrastructure.
+- Keeps GPUI Fast as the existing rendering/backend integration.
+- Maps Night Owl into the upstream Material 3 semantic theme roles.
+- Owns its specialized execution visualizations (Execution Timeline, Pointer Graph, Runtime Inspector, Stack and Heap views) using GPUI Kit primitives and Material 3 tokens.
+
+AveLoop does not create or maintain a local fork of GPUI Kit Material, does not vendor modified upstream code, and does not introduce a WebView or web component runtime.
+
 Generic design-system components are separate from product-specific runtime visualizations.
+
+The conceptual integration is:
+
+```mermaid
+flowchart TB
+    APP["AveLoop Application"]
+    GPUI["GPUI Native UI framework"]
+    KIT["Existing GPUI Kit Component and interaction infrastructure"]
+    FAST["Existing GPUI Fast Rendering/backend integration"]
+    MATERIAL["Upstream GPUI Kit Material Generic Material 3 component library"]
+    THEME["Night Owl Theme Material 3 semantic role mapping"]
+    AVELOOP_UI["AveLoop-specific UI Application and execution presentation"]
+    EXECUTION["Product-specific visualizations Execution Timeline Pointer Graph Runtime Inspector Stack and Heap views"]
+
+    APP -->|"uses"| GPUI
+    APP -->|"uses existing infrastructure"| KIT
+    APP -->|"preserves"| FAST
+    KIT -->|"built on"| GPUI
+    MATERIAL -->|"extends and depends on"| KIT
+    APP -->|"reuses generic Material 3 components from"| MATERIAL
+    THEME -->|"configures semantic theme roles for"| MATERIAL
+    THEME -->|"provides consistent application styling to"| AVELOOP_UI
+    AVELOOP_UI -->|"uses"| KIT
+    AVELOOP_UI -->|"uses Material components and tokens from"| MATERIAL
+    EXECUTION -->|"implemented specifically for AveLoop using"| KIT
+    EXECUTION -->|"follows visual tokens from"| MATERIAL
+    AVELOOP_UI --> EXECUTION
+    APP --> AVELOOP_UI
+```
 
 ## 8.4 Night Owl
 
@@ -816,6 +857,8 @@ These sources inform the implementation plan; they do not override the product r
 - MSVC command-line build: https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line
 - Tree-sitter: https://github.com/tree-sitter/tree-sitter
 - Material Design 3: https://m3.material.io/
+- GPUI Kit Material (upstream Material 3 component library): https://github.com/mizorewww/gpui-kit-material (release 0.2.0)
+- GPUI Material Symbols: https://github.com/mizorewww/gpui-material-symbols
 - Night Owl: https://github.com/sdras/night-owl-vscode-theme
 - Python Tutor: https://pythontutor.com/
 - AveLoop UI prototype: repository/project `index.html` supplied with this conversation.
@@ -1017,15 +1060,44 @@ Build a bounded native editor using GPUI text/input primitives. Alpha is not int
 
 ### 3.6 Design system
 
-Implement a focused GPUI-native Material 3 foundation:
-- Semantic tokens.
-- Night Owl mapping.
-- Typography and shapes.
-- State layers/focus.
-- Buttons, icon buttons, tabs, menus, dialogs, tooltips, sliders, switches as required by Alpha.
-- Product-specific runtime visualization components remain in AveLoop presentation modules.
+AveLoop uses upstream `gpui-kit-material` as its Material 3 component system instead of owning a separate generic component layer. The intended integration relationships are:
 
-Do not adopt GPUI Material or GPUI Kit wholesale without a completed audit and explicit dependency decision. The current Alpha plan assumes a small owned component layer; reusable low-level primitives may be adopted after review.
+```mermaid
+flowchart TB
+    APP["AveLoop Application"]
+    GPUI["GPUI Native UI framework"]
+    KIT["Existing GPUI Kit Component and interaction infrastructure"]
+    FAST["Existing GPUI Fast Rendering/backend integration"]
+    MATERIAL["Upstream GPUI Kit Material Generic Material 3 component library"]
+    THEME["Night Owl Theme Material 3 semantic role mapping"]
+    AVELOOP_UI["AveLoop-specific UI Application and execution presentation"]
+    EXECUTION["Product-specific visualizations Execution Timeline Pointer Graph Runtime Inspector Stack and Heap views"]
+
+    APP -->|"uses"| GPUI
+    APP -->|"uses existing infrastructure"| KIT
+    APP -->|"preserves"| FAST
+    KIT -->|"built on"| GPUI
+    MATERIAL -->|"extends and depends on"| KIT
+    APP -->|"reuses generic Material 3 components from"| MATERIAL
+    THEME -->|"configures semantic theme roles for"| MATERIAL
+    THEME -->|"provides consistent application styling to"| AVELOOP_UI
+    AVELOOP_UI -->|"uses"| KIT
+    AVELOOP_UI -->|"uses Material components and tokens from"| MATERIAL
+    EXECUTION -->|"implemented specifically for AveLoop using"| KIT
+    EXECUTION -->|"follows visual tokens from"| MATERIAL
+    AVELOOP_UI --> EXECUTION
+    APP --> AVELOOP_UI
+```
+
+Rules:
+- **GPUI Kit** remains the existing component and interaction infrastructure; it is not replaced.
+- **GPUI Fast** remains the existing rendering/backend integration; it is not replaced.
+- **GPUI Kit Material** supplies the generic Material 3 components; AveLoop does not reimplement them.
+- **Night Owl** remains the default theme and maps its colors into the upstream Material 3 semantic role system; it is not replaced by the upstream default palette.
+- AveLoop owns its specialized execution visualizations; they reuse GPUI Kit primitives and Material 3 tokens where appropriate.
+- No local GPUI Kit Material fork is created or modified; no second independent theme system is introduced.
+
+Dependency-level details (exact Cargo features, version pins, Rust MSRV) live in §8.
 
 ---
 
@@ -1336,9 +1408,18 @@ Alpha baseline:
 - GPUI: selected framework, exact revision pinned.
 - Tree-sitter: use for C/C++ syntax parsing/highlighting after integration validation.
 - LLDB-DAP: one supported debugger interface on macOS (Apple toolchain); GDB is the Linux default. Exact versions are recorded per verified platform, not pinned globally.
-- Material components: owned focused GPUI implementation unless audit proves a compatible component set worth adopting.
-- GPUI Material fork: strategy was approved, repository creation was not; do not create or modify a fork as part of this plan.
-- GPUI Kit: evaluate useful lower-level primitives only; do not adopt its visual system wholesale.
+- Material components: upstream `gpui-kit-material` release 0.2.0 is the adopted generic Material 3 component system; AveLoop does not own a separate generic component layer.
+- GPUI Kit Material dependency decision (verified against crates.io):
+  - Upstream repository: https://github.com/mizorewww/gpui-kit-material (release 0.2.0, 2026-11-18; 45★, 7 forks, 1 open issue, not archived).
+  - License: MIT AND Apache-2.0.
+  - Verified compatibility baseline: depends on GPUI Kit 0.10.0 and GPUI Base 0.10.0, matching AveLoop's pinned versions (`gpui-kit` 0.10.0, `gpui-base` 0.10.0).
+  - Newer upstream release: `gpui-kit-material 0.3.0` was published 2026-11-24 and requires GPUI Kit `^0.11.0` and GPUI Base `^0.11.0` (it also moves the optional Fast pin to `=0.1.19`, symbols to `^0.3`, and pickers to `jiff`). That is incompatible with AveLoop's 0.10.0 baseline, so 0.2.0 remains the correct pin; 0.3.0 is recorded but not adopted.
+  - GPUI Fast: the upstream release declares an optional exact-pin dependency `gpui-fast = "=0.1.16"`. AveLoop pins `gpui-fast` 0.1.17. Enabling the upstream `gpui-fast` feature would introduce a duplicate `gpui-fast` version (0.1.16 alongside 0.1.17) and two incompatible framework type trees, so the feature is **not** enabled. Material components integrate with AveLoop's existing GPUI Fast 0.1.17 through the shared GPUI Kit 0.10.0 / GPUI Base 0.10.0 types instead.
+  - Cargo configuration (baseline example to be applied at implementation): `gpui-kit-material = { version = "0.2.0", default-features = false, features = ["full", "serde"] }`. `full` enables the complete Material component groups; `serde` enables serialization support. `embedded-symbols` and `gpui-fast` are deliberately excluded.
+  - Embedded symbols: the upstream default enables `embedded-symbols`, which pulls `gpui-material-symbols/embed-assets` (~51 MB of fonts/SVG data). AveLoop excludes it; icon use is evaluated separately against AveLoop's existing asset infrastructure.
+  - Rust MSRV: upstream release 0.2.0 requires Rust 1.98; AveLoop's installed toolchain is 1.96.0. A toolchain update to at least 1.98 is a documented developer/CI requirement, not an end-user requirement (AveLoop does not bundle a Rust toolchain).
+  - No fork: consuming the published upstream crate is allowed; creating or modifying a local fork or vendoring modified upstream code is prohibited.
+- GPUI Kit: remains the component and interaction infrastructure; it is not replaced or duplicated.
 - LSP: defer.
 
 ---
@@ -1528,11 +1609,11 @@ All compiler and debugger verification uses toolchains already installed on each
 
 # Phase 9 — User Story 6: Material 3, Night Owl, and accessibility
 
-- [ ] T056 [US6] Define Material 3 semantic tokens and map the Night Owl palette to application-wide roles.
-- [ ] T057 [P] [US6] Implement shared typography, shape, spacing, elevation, focus, and state-layer primitives.
-- [ ] T058 [US6] Implement the required GPUI-native generic components and product-specific visualization components using the same token system.
-- [ ] T059 [US6] Apply Night Owl consistently across editor chrome, workspace, panels, dialogs, console, timeline, and visualizations.
-- [ ] T060 [US6] Complete responsive layout, keyboard-only, visible-focus, contrast, non-color status, and accessibility review.
+- [ ] T056 [US6] Define Material 3 semantic tokens and map the Night Owl palette to application-wide roles using upstream GPUI Kit Material's theme and semantic-token facilities. Preserve GPUI Kit and GPUI Fast, avoid a second generic theme-token system, and do not replace Night Owl with the upstream default palette.
+- [ ] T057 [P] [US6] Reuse upstream Material 3 visual primitives (typography, shapes, elevation, focus, state layers, layout metrics, and motion) from GPUI Kit Material where appropriate. Implement only necessary AveLoop-specific adaptations and keep specialized execution views AveLoop-owned.
+- [ ] T058 [US6] Integrate upstream `gpui-kit-material` as the primary Material library: preserve existing GPUI Kit infrastructure, verify GPUI Fast 0.1.17 compatibility (no `gpui-fast = "=0.1.16"` duplicate), verify Rust MSRV 1.98 compatibility, use minimal Cargo features (`default-features = false`, `features = ["full", "serde"]`), no unnecessary embedded asset bundles, reuse generic upstream components, add small AveLoop wrappers, implement custom Execution Timeline and Pointer Graph components, and add component and integration tests.
+- [ ] T059 [US6] Apply Night Owl across the application using the shared Material semantic theme system (map Night Owl palette into upstream Material 3 semantic roles; do not replace Night Owl with the upstream default palette).
+- [ ] T060 [US6] Complete responsive layout, keyboard-only navigation, visible focus, contrast, non-color status, motion behavior, state indication, and native platform interaction accessibility review.
 
 **Acceptance:** the UI is a coherent Material 3 implementation with Night Owl, not a collection of unrelated default controls.
 

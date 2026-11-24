@@ -598,7 +598,48 @@ Material Design 3 is the actual design system, not an inspiration label. It gove
 - Motion.
 - Focus and accessibility behavior.
 
+### 8.3.1 Component source
+
+Generic Material 3 components are obtained from the upstream `gpui-kit-material` library (GPUI-native Material 3 component system built on GPUI Kit), not reimplemented in AveLoop. AveLoop:
+
+- Uses upstream GPUI Kit Material as the primary source of generic Material 3 components (buttons, inputs, menus, dialogs, navigation, feedback, progress, containment, pickers, shapes, window chrome, adaptive components, dynamic color).
+- Keeps GPUI Kit as the underlying component and interaction infrastructure.
+- Keeps GPUI Fast as the existing rendering/backend integration.
+- Maps Night Owl into the upstream Material 3 semantic theme roles.
+- Owns its specialized execution visualizations (Execution Timeline, Pointer Graph, Runtime Inspector, Stack and Heap views) using GPUI Kit primitives and Material 3 tokens.
+
+AveLoop does not create or maintain a local fork of GPUI Kit Material, does not vendor modified upstream code, and does not introduce a WebView or web component runtime.
+
 Generic design-system components are separate from product-specific runtime visualizations.
+
+The conceptual integration is:
+
+```mermaid
+flowchart TB
+    APP["AveLoop Application"]
+    GPUI["GPUI Native UI framework"]
+    KIT["Existing GPUI Kit Component and interaction infrastructure"]
+    FAST["Existing GPUI Fast Rendering/backend integration"]
+    MATERIAL["Upstream GPUI Kit Material Generic Material 3 component library"]
+    THEME["Night Owl Theme Material 3 semantic role mapping"]
+    AVELOOP_UI["AveLoop-specific UI Application and execution presentation"]
+    EXECUTION["Product-specific visualizations Execution Timeline Pointer Graph Runtime Inspector Stack and Heap views"]
+
+    APP -->|"uses"| GPUI
+    APP -->|"uses existing infrastructure"| KIT
+    APP -->|"preserves"| FAST
+    KIT -->|"built on"| GPUI
+    MATERIAL -->|"extends and depends on"| KIT
+    APP -->|"reuses generic Material 3 components from"| MATERIAL
+    THEME -->|"configures semantic theme roles for"| MATERIAL
+    THEME -->|"provides consistent application styling to"| AVELOOP_UI
+    AVELOOP_UI -->|"uses"| KIT
+    AVELOOP_UI -->|"uses Material components and tokens from"| MATERIAL
+    EXECUTION -->|"implemented specifically for AveLoop using"| KIT
+    EXECUTION -->|"follows visual tokens from"| MATERIAL
+    AVELOOP_UI --> EXECUTION
+    APP --> AVELOOP_UI
+```
 
 ## 8.4 Night Owl
 
@@ -809,6 +850,8 @@ These sources inform the implementation plan; they do not override the product r
 - MSVC command-line build: https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line
 - Tree-sitter: https://github.com/tree-sitter/tree-sitter
 - Material Design 3: https://m3.material.io/
+- GPUI Kit Material (upstream Material 3 component library): https://github.com/mizorewww/gpui-kit-material (release 0.2.0)
+- GPUI Material Symbols: https://github.com/mizorewww/gpui-material-symbols
 - Night Owl: https://github.com/sdras/night-owl-vscode-theme
 - Python Tutor: https://pythontutor.com/
 - AveLoop UI prototype: repository/project `index.html` supplied with this conversation.

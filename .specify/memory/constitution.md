@@ -82,7 +82,7 @@ Requirement words follow `spec.md` §0: **MUST**, **SHOULD**, **MAY**, **OUT**.
 - Before adoption, the project **MUST** record purpose and exact feature used, license, maintenance evidence, API stability, platform support, transitive cost, GPUI compatibility, and exit cost. (`plan.md` §8)
 - Dependencies **MUST** be justified, license-reviewed, and pinned or otherwise reproducible. (`spec.md` NFR-012)
 - AveLoop **MUST NOT** bundle, download, or install a compiler, debugger, or LLVM distribution. (`spec.md` NFR-009, §7.2)
-- The GPUI Material fork **MUST NOT** be created or modified as part of this plan. (`plan.md` §8)
+- A local GPUI Kit Material fork or vendored modification **MUST NOT** be created or modified. Consuming the published upstream crate is allowed and is the default dependency-governance choice. (`plan.md` §8)
 - A dependency that only saves a few lines **SHOULD** be rejected in favor of the standard library or an existing dependency.
 
 **Rationale.** Toolchain and dependency surface are long-lived risks. Every addition carries license, maintenance, and platform cost.

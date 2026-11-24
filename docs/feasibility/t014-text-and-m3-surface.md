@@ -120,3 +120,45 @@ grep -n "tree_sitter_c::\|tree_sitter_cpp::" $K/gpui-component-0.10.0/src/highli
 grep -n "pub mod " $K/gpui-component-0.10.0/src/lib.rs
 grep -n "tree-sitter-c\|tree-sitter-cpp" $K/gpui-kit-0.10.0/Cargo.toml
 ```
+
+## 8. Dated addendum — GPUI Kit Material adoption
+
+**Date:** 2026-11-24
+
+### Previously verified GPUI Kit capabilities
+
+This addendum preserves the original 0.10.0 inventory above. It does not reopen or replace T014's text-primitives, editor, or `gpui-component` findings.
+
+### Newly inspected GPUI Kit Material capabilities
+
+- The upstream crates.io release is `gpui-kit-material 0.2.0`, published 2026-11-18, licensed `MIT AND Apache-2.0`, Rust 1.98 minimum, and edition 2024.
+- The release lists GPUI Kit 0.10.0 and GPUI Base 0.10.0, matching AveLoop's existing pinned framework baseline.
+- The `full` feature covers adaptive components, buttons, containment, dialogs, dynamic color, feedback, inputs, loading, menus, navigation, pickers, progress, selection, shapes, and window chrome.
+- The upstream README describes 50+ components, semantic color roles, type scale, shapes, state layers, expressive motion, reduced-motion support, icons, and Kit-native input/focus/keyboard behavior.
+- The upstream project is pre-release (0.1/0.2); APIs are not marked stable and component gaps require upstream coverage review.
+
+### Compatibility findings
+
+- `gpui-kit-material 0.2.0` declares optional exact `gpui-fast = "=0.1.16"`.
+- AveLoop's existing integration is GPUI Fast 0.1.17. Enabling the upstream Fast feature would resolve duplicate GPUI Fast versions and is not selected.
+- The intended dependency is without default features: `gpui-kit-material = { version = "0.2.0", default-features = false, features = ["full", "serde"] }`.
+- `full` is kept as the complete component allowlist. `gpui-fast` is not enabled as AveLoop already enables its Fast backend through `gpui-kit`.
+- `embedded-symbols` is excluded: the upstream symbol package describes embed-assets as approximately 51 MB of fonts and SVG data. Icon use may be supplied incrementally through existing assets or a minimal symbol configuration.
+- `serde` is enabled for theme and preference persistence.
+- Rust 1.98 is required by this release; AveLoop's recorded 1.96.0 toolchain is below it. A developer/CI toolchain update remains a compatibility requirement, not an end-user distribution requirement.
+- `gpui-kit-material 0.3.0` was published 2026-11-24 and requires GPUI Kit/Base `0.11.0`; it is incompatible with the 0.10.0 baseline and is not adopted. The 0.2.0 pin remains correct.
+
+### Adoption decisions
+
+- **ADOPT** the published upstream crate as AveLoop's generic M3 component source.
+- **PRESERVE** GPUI Kit 0.10.0 and GPUI Fast 0.1.17.
+- **PRESERVE** Night Owl and map it into the upstream semantic role system.
+- **NO FORK** and no vendored upstream modifications.
+- **AVELOOP-OWNED**: Execution Timeline, Pointer Relationship Graph, Runtime Inspector, Stack/Heap views, and trace-specific behavior.
+
+### Remaining uncertainties
+
+- Shared GPUI Kit/Base type compatibility and runtime behavior have not been executed with this crate in AveLoop's dependency graph.
+- Cross-platform rendering, keyboard, focus, motion, and accessibility behavior remain implementation-test requirements on Linux, macOS, and Windows.
+- Asset/API behavior for icons must be selected without the 51 MB embedded-symbol bundle.
+- Binary-size, compile-time, and runtime impact require an implementation build and release evidence.
