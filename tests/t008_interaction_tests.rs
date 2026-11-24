@@ -98,7 +98,7 @@ fn test_t008_text_input_focus_and_keyboard(cx: &mut TestAppContext) {
         .expect("open test window")
     });
 
-    cx.update_window(window_handle.into(), |_, window, cx| {
+    cx.update_window(window_handle, |_, window, cx| {
         window.render_frame(cx);
 
         // 1. Focus test
@@ -131,7 +131,7 @@ fn test_t008_text_input_focus_and_keyboard(cx: &mut TestAppContext) {
     });
 
     // 6. Clipboard paste test through UI button
-    cx.update_window(window_handle.into(), |_, window, cx| {
+    cx.update_window(window_handle, |_, window, cx| {
         window.click("paste-btn", cx);
         assert_eq!(window.find("status-label").label(), Some("Pasted"));
         assert_eq!(window.find("clipboard-result").label(), Some("int main("));
@@ -166,7 +166,7 @@ fn test_t008_window_resizing_and_layout_reflow(cx: &mut TestAppContext) {
         .expect("open test window")
     });
 
-    cx.update_window(window_handle.into(), |_, window, cx| {
+    cx.update_window(window_handle, |_, window, cx| {
         window.render_frame(cx);
         let initial_size = window.bounds().size;
         assert_eq!(initial_size.width, px(600.));

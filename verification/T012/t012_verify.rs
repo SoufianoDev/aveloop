@@ -5,7 +5,10 @@ fn main() {
     let results = vec![
         ("spawn_and_kill", verify_spawn_and_kill()),
         ("exit_status_captured", verify_exit_status()),
-        ("child_does_not_outlive_kill", verify_child_gone_after_kill()),
+        (
+            "child_does_not_outlive_kill",
+            verify_child_gone_after_kill(),
+        ),
         ("timeout_then_kill", verify_timeout_then_kill()),
     ];
 
@@ -61,7 +64,11 @@ fn verify_spawn_and_kill() -> bool {
 
 fn verify_exit_status() -> bool {
     let status = Command::new(if cfg!(unix) { "true" } else { "cmd" })
-        .args(if cfg!(unix) { &[][..] } else { &["/C", "exit", "0"][..] })
+        .args(if cfg!(unix) {
+            &[][..]
+        } else {
+            &["/C", "exit", "0"][..]
+        })
         .status();
     match status {
         Ok(s) => s.success(),

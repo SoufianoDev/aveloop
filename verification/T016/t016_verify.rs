@@ -76,7 +76,10 @@ impl Selection {
 }
 
 fn locate(roots: &[PathBuf], exe: &str) -> Option<PathBuf> {
-    roots.iter().map(|root| root.join(exe)).find(|p| p.is_file())
+    roots
+        .iter()
+        .map(|root| root.join(exe))
+        .find(|p| p.is_file())
 }
 
 /// A family is selectable only when compiler and debugger are both present.
@@ -197,9 +200,19 @@ fn main() -> ExitCode {
         }
     };
 
-    run("scenario 1 mingw only", std::slice::from_ref(&mingw_only), None, "selection=mingw");
+    run(
+        "scenario 1 mingw only",
+        std::slice::from_ref(&mingw_only),
+        None,
+        "selection=mingw",
+    );
     run("scenario 2 msvc only", &[msvc_only], None, "selection=msvc");
-    run("scenario 3 both prefer mingw", std::slice::from_ref(&both), None, "selection=mingw");
+    run(
+        "scenario 3 both prefer mingw",
+        std::slice::from_ref(&both),
+        None,
+        "selection=mingw",
+    );
     run("scenario 4 neither", &[neither], None, "selection=none");
     run(
         "explicit msvc wins over default",

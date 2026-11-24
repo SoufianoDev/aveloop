@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev, feat/gpui-kit-fast]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    name: ${{ matrix.label }} build, format, lint, test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            label: Linux x86_64
+          - os: windows-2022
+            label: Windows x86_64
+          - os: macos-14
+            label: macOS arm64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Format check
+        run: cargo fmt --all -- --check
+
+      - name: Clippy
+        run: cargo clippy --lib --tests -- -D warnings
+
+      - name: Build
+        run: cargo build --lib --bin aveloop
+
+      - name: Test
+        run: cargo test --lib --tests
