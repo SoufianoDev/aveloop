@@ -4,22 +4,22 @@ Canonical continuity record for every agent working on this repository. Read thi
 
 ## Current State
 
-- **Last updated:** 2026-11-24 (T012 CI passed on Linux/Windows/macOS; T013 started)
+- **Last updated:** 2026-11-24 (T014 evaluated; T015 next)
 - **Repository:** `SoufianoDev/aveloop` (`https://github.com/SoufianoDev/aveloop.git`)
 - **Project root:** `/home/soufiano/SoufianoDev/AveLoop`
 - **Active branch:** `dev` tracking `origin/feat/gpui-kit-fast`.
-- **Last verified HEAD:** `71aaac9` (`docs: update handoff for T012 completion and correct HEAD discrepancy`), matching `origin/feat/gpui-kit-fast`
-- **DISCREPANCY corrected:** Previous HANDOFF recorded HEAD as `ad45702`; actual HEAD at session start was `ce821b7`; corrected here. Repository wins.
+- **Last verified HEAD:** `8f112bc` (`docs: evaluate T014 GPUI text primitives and M3 component surface`), pushed to `origin/feat/gpui-kit-fast`
+- **DISCREPANCY corrected:** HANDOFF recorded HEAD as `71aaac9`; verified HEAD at this session start was `c4f653a` (`docs(t013): record cross-platform Tree-sitter verification`). Repository wins.
 - **`main` moved:** `origin/main` is now `7953e08` (`Merge pull request #140 from SoufianoDev/feat/gpui-kit-fast`). Contains `4bf809c` but not `589b7e2` or later.
-- **Working tree:** T013 commit pushed; unrelated theme author edit remains uncommitted
-- **Active task:** T013 complete; T014 next
+- **Working tree:** one uncommitted edit by the repository owner in `src/presentation/theme.rs` (Night Owl theme author string). Not produced by an agent; left untouched and unstaged.
+- **Active task:** T014 complete; T015 next
 - **Current phase:** Phase 2 — Foundational feasibility
-- **Overall status:** Phase 1 complete (T001–T004); T005–T013 complete; T014–T015 next.
-- **Current objective:** Await Issue #13 evidence comment and proceed to T014 text/M3 feasibility evaluation.
+- **Overall status:** Phase 1 complete (T001–T004); T005–T014 complete; T015 next.
+- **Current objective:** Produce the consolidated cross-platform feasibility report (T015).
 
 ## Immediate Next Action
 
-T013 CI run `45297491219` passed all 3 OS legs. Post evidence on Issue #13 and record T013 closure, then start T014 (GPUI text primitives and Material 3 component surface). Do not close Issues without explicit authorization.
+Start T015 (consolidated cross-platform feasibility report). Do not proceed to production foundation work until every Alpha target has a verified path or the target matrix is explicitly re-approved. Do not close Issues without explicit authorization. Leave the owner's uncommitted `src/presentation/theme.rs` edit alone.
 
 ## Verified Project State
 
@@ -119,12 +119,13 @@ Verified this session: `f259ead` exists locally and on the remote, the tree is c
 | T011 complete | Protocol capabilities negotiated and `supportsStepBack: false` confirmed across Linux (GDB DAP/MI), macOS (LLDB), and Windows | `docs/feasibility/t011-debugger-capabilities-negotiation.md`; `docs/feasibility/cross-platform-matrix.md`; Issue #11 comments |
 | T008 complete (Linux) | 2/2 interaction tests pass (focus, typing, backspace, clipboard via UI, resize/reflow); Wayland window opens and exits 0; X11 via Xephyr: clipboard write/read PASSED, window opens, exit 0; external round-trip verified both directions against `xsel`; Wayland clipboard read remains unverified (no `wl-clipboard`; offers need focus) | `docs/feasibility/t008-gpui-input.md`; `src/bin/t008_verify.rs`; `tests/t008_interaction_tests.rs`; Issue #8 comments |
 | T012 complete (Linux) | 4/4 checks PASS (spawn_and_kill, exit_status_captured, child_does_not_outlive_kill, timeout_then_kill); exit 0; CI dispatched for Windows/macOS | `src/bin/t012_verify.rs`; `docs/feasibility/t012-process-cancellation.md`; Issue #12 comment; commit `e6d0749` |
+| T014 complete | Text primitives and the reusable Editor widget evaluated from pinned sources; required M3 surface mapped to `gpui-component` modules; reuse/no-fork decision recorded; follow-ups listed (enable tree-sitter C/C++ features, M3 variant mapping, build timeline and pointer graph) | `docs/feasibility/t014-text-and-m3-surface.md`; Issue #14 comment; commit `8f112bc` |
 
 ## Active and Pending Work
 
-- **Phase 2 (active):** Foundational feasibility tasks (T005–T012 complete on Linux; T012 CI pending Windows/macOS).
-- **T012 CI pending:** `.github/workflows/t012-process-cancellation.yml` triggered on push to `feat/gpui-kit-fast`; await Windows and macOS leg results.
-- **T013–T015:** Tree-sitter grammar audit, GPUI Material 3 text evaluation, and consolidated cross-platform feasibility report.
+- **Phase 2 (active):** Foundational feasibility tasks T005–T014 complete; T015 is the phase exit gate.
+- **T015 (next):** Consolidated cross-platform feasibility report; every Alpha target must have a verified path or the matrix must be re-approved before Phase 2 production foundation work.
+- **T014 follow-ups:** enable `tree-sitter-c`/`tree-sitter-cpp` passthrough features, map M3 variant names, build the execution timeline and pointer graph, and stress-test the editor (large files, IME per OS).
 - **T008 residual:** Wayland clipboard read returns `None`; re-test with `wl-copy`/`wl-paste` on a focused Wayland session.
 
 ## Files Changed
@@ -158,6 +159,9 @@ Verified this session: `f259ead` exists locally and on the remote, the tree is c
 | `.github/workflows/t012-process-cancellation.yml` | added | T012 CI workflow (Linux/Windows/macOS) | Committed `e6d0749` |
 | `specs/001-ave-loop-alpha/tasks.md` | modified | Mark T012 `[x]` | Committed `e6d0749` |
 | `specs/001-ave-loop-alpha/complete.md` | modified | Mark T012 `[x]` | Committed `e6d0749` |
+| `docs/feasibility/t014-text-and-m3-surface.md` | added | T014 text-primitive evaluation, editor reuse analysis, M3 surface mapping, decisions | Committed `8f112bc` |
+| `specs/001-ave-loop-alpha/tasks.md` | modified | Mark T014 `[x]` | Committed `8f112bc` |
+| `specs/001-ave-loop-alpha/complete.md` | modified | Regenerated after the T014 check; all three blocks verified equal to their sources | Committed `8f112bc` |
 | `.planning/2026-11-22-aveloop-continuity-t001-kickoff/*` | untracked, ignored | Local planning files | Not tracked by design |
 | `specs/001-ave-loop-alpha/{spec,plan,tasks,complete}.md` | committed in `f259ead` | Authoritative Alpha baseline | Verified clean |
 
@@ -181,6 +185,8 @@ Verified this session: `f259ead` exists locally and on the remote, the tree is c
 | #10 | T010 | OPEN | Evidence comments: Linux verified, macOS/Windows verified via CI |
 | #11 | T011 | OPEN | Evidence comments: Linux verified, macOS/Windows verified via CI |
 | #12 | T012 | OPEN | Evidence comment posted; Linux 4/4 PASS; CI pending Windows/macOS |
+| #13 | T013 | OPEN | Evidence comment posted; all 3 CI OS legs passed |
+| #14 | T014 | OPEN | Evidence comment posted; evaluation complete, runtime UI unverified |
 | PR #140 | `feat/gpui-kit-fast` → `main` | MERGED | Merged by someone other than this session; produced `7953e08` containing `4bf809c` |
 | #118 / #133 | T066 canonical / duplicate | OPEN | #133 marked superseded, not closed |
 | #75 / #93 / #129 / #134 / #79 | Earlier reconciliations | — | Unchanged this session |
@@ -281,6 +287,12 @@ URLs: `https://github.com/SoufianoDev/aveloop/issues/<n>`.
 | T012 run (Linux) | PASS — 4/4 checks pass, exit 0 | H0088 |
 | T012 commit + push | PASS — `e6d0749`, 5 files, `ce821b7..e6d0749 dev -> feat/gpui-kit-fast` | H0090 |
 | Issue #12 evidence comment | PASS — comment posted; issue remains OPEN | H0091 |
+| T014 text primitive inventory | PASS — shaping, layout, hit-testing, caret geometry, IME, metrics present in `gpui-fast` 0.1.17 | H0097 |
+| T014 editor reuse | PASS — `Editor`/`EditorState` with gutter decorations, diagnostics, folding, display map, search, tree-sitter C/C++ language mapping | H0097 |
+| T014 M3 surface mapping | PASS — required Alpha surface mapped to `gpui-component` modules; timeline and pointer graph are product-specific | H0097 |
+| T014 tree-sitter features | NOT ENABLED — `tree-sitter-c`/`tree-sitter-cpp` passthrough exists and both crates are already in `Cargo.lock`; enabling deferred to the editor task | H0097 |
+| T014 `complete.md` regeneration | PASS — all three marker blocks equal to `spec.md`, `plan.md`, `tasks.md` | H0097 |
+| Issue #14 evidence comment | PASS — comment posted; issue remains OPEN | H0097 |
 
 ## Failed Attempts
 
@@ -315,7 +327,7 @@ URLs: `https://github.com/SoufianoDev/aveloop/issues/<n>`.
 
 ## Activity Log (Append-Only)
 
-Entries H0001–H0085 record the project and review sessions. Entry timestamps are as reported by the host clock at the time; ordering is positional and authoritative where timestamps disagree. Pre-handoff work is summarized in **Baseline**, not fabricated here.
+Entries H0001–H0097 record the project and review sessions. Entry timestamps are as reported by the host clock at the time; ordering is positional and authoritative where timestamps disagree. Pre-handoff work is summarized in **Baseline**, not fabricated here.
 
 - [H0001] [2026-11-22T23:47Z] [continuity] ACTION: Received and accepted the mandatory continuity protocol.
   - Command/tool: user instruction
@@ -941,6 +953,17 @@ Entries H0001–H0085 record the project and review sessions. Entry timestamps a
   - Result: all 3 OS jobs succeeded; evidence comment posted
   - Evidence: https://github.com/SoufianoDev/aveloop/issues/13#issuecomment-7118170354
   - State change: T013 complete; next task is T014
+
+- [H0096] [2026-11-24] [state] DISCREPANCY: HANDOFF recorded HEAD as `71aaac9`; verified HEAD at session start was `c4f653a` (`docs(t013): record cross-platform Tree-sitter verification`), which matches `origin/feat/gpui-kit-fast`. The working tree also carries an uncommitted owner edit in `src/presentation/theme.rs` (Night Owl author string); it was left untouched and unstaged. T013 was already complete with its Issue #13 evidence comment, so the stale "post evidence" instruction was dropped.
+  - Evidence: `git log --oneline -15`, `git status --short`, `git ls-remote --heads origin`
+  - State change: Current State corrected to `8f112bc` after the T014 commit; next task T015
+
+- [H0097] [2026-11-24] [T014] ACTION: Evaluated GPUI text primitives and the Material 3 surface from pinned sources.
+  - Command/tool: reads of `gpui-fast-0.1.17/src/text_system.rs`, `text_system/line.rs`, `text_system/line_layout.rs`, `gpui-base-0.10.0/src/input/editor/*`, `gpui-component-0.10.0/src/{lib.rs,highlighter/languages.rs,button,theme}`, `gpui-kit-0.10.0/Cargo.toml`
+  - Target: `docs/feasibility/t014-text-and-m3-surface.md`
+  - Result: text shaping/layout/hit-testing/caret/IME/metrics confirmed present; `Editor`/`EditorState` reuse confirmed with gutter, diagnostics, folding, display map, search and tree-sitter C/C++ mapping; required Alpha surface mapped to component modules; timeline and pointer graph recorded as product-specific; reuse/no-fork decision recorded; `tree-sitter-c`/`tree-sitter-cpp` passthrough exists but is not enabled
+  - Evidence: file and line references in the report; `tree-sitter-c 0.24.2` and `tree-sitter-cpp 0.23.4` already in `Cargo.lock`
+  - State change: T014 marked `[x]`; `complete.md` regenerated and all three blocks verified equal to their sources; Issue #14 comment posted; commit `8f112bc`
 
 ## Resume Instructions
 
