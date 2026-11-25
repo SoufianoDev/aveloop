@@ -183,7 +183,7 @@ These are deliberate scope boundaries, not unfinished promises:
 11. **No remote/cloud execution, collaboration, plugin marketplace, AI features, or integrated Git hosting.**
 12. **No hardened security sandbox claim.** Alpha launches local programs with the user's OS permissions. It applies explicit launch consent, working-directory controls, timeout/cancellation, and process-tree termination where supported, but it is not a security boundary against hostile code.
 13. **No bundled or automatically installed toolchain.** AveLoop neither bundles nor downloads a compiler, debugger, or LLVM distribution. Missing components are reported with official installation guidance; the user performs any installation.
-14. **No artificial small-program ceiling.** Recording limits exist and are configurable, accounted, and reported, but no fixed step count or program size defines the product. A large program that cannot be wholly visualized at once remains fully debuggable through scoped visualization.
+14. **No artificial small-program ceiling.** Resource limits exist and are configurable, accounted, and reported, but no fixed step count or program size defines the product. A large program that cannot be wholly visualized at once remains fully debuggable through scoped visualization. Visualization budgets and recording budgets are independent policies with different guarantees (§6.6).
 15. **No claim of a complete relationship graph.** Any node/edge set is a view over observed, derived, or explicitly labelled inferred relationships, not a claim that all process memory has been discovered.
 
 ## 2.3 Out of scope
@@ -308,6 +308,7 @@ A user inspects stack frames, variables, aggregates, pointers, and observable me
 - Scoping the view to a frame, function, object, or memory region changes what is displayed, not what was recorded.
 - Expanding a graph node retrieves additional state on demand and a stale request cannot overwrite a newer selection.
 - A scoped or truncated view is visibly distinct from an incomplete recording.
+- Reaching a visualization budget never deletes recorded data; reaching a recording budget is reported and never disguised as a display limit.
 - Heap visualizations explicitly state that they are debugger-observable/reachable objects, not a complete process heap.
 
 ## US-07 — Inspect trace and output
@@ -419,9 +420,10 @@ Priority: **P0** = Alpha critical; **P1** = Alpha usability requirement; **P2** 
 | FR-093 | The application shall let the user scope runtime visualization to a selected frame, function, thread, variable, pointer, object, memory region, or execution event. | P0 |
 | FR-094 | The application shall render relationships as an expandable graph with verified nodes and directional edges, retrieving additional state on demand and cancelling stale expansion requests. | P0 |
 | FR-095 | Detailed and scoped visualization shall consume the same normalized observation and history model; no separate visualization engine shall exist for small programs. | P0 |
-| FR-096 | A scoped, filtered, or truncated visualization shall be visually distinguishable from an incomplete recording, and its coverage or budget shall be disclosed. | P0 |
-| FR-097 | Runtime recording shall impose no fixed small-program step ceiling; recording limits shall be configurable, accounted, and reported, and a partial recording shall be labelled as partial. | P0 |
+| FR-096 | Reaching a visualization budget or rendering a scoped/filtered view shall be reported as partially displayed, shall not delete or alter recorded data, and shall never be presented as an incomplete recording. | P0 |
+| FR-097 | Runtime recording shall impose no fixed small-program step ceiling; recording limits shall be configurable, accounted, and reported through a declared stop/pause/continue policy, and reaching one shall identify the recorded interval and missing observations without silently discarding data. | P0 |
 | FR-098 | Each language integration shall declare which runtime concepts it can observe, and concepts it cannot observe shall be reported as unavailable rather than inferred. | P0 |
+| FR-099 | Visualization budgets and recording budgets shall remain independent: no visualization limitation shall be reported as a recording failure, and no recording limitation shall be presented as complete visualization. | P0 |
 
 ## 5.6 Navigation and visualization
 
@@ -533,6 +535,37 @@ Runtime observation is language-specific even when the normalized model is share
 - A concept the adapter cannot observe is reported as unavailable for that language/backend combination; it is not rendered as empty, inferred, or silently omitted.
 - Universal assumptions about pointers, object identity, or lifetimes are not allowed to override language semantics.
 - Alpha declares adapter capabilities for C17 and C++20 only. Rust (ownership, borrowing, slices) and Go (slices, maps, interfaces, goroutines, channels) require new adapters and are post-Alpha.
+
+## 6.6 Visualization budgets and recording budgets
+
+Two independent resource policies govern the visualization system. They carry different correctness guarantees and must never be conflated.
+
+### A. Visualization budget — controls what is displayed
+
+Applies to displayed state only: maximum visible nodes and edges, graph expansion depth, rendering memory, layout computation time, and on-demand inspection limits.
+
+Reaching a visualization budget:
+- Must not delete recorded events, modify historical snapshots, or truncate the execution trace.
+- Must not mark an otherwise complete recording as incomplete.
+- Must not imply that the underlying recording is missing information.
+- Must be reported as a scoped or partially displayed visualization, and the user must be able to expand or change the inspection scope while more recorded information is available.
+
+### B. Recording budget — controls what is captured and retained
+
+Applies to capture and retention: recording memory, trace and snapshot storage, event capture limits, recording time, and other explicitly configured constraints.
+
+Reaching a recording budget:
+- Must never silently discard previously recorded information.
+- Must inform the user.
+- Must be resolved by a declared policy: stop, pause, or continue recording.
+- Must identify the recorded interval and any missing observations accurately.
+- Must never present the trace as a complete recording of the entire session.
+
+A recording that ended at a declared stopping point (intentional stop) is distinct from a recording interrupted before the session's expected completion.
+
+### C. Independence
+
+A visualization limitation shall never be reported as a recording failure. A recording limitation shall never be hidden by presenting the remaining graph as complete.
 
 ---
 

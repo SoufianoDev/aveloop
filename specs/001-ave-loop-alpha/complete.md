@@ -190,7 +190,7 @@ These are deliberate scope boundaries, not unfinished promises:
 11. **No remote/cloud execution, collaboration, plugin marketplace, AI features, or integrated Git hosting.**
 12. **No hardened security sandbox claim.** Alpha launches local programs with the user's OS permissions. It applies explicit launch consent, working-directory controls, timeout/cancellation, and process-tree termination where supported, but it is not a security boundary against hostile code.
 13. **No bundled or automatically installed toolchain.** AveLoop neither bundles nor downloads a compiler, debugger, or LLVM distribution. Missing components are reported with official installation guidance; the user performs any installation.
-14. **No artificial small-program ceiling.** Recording limits exist and are configurable, accounted, and reported, but no fixed step count or program size defines the product. A large program that cannot be wholly visualized at once remains fully debuggable through scoped visualization.
+14. **No artificial small-program ceiling.** Resource limits exist and are configurable, accounted, and reported, but no fixed step count or program size defines the product. A large program that cannot be wholly visualized at once remains fully debuggable through scoped visualization. Visualization budgets and recording budgets are independent policies with different guarantees (§6.6).
 15. **No claim of a complete relationship graph.** Any node/edge set is a view over observed, derived, or explicitly labelled inferred relationships, not a claim that all process memory has been discovered.
 
 ## 2.3 Out of scope
@@ -315,6 +315,7 @@ A user inspects stack frames, variables, aggregates, pointers, and observable me
 - Scoping the view to a frame, function, object, or memory region changes what is displayed, not what was recorded.
 - Expanding a graph node retrieves additional state on demand and a stale request cannot overwrite a newer selection.
 - A scoped or truncated view is visibly distinct from an incomplete recording.
+- Reaching a visualization budget never deletes recorded data; reaching a recording budget is reported and never disguised as a display limit.
 - Heap visualizations explicitly state that they are debugger-observable/reachable objects, not a complete process heap.
 
 ## US-07 — Inspect trace and output
@@ -426,9 +427,10 @@ Priority: **P0** = Alpha critical; **P1** = Alpha usability requirement; **P2** 
 | FR-093 | The application shall let the user scope runtime visualization to a selected frame, function, thread, variable, pointer, object, memory region, or execution event. | P0 |
 | FR-094 | The application shall render relationships as an expandable graph with verified nodes and directional edges, retrieving additional state on demand and cancelling stale expansion requests. | P0 |
 | FR-095 | Detailed and scoped visualization shall consume the same normalized observation and history model; no separate visualization engine shall exist for small programs. | P0 |
-| FR-096 | A scoped, filtered, or truncated visualization shall be visually distinguishable from an incomplete recording, and its coverage or budget shall be disclosed. | P0 |
-| FR-097 | Runtime recording shall impose no fixed small-program step ceiling; recording limits shall be configurable, accounted, and reported, and a partial recording shall be labelled as partial. | P0 |
+| FR-096 | Reaching a visualization budget or rendering a scoped/filtered view shall be reported as partially displayed, shall not delete or alter recorded data, and shall never be presented as an incomplete recording. | P0 |
+| FR-097 | Runtime recording shall impose no fixed small-program step ceiling; recording limits shall be configurable, accounted, and reported through a declared stop/pause/continue policy, and reaching one shall identify the recorded interval and missing observations without silently discarding data. | P0 |
 | FR-098 | Each language integration shall declare which runtime concepts it can observe, and concepts it cannot observe shall be reported as unavailable rather than inferred. | P0 |
+| FR-099 | Visualization budgets and recording budgets shall remain independent: no visualization limitation shall be reported as a recording failure, and no recording limitation shall be presented as complete visualization. | P0 |
 
 ## 5.6 Navigation and visualization
 
@@ -540,6 +542,37 @@ Runtime observation is language-specific even when the normalized model is share
 - A concept the adapter cannot observe is reported as unavailable for that language/backend combination; it is not rendered as empty, inferred, or silently omitted.
 - Universal assumptions about pointers, object identity, or lifetimes are not allowed to override language semantics.
 - Alpha declares adapter capabilities for C17 and C++20 only. Rust (ownership, borrowing, slices) and Go (slices, maps, interfaces, goroutines, channels) require new adapters and are post-Alpha.
+
+## 6.6 Visualization budgets and recording budgets
+
+Two independent resource policies govern the visualization system. They carry different correctness guarantees and must never be conflated.
+
+### A. Visualization budget — controls what is displayed
+
+Applies to displayed state only: maximum visible nodes and edges, graph expansion depth, rendering memory, layout computation time, and on-demand inspection limits.
+
+Reaching a visualization budget:
+- Must not delete recorded events, modify historical snapshots, or truncate the execution trace.
+- Must not mark an otherwise complete recording as incomplete.
+- Must not imply that the underlying recording is missing information.
+- Must be reported as a scoped or partially displayed visualization, and the user must be able to expand or change the inspection scope while more recorded information is available.
+
+### B. Recording budget — controls what is captured and retained
+
+Applies to capture and retention: recording memory, trace and snapshot storage, event capture limits, recording time, and other explicitly configured constraints.
+
+Reaching a recording budget:
+- Must never silently discard previously recorded information.
+- Must inform the user.
+- Must be resolved by a declared policy: stop, pause, or continue recording.
+- Must identify the recorded interval and any missing observations accurately.
+- Must never present the trace as a complete recording of the entire session.
+
+A recording that ended at a declared stopping point (intentional stop) is distinct from a recording interrupted before the session's expected completion.
+
+### C. Independence
+
+A visualization limitation shall never be reported as a recording failure. A recording limitation shall never be hidden by presenting the remaining graph as complete.
 
 ---
 
@@ -1157,6 +1190,8 @@ flowchart TB
     NORMALIZER["Normalized runtime state<br/>session, process, thread, event, location, frame,<br/>variable, type, value, address, region, object identity,<br/>pointer and reference relations"]
     HISTORY["Execution history<br/>stop records, snapshots, checkpoints, diffs, provenance"]
     ENGINE["Shared visualization engine"]
+    REC["Recording budget policy<br/>stop / pause / continue, no silent discard"]
+    VIS["Visualization budget policy<br/>nodes, edges, depth, layout time, no data deletion"]
     ROUTER{"Visualization scope and available data"}
     GUIDED["Guided / detailed view<br/>step-oriented, small controlled sessions"]
     SCOPED["Scoped / selective view<br/>frame, function, thread, object, pointer, region, event"]
@@ -1168,8 +1203,10 @@ flowchart TB
     BACKEND --> NORMALIZER
     BACKEND --> ADAPTER
     ADAPTER --> NORMALIZER
+    REC -->|"governs what is captured and retained"| HISTORY
     NORMALIZER --> HISTORY
     HISTORY --> ENGINE
+    VIS -->|"governs what is rendered and expanded"| ENGINE
     ENGINE --> ROUTER
     ROUTER -->|"small scope, manageable state"| GUIDED
     ROUTER -->|"large scope or complex state"| SCOPED
@@ -1181,7 +1218,7 @@ flowchart TB
     INSPECTOR --> NAV
 ```
 
-This is a conceptual data-flow diagram, not a module or directory tree.
+This is a conceptual data-flow diagram, not a module or directory tree. The recording budget policy and the visualization budget policy are independent: the first decides what enters history, the second decides what is drawn from it.
 
 ### 4.1 Responsibilities
 
@@ -1234,7 +1271,7 @@ Keep these concepts distinct: raw observation, stop record, derived event/diff, 
 - Stops are recorded in their real order and never reordered or fabricated.
 - A checkpoint is stored at a chosen interval or when needed to bound reconstruction cost.
 - The Alpha implementation may store complete stop observations for a bounded trace and optimize only after measuring.
-- Recording bounds are configured, accounted (memory/disk), and reported. Reaching a bound produces a partial recording; it is never silently trimmed to look complete.
+- Recording bounds are configured, accounted (memory/disk), and reported. Reaching one is resolved by a declared stop, pause, or continue policy and produces a partial recording whose recorded interval is identified — never a trace trimmed to look complete. An intentional stop is distinguished from an interrupted recording.
 - Capture is not a claim of reverse execution.
 
 ### 4.6 Capture granularity
@@ -1261,7 +1298,7 @@ The engine consumes normalized state and history, never debugger protocols. It:
 5. Publishes one immutable view per selected stop so every panel shows the same state.
 6. Reports coverage: what is shown, what is expandable, what is unavailable, and whether the recording itself is partial.
 
-Depth limits, node budgets, and aggregation thresholds belong to visualization policy. They change what is displayed, never what was recorded, and the UI labels the difference.
+Depth limits, node budgets, and aggregation thresholds belong to visualization policy. They change what is displayed, never what was recorded, and the UI labels the view as scoped or partially displayed rather than implying a recording failure.
 
 ### 4.8 Relationship graph
 
@@ -1271,16 +1308,24 @@ Depth limits, node budgets, and aggregation thresholds belong to visualization p
 - Object identity follows documented session rules; address equality alone is not identity. Address reuse after a verified deallocation does not silently preserve identity.
 - Null, uninitialized, invalid, unresolved, unavailable, optimized-out, and unknown values render as distinct node states, not empty objects.
 
-### 4.9 Scalability and resource policy
+### 4.9 Two independent resource policies
 
-Real programs require selective inspection, not restricted capability.
+Real programs require selective inspection, not restricted capability. Scalability limits are split into two policies with different guarantees; neither may be reported as the other (`spec.md` §6.6).
+
+**Visualization budget — what is displayed.** Nodes and edges per view, expansion depth, rendering memory, layout time, and on-demand inspection limits. Reaching it changes only the rendered view: recorded stops, snapshots, and events are untouched, an otherwise complete recording stays complete, and the UI reports the view as scoped or partially displayed with a way to expand or re-scope.
+
+**Recording budget — what is captured and retained.** Recording memory, trace and snapshot storage, event capture limits, and recording time. Reaching it is resolved by a declared stop, pause, or continue policy; the user is informed, the recorded interval and missing observations are identified, and nothing already recorded is discarded. An intentional stop is distinguishable from an interrupted recording.
+
+**Independence.** A scoped view is never described as an incomplete recording. A partial recording is never hidden by rendering a smaller graph that looks complete. The two states are labelled by different UI mechanisms.
+
+Implementation techniques:
 
 - Scope selection narrows the graph before rendering; it never disables debugging.
 - Object graphs expand on demand; nothing is eagerly traversed to the end of a pointer graph.
 - Rendering is virtualized and incremental: only visible nodes are laid out, and updates are applied as diffs.
 - Heavy inspection runs off the UI thread; results that no longer match the current selection are discarded.
 - Snapshots use structural sharing so unchanged subtrees are not duplicated.
-- Budgets (nodes, edges, depth, bytes, time) are explicit, configurable, and surfaced in the UI when they affect the view.
+- Both budgets are configurable and surfaced in the UI when they affect the view.
 
 ### 4.10 Language observation adapters
 
@@ -1470,7 +1515,7 @@ Work:
 - Material 3 component states and Night Owl mapping.
 - Keyboard shortcuts and workspace resizing.
 
-**Exit gate:** every panel displays the same selected stop ID under forward, backward, seek, playback, session replacement, and reconstruction failure tests; a scoped view of a large session stays responsive, expands on demand, and is visibly distinguishable from a partial recording.
+**Exit gate:** every panel displays the same selected stop ID under forward, backward, seek, playback, session replacement, and reconstruction failure tests; a scoped view of a large session stays responsive and expands on demand; a visualization budget is never reported as a recording failure, and a recording budget is never hidden as a complete trace.
 
 ### Phase 8 — Cross-platform validation and Alpha hardening
 
@@ -1735,7 +1780,7 @@ All compiler and debugger verification uses toolchains already installed on each
 - [ ] T035 [US3] Implement debugger transport and session lifecycle for the selected backend (GDB DAP or GDB/MI on Linux, `lldb-dap` on macOS, the compiler-matched Windows debugger), including initialize, capability negotiation, launch, configuration, and termination.
 - [ ] T036 [US3] Implement source-level breakpoint/step operations and bounded, on-demand retrieval of stack frames, scopes, variables, and aggregate children for a selected frame or thread.
 - [ ] T037 [US3] Capture stdout/stderr and ordered debugger observations and normalize them through a language observation adapter that preserves source, build, session, thread, and frame provenance and declares which runtime concepts it can observe.
-- [ ] T038 [US3] Implement trace records, snapshots, checkpoints, and diffs with explicit storage accounting; label a recording that reached its bound as partial, without conflating observations, events, snapshots, and visualization scope.
+- [ ] T038 [US3] Implement trace records, snapshots, checkpoints, and diffs with explicit storage accounting; resolve a reached recording budget through a declared stop/pause/continue policy, identify the recorded interval and missing observations, and distinguish an intentional stop from an interrupted recording, without conflating observations, events, snapshots, and visualization scope.
 - [ ] T039 [US3] Implement deterministic selected-state reconstruction from recorded trace data.
 - [ ] T040 [US3] Implement first/previous/next/last, seeking, play/pause, and playback speed over recorded stops.
 - [ ] T041 [US3] Implement cancellation, process-tree cleanup, protocol timeouts, malformed-response handling, and stale-session message rejection.
@@ -1751,11 +1796,11 @@ All compiler and debugger verification uses toolchains already installed on each
 - [ ] T044 [US4] Implement Stack and Variables views from resolved frames, scopes, and debugger observations, with frame/thread/function scope selection for the visualization.
 - [ ] T045 [US4] Implement arrays, structures, C++ class/struct members, and explicit known/unavailable/optimized-out value states.
 - [ ] T046 [US4] Implement the expandable pointer/reference/object relationship graph with verified nodes, directional edges, aliases, and interior offsets, drawing each edge only from an observed or documented derivation and labelling any inference.
-- [ ] T047 [US4] Implement the Heap observable-object view with on-demand expansion of reachable objects, explicit coverage limits, and verified allocation/deallocation labels only.
+- [ ] T047 [US4] Implement the Heap observable-object view with on-demand expansion of reachable objects, a visualization budget that limits only what is displayed without deleting recorded data, and verified allocation/deallocation labels only.
 - [ ] T048 [US4] Implement unresolved/unknown pointer states and prevent unsupported dangling-pointer or complete-heap claims.
 - [ ] T049 [US4] Add invariant tests proving that source, Stack, Variables, Heap, Pointer, Trace, Timeline, and attributable Output show the same selected stop.
-- [ ] T050 [US4] Verify synchronization during forward/backward navigation, seek, playback, session replacement, missing data, and reconstruction failure; verify that scoping a large session changes the view without changing the recording and that a scoped or truncated view cannot be mistaken for a partial recording.
-- [ ] T072 [US4] Implement the shared runtime visualization engine: scope routing, incremental graph construction, on-demand expansion scheduling, cancellation of stale inspection requests, virtualized rendering, and transparent visualization budgets. Existing tasks cover observation (T035–T038), individual views (T044–T048), and verification (T049–T050) but none owns the engine that connects normalized state to scoped views.
+- [ ] T050 [US4] Verify synchronization during forward/backward navigation, seek, playback, session replacement, missing data, and reconstruction failure; verify that scoping a large session changes only the view, that a visualization budget is never reported as a recording failure, and that a recording budget is never hidden behind a smaller rendered graph.
+- [ ] T072 [US4] Implement the shared runtime visualization engine: scope routing, incremental graph construction, on-demand expansion scheduling, cancellation of stale inspection requests, virtualized rendering, and independent visualization and recording budget policies. Existing tasks cover observation (T035–T038), individual views (T044–T048), and verification (T049–T050) but none owns the engine that connects normalized state to scoped views.
 
 **Acceptance:** runtime visualizations are truthful, synchronized, scale from guided detail to scoped views over the same model, and are explicit about incomplete debugger visibility.
 
@@ -1811,7 +1856,7 @@ All compiler and debugger verification uses toolchains already installed on each
 | Build/execute FR-020–028 | T029–T034 |
 | Trace FR-040–050 | T035–T042 |
 | Selected state FR-060–065 | T039–T050 |
-| Runtime FR-080–098 | T043–T050, T072 |
+| Runtime FR-080–099 | T043–T050, T072 |
 | Navigation/visualization FR-100–106 | T040, T043–T055 |
 | Output FR-120–123 | T037, T052–T055 |
 | Safety FR-140–145 | T033, T041, T066, T068 |

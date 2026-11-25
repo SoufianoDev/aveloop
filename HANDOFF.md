@@ -4,7 +4,7 @@ Canonical continuity record for every agent working on this repository. Read thi
 
 ## Current State
 
-- **Last updated:** 2026-11-24 (runtime-visualization architecture: specification, plan, tasks, and Issues expanded; T072 added)
+- **Last updated:** 2026-11-25 (budget separation: visualization vs recording policies; direction promoted to USER-CONFIRMED)
 - **Repository:** `SoufianoDev/aveloop` (`https://github.com/SoufianoDev/aveloop.git`)
 - **Project root:** `/home/soufiano/SoufianoDev/AveLoop`
 - **Active branch:** `dev` tracking `origin/feat/gpui-kit-fast`.
@@ -15,7 +15,8 @@ Canonical continuity record for every agent working on this repository. Read thi
 - **Current phase:** Phase 3 code is green (T016–T021 complete); T022 is open again because its definition changed.
 - **Overall status:** T001–T021 complete as work items. T022's earlier completion is `SUPERSEDED` by the architecture review. Product CI is green on Linux x86_64, Windows x86_64, and macOS arm64.
 - **Current objective:** revise the project model to workspace-first with an optional `ave.toml` overlay.
-- **Runtime-visualization architecture:** now recorded in `spec.md` §1.3, §2.1 E, §2.2 items 14–15, §6.1, §6.5, US-06, FR-093–FR-098; `plan.md` §4 (observation → normalization → history → shared visualization engine); `tasks.md` T036/T037/T038/T044/T046/T047/T050 revised plus new T072. No engine code was written and no task was marked complete on documentation grounds.
+- **Budget separation (USER-CONFIRMED):** visualization budgets govern what is displayed and never delete, alter, or truncate recorded data or relabel a complete recording; recording budgets govern what is captured and retained, are resolved by a declared stop/pause/continue policy, identify the recorded interval and missing observations, and distinguish an intentional stop from an interrupted recording. Neither may be reported as the other. `spec.md` §6.6, FR-096–FR-099; `plan.md` §4.5, §4.7, §4.9 + the §4 flowchart; `tasks.md` T038, T047, T050, T072.
+- **Runtime-visualization architecture (USER-CONFIRMED):** now recorded in `spec.md` §1.3, §2.1 E, §2.2 items 14–15, §6.1, §6.5, US-06, FR-093–FR-098; `plan.md` §4 (observation → normalization → history → shared visualization engine); `tasks.md` T036/T037/T038/T044/T046/T047/T050 revised plus new T072. No engine code was written and no task was marked complete on documentation grounds.
 
 ## Immediate Next Action
 
@@ -104,6 +105,8 @@ Confirmed during this session (2026-11-22T23:47–23:50Z):
 - **2026-11-23 (local) — Mandatory continuity protocol.** Tracked root `HANDOFF.md`, root agent instructions, and Planning with Files remain the operating system for all AveLoop work.
 - **2026-11-23 (local) — Stop after the T001 kickoff report.** Do not begin T001 implementation in this operation.
 - **2026-11-23 — GPUI Kit & Fast commit authorization.** User explicitly authorized staging and committing GPUI Kit and GPUI Fast integration onto branch `feat/gpui-kit-fast`. No PR, no push, no merge to `main`.
+- **2026-11-24 — Runtime-visualization product direction.** Guided (detailed, step-oriented) and scoped (selective, expandable) visualization are two presentation strategies over one normalized observation, history, and visualization architecture; they must never become separate engines. Real-world software is a primary target; small-program-only positioning is rejected. AveLoop may never claim to visualize every object or the entire memory graph; capability claims follow what the selected backend and language adapter can reliably observe. Authority: `spec.md` §1.3, §2.1 E, §2.2, §6.5; `plan.md` §4; `tasks.md` T036–T050, T072.
+- **2026-11-25 — Visualization and recording budgets are independent.** A visualization budget may scope, aggregate, or truncate only the rendered view, never recorded events, snapshots, or the trace, and never marks a complete recording incomplete. A recording budget resolves through a declared stop/pause/continue policy, informs the user, identifies the recorded interval and missing observations, never silently discards recorded data, and never presents a partial trace as complete. An intentional stop is distinguishable from an interrupted recording. Authority: `spec.md` §6.6 and FR-096–FR-099; `plan.md` §4.9 and the §4 flowchart; `tasks.md` T038, T047, T050, T072.
 
 ### AGENT-PROPOSED
 
@@ -283,12 +286,12 @@ Verified this session: `f259ead` exists locally and on the remote, the tree is c
 | PR #140 | `feat/gpui-kit-fast` → `main` | MERGED | Merged by someone other than this session; produced `7953e08` containing `4bf809c` |
 | #53 / #77 | T036 canonical / duplicate | OPEN | Canonical scope and criteria updated; #77 linked by comment only |
 | #55 / #79 | T037 canonical / duplicate | OPEN | Canonical scope and criteria updated; #79 linked by comment only |
-| #57 / #82 | T038 canonical / duplicate | OPEN | Canonical scope and criteria updated; #82 linked by comment only |
+| #57 / #82 | T038 canonical / duplicate | OPEN | Canonical scope and criteria updated twice (visualization; recording-budget policy); #82 linked by comment only |
 | #74 / #97 | T044 canonical / duplicate | OPEN | Canonical scope and criteria updated; #97 linked by comment only |
 | #78 / #101 | T046 canonical / duplicate | OPEN | Canonical scope and criteria updated; #101 linked by comment only |
-| #80 / #103 | T047 canonical / duplicate | OPEN | Canonical scope and criteria updated; #103 linked by comment only |
-| #85 / #109 | T050 canonical / duplicate | OPEN | Canonical scope and criteria updated; #109 linked by comment only |
-| #141 | Canonical T072 | OPEN | Created this session (shared runtime visualization engine) |
+| #80 / #103 | T047 canonical / duplicate | OPEN | Canonical scope and criteria updated twice (visualization budget); #103 linked by comment only |
+| #85 / #109 | T050 canonical / duplicate | OPEN | Canonical scope and criteria updated twice (budget independence); #109 linked by comment only |
+| #141 | Canonical T072 | OPEN | Created 2026-11-24; criteria refined 2026-11-25 for independent budget policies |
 | #118 / #133 | T066 canonical / duplicate | OPEN | #133 marked superseded, not closed |
 | #75 / #93 / #129 / #134 / #79 | Earlier reconciliations | — | Unchanged this session |
 
@@ -1276,6 +1279,17 @@ Entries H0001–H0099 record the project and review sessions. Entry timestamps a
   - Commit `b4682e7`; pushed `5291e00..b4682e7` to `dev` → `origin/feat/gpui-kit-fast`; staged only `spec.md`, `plan.md`, `tasks.md`, `complete.md`, `HANDOFF.md` (owner's `src/presentation/theme.rs` left unstaged, `.planning/` never staged)
   - Evidence: CI run `45534481962` (head `b4682e7`) — Linux x86_64, Windows x86_64, and macOS arm64 all `success`
   - Validation: `git diff --check` clean; `complete.md` regenerated from `spec.md`, `plan.md`, and `tasks.md`; `git status --short` shows only the four spec files, this file, and the owner's `src/presentation/theme.rs`; no Rust code changed, so no test run was required for this pass.
+
+- [H0128] [2026-11-25] [ARCH] USER-CONFIRMED: visualization budgets separated from recording budgets.
+  - Session: OpenCode session (AI agent: opencode), branch `dev` → `origin/feat/gpui-kit-fast`
+  - Provenance change: the runtime-visualization direction recorded as AGENT-PROPOSED in H0127 is now USER-CONFIRMED, including guided + scoped over one architecture and the rejection of small-program-only positioning. Remaining implementation details (structural sharing, virtualization thresholds, concrete default limits, expansion scheduler design) stay AGENT-PROPOSED.
+  - New USER-CONFIRMED rule: visualization budgets and recording budgets are independent. A visualization budget scopes, aggregates, or truncates only the rendered view and may not delete events, modify snapshots, truncate the trace, or mark a complete recording incomplete. A recording budget is resolved by a declared stop/pause/continue policy, informs the user, identifies the recorded interval and missing observations, never silently discards data, and never presents a partial trace as complete. An intentional stop is distinguished from an interrupted recording.
+  - Spec changes: new §6.6 (A visualization budget, B recording budget, C independence, with the "must not" list for each); §2.2 item 14 now points at the two policies; US-06 gains a budget-independence acceptance bullet; FR-096 rewritten as a visualization-budget guarantee; FR-097 rewritten with the stop/pause/continue policy and interval identification; new FR-099 budget independence.
+  - Plan changes: §4 flowchart gains two policy nodes (recording budget → history, visualization budget → engine) and a clarifying caption; §4.5 recording-bound bullet now specifies the stop/pause/continue resolution and intentional-vs-interrupted distinction; §4.7 states a visualization budget is reported as scoped/partially displayed, not a recording failure; §4.9 replaced by "Two independent resource policies" with per-policy guarantees plus the implementation techniques; Phase 7 exit gate now requires both directions to be un-confusable.
+  - Task changes: T038 recording-budget policy; T047 visualization budget limited to display; T050 verifies budget independence in both directions; T072 owns both policies. Traceability row now `Runtime FR-080–099 → T043–T050, T072`.
+  - GitHub sync (by `Spec Kit task`): #57/T038, #80/T047, #85/T050, #141/T072 scopes, criteria, and references updated; all canonical task lines verified string-identical to `tasks.md`. Existing valid criteria preserved; superseded duplicates #77/#79/#82/#97/#101/#103/#109 remain open and linked; nothing closed.
+  - Not done on purpose: no visualization engine, no instrumentation, no Cargo change, no Rust/Go expansion, no task marked complete, no unrelated source edits, no push to `main`.
+  - Next action unchanged: T022 — workspace and project model revision.
 
 ## Resume Instructions
 

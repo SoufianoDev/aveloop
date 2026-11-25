@@ -243,6 +243,8 @@ flowchart TB
     NORMALIZER["Normalized runtime state<br/>session, process, thread, event, location, frame,<br/>variable, type, value, address, region, object identity,<br/>pointer and reference relations"]
     HISTORY["Execution history<br/>stop records, snapshots, checkpoints, diffs, provenance"]
     ENGINE["Shared visualization engine"]
+    REC["Recording budget policy<br/>stop / pause / continue, no silent discard"]
+    VIS["Visualization budget policy<br/>nodes, edges, depth, layout time, no data deletion"]
     ROUTER{"Visualization scope and available data"}
     GUIDED["Guided / detailed view<br/>step-oriented, small controlled sessions"]
     SCOPED["Scoped / selective view<br/>frame, function, thread, object, pointer, region, event"]
@@ -254,8 +256,10 @@ flowchart TB
     BACKEND --> NORMALIZER
     BACKEND --> ADAPTER
     ADAPTER --> NORMALIZER
+    REC -->|"governs what is captured and retained"| HISTORY
     NORMALIZER --> HISTORY
     HISTORY --> ENGINE
+    VIS -->|"governs what is rendered and expanded"| ENGINE
     ENGINE --> ROUTER
     ROUTER -->|"small scope, manageable state"| GUIDED
     ROUTER -->|"large scope or complex state"| SCOPED
@@ -267,7 +271,7 @@ flowchart TB
     INSPECTOR --> NAV
 ```
 
-This is a conceptual data-flow diagram, not a module or directory tree.
+This is a conceptual data-flow diagram, not a module or directory tree. The recording budget policy and the visualization budget policy are independent: the first decides what enters history, the second decides what is drawn from it.
 
 ### 4.1 Responsibilities
 
@@ -320,7 +324,7 @@ Keep these concepts distinct: raw observation, stop record, derived event/diff, 
 - Stops are recorded in their real order and never reordered or fabricated.
 - A checkpoint is stored at a chosen interval or when needed to bound reconstruction cost.
 - The Alpha implementation may store complete stop observations for a bounded trace and optimize only after measuring.
-- Recording bounds are configured, accounted (memory/disk), and reported. Reaching a bound produces a partial recording; it is never silently trimmed to look complete.
+- Recording bounds are configured, accounted (memory/disk), and reported. Reaching one is resolved by a declared stop, pause, or continue policy and produces a partial recording whose recorded interval is identified — never a trace trimmed to look complete. An intentional stop is distinguished from an interrupted recording.
 - Capture is not a claim of reverse execution.
 
 ### 4.6 Capture granularity
@@ -347,7 +351,7 @@ The engine consumes normalized state and history, never debugger protocols. It:
 5. Publishes one immutable view per selected stop so every panel shows the same state.
 6. Reports coverage: what is shown, what is expandable, what is unavailable, and whether the recording itself is partial.
 
-Depth limits, node budgets, and aggregation thresholds belong to visualization policy. They change what is displayed, never what was recorded, and the UI labels the difference.
+Depth limits, node budgets, and aggregation thresholds belong to visualization policy. They change what is displayed, never what was recorded, and the UI labels the view as scoped or partially displayed rather than implying a recording failure.
 
 ### 4.8 Relationship graph
 
@@ -357,16 +361,24 @@ Depth limits, node budgets, and aggregation thresholds belong to visualization p
 - Object identity follows documented session rules; address equality alone is not identity. Address reuse after a verified deallocation does not silently preserve identity.
 - Null, uninitialized, invalid, unresolved, unavailable, optimized-out, and unknown values render as distinct node states, not empty objects.
 
-### 4.9 Scalability and resource policy
+### 4.9 Two independent resource policies
 
-Real programs require selective inspection, not restricted capability.
+Real programs require selective inspection, not restricted capability. Scalability limits are split into two policies with different guarantees; neither may be reported as the other (`spec.md` §6.6).
+
+**Visualization budget — what is displayed.** Nodes and edges per view, expansion depth, rendering memory, layout time, and on-demand inspection limits. Reaching it changes only the rendered view: recorded stops, snapshots, and events are untouched, an otherwise complete recording stays complete, and the UI reports the view as scoped or partially displayed with a way to expand or re-scope.
+
+**Recording budget — what is captured and retained.** Recording memory, trace and snapshot storage, event capture limits, and recording time. Reaching it is resolved by a declared stop, pause, or continue policy; the user is informed, the recorded interval and missing observations are identified, and nothing already recorded is discarded. An intentional stop is distinguishable from an interrupted recording.
+
+**Independence.** A scoped view is never described as an incomplete recording. A partial recording is never hidden by rendering a smaller graph that looks complete. The two states are labelled by different UI mechanisms.
+
+Implementation techniques:
 
 - Scope selection narrows the graph before rendering; it never disables debugging.
 - Object graphs expand on demand; nothing is eagerly traversed to the end of a pointer graph.
 - Rendering is virtualized and incremental: only visible nodes are laid out, and updates are applied as diffs.
 - Heavy inspection runs off the UI thread; results that no longer match the current selection are discarded.
 - Snapshots use structural sharing so unchanged subtrees are not duplicated.
-- Budgets (nodes, edges, depth, bytes, time) are explicit, configurable, and surfaced in the UI when they affect the view.
+- Both budgets are configurable and surfaced in the UI when they affect the view.
 
 ### 4.10 Language observation adapters
 
@@ -556,7 +568,7 @@ Work:
 - Material 3 component states and Night Owl mapping.
 - Keyboard shortcuts and workspace resizing.
 
-**Exit gate:** every panel displays the same selected stop ID under forward, backward, seek, playback, session replacement, and reconstruction failure tests; a scoped view of a large session stays responsive, expands on demand, and is visibly distinguishable from a partial recording.
+**Exit gate:** every panel displays the same selected stop ID under forward, backward, seek, playback, session replacement, and reconstruction failure tests; a scoped view of a large session stays responsive and expands on demand; a visualization budget is never reported as a recording failure, and a recording budget is never hidden as a complete trace.
 
 ### Phase 8 — Cross-platform validation and Alpha hardening
 
