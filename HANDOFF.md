@@ -8,7 +8,7 @@ Canonical continuity record for every agent working on this repository. Read thi
 - **Repository:** `SoufianoDev/aveloop` (`https://github.com/SoufianoDev/aveloop.git`)
 - **Project root:** `/home/soufiano/SoufianoDev/AveLoop`
 - **Active branch:** `dev` tracking `origin/feat/gpui-kit-fast`.
-- **Last verified HEAD:** `5291e00` (T022 evidence commit); verify again before acting.
+- **Last verified HEAD:** `b4682e7` (runtime-visualization document set); verify again before acting.
 - **`main` moved:** `origin/main` is `7953e08` (`Merge pull request #140`). It does not contain `589b7e2` or later. Integration into `main` is not authorized.
 - **Working tree:** owner edit in `src/presentation/theme.rs` (unstaged, leave alone) plus uncommitted runtime-visualization edits to `spec.md`, `plan.md`, `tasks.md`, `complete.md`, and this file.
 - **Active task:** T022 reopened under the redefined workspace/project + optional-overlay contract. The committed `src/domain/project/manifest.rs` (`591e09c`) predates the definition and must be revised to it.
@@ -1273,6 +1273,8 @@ Entries H0001–H0099 record the project and review sessions. Entry timestamps a
   - Evidence used for capability claims: GDB manual on reverse execution (target-dependent, not universal); CLion Memory view page (hex, 256-byte initial region, pointer jump, change highlighting, editing; 2024-10-11); CLion doc index for register/hex/parallel-stack/live-watch/core-dump/DAP pages; Python Tutor homepage for variables/objects/pointers/stack frames and its 1000-step stop message (third-party reproduction, see UNVERIFIED).
   - Research limits recorded honestly: Python Tutor's primary docs/FAQ were not retrievable; no CLion object-visualizer feature page was found; no backend was tried live in this pass.
   - Not done on purpose: no visualization engine code, no Cargo dependency change, no instrumentation framework, no Rust/Go implementation, no new execution engine, no task marked complete, no push to `main`, no PR/merge, no CI workflow change.
+  - Commit `b4682e7`; pushed `5291e00..b4682e7` to `dev` → `origin/feat/gpui-kit-fast`; staged only `spec.md`, `plan.md`, `tasks.md`, `complete.md`, `HANDOFF.md` (owner's `src/presentation/theme.rs` left unstaged, `.planning/` never staged)
+  - Evidence: CI run `45534481962` (head `b4682e7`) — Linux x86_64, Windows x86_64, and macOS arm64 all `success`
   - Validation: `git diff --check` clean; `complete.md` regenerated from `spec.md`, `plan.md`, and `tasks.md`; `git status --short` shows only the four spec files, this file, and the owner's `src/presentation/theme.rs`; no Rust code changed, so no test run was required for this pass.
 
 ## Resume Instructions
