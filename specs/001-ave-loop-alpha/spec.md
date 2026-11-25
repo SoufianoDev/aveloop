@@ -64,6 +64,10 @@ AveLoop is not a general-purpose visual programming language, cloud IDE, or repl
 
 Workspace management, language integration, build-system handling, and debugger backends are separate, extensible responsibilities. Alpha implements only C17 and C++20; adding another language must not require redesigning the workspace, project, or project-configuration model.
 
+Workspace, project, build target, source file, and language integration are independent identities. One workspace may contain several projects, one project may contain several languages and several build targets, and one build target may contain sources from more than one language when its build system genuinely supports that arrangement. No workspace or project carries one authoritative language. A source file stays editable even when it belongs to no build target.
+
+Build-system recognition is not build-system integration and is not successful build support. The application reports what it recognized, what it can consume, and what it can actually build as separate states.
+
 Runtime execution visualization is AveLoop's central product capability. AveLoop makes actual program execution — progression, stack frames, variables, objects, pointers, references, and memory relationships — observable and navigable. It serves both teaching-scale examples and real, complex programs from one normalized runtime-observation model: small, controlled sessions may present detailed step-oriented views, while large sessions use scoped, selective, expandable views. The same observation, history, and normalization model feeds both; there is no separate educational engine. Accuracy outranks visual completeness: no visualization may present an inference as an observation.
 
 ## 1.4 Intended users
@@ -89,8 +93,11 @@ The Alpha is successful only if this workflow works on Linux, Windows, and macOS
 - Native Rust/GPUI desktop application.
 - One shared application codebase for Linux, Windows, and macOS.
 - Open any local directory as a workspace without requiring an AveLoop manifest.
-- Recognize an existing build-system descriptor (for example `CMakeLists.txt`, `Cargo.toml`, `go.mod`) without modifying or replacing it.
-- Create an optional AveLoop project overlay (`ave.toml`) when a workspace needs build or run settings that no native descriptor provides.
+- Discover zero or more projects in a workspace, including nested and sibling projects with different build systems.
+- Recognize multiple build-system descriptors (`CMakeLists.txt`, `Makefile`, `compile_commands.json`, `Cargo.toml`, `go.mod`, and other registered kinds) without modifying or replacing them, reporting recognition, integration, and build support as separate states.
+- Treat a project as language-agnostic: languages are recorded per source file, never as one project-wide language field.
+- Represent multiple build targets per project, each with its own source membership, language participation, dependencies, entry point, build configuration, and run configuration.
+- Use an optional `ave.toml` either as an overlay on a native descriptor or as a standalone definition of AveLoop-managed targets when no native integration exists.
 - Open, edit, and save source files.
 - Maintain a clear current-workspace/current-project/current-file context.
 - Report missing or incompatible toolchains.
@@ -189,7 +196,8 @@ These are deliberate scope boundaries, not unfinished promises:
 ## 2.3 Out of scope
 
 - Any implementation language other than Rust for AveLoop itself, and any target language beyond C17/C++20 in Alpha. Additional target languages are deferred, not architecturally excluded (§1.3).
-- Build or test execution through CMake, Cargo, Go modules, or another native descriptor. Alpha recognizes those files as project descriptors but does not drive them.
+- Build or test execution through CMake, Cargo, Go modules, or another native descriptor. Alpha recognizes those descriptors and reports their integration status but does not drive them.
+- Language integration for Rust, Go, or any language outside C17/C++20. Their files open as plain text, remain editable, and are not built, debugged, or visualized by Alpha.
 - JavaScript/HTML/CSS production UI.
 - WebView-based application UI.
 - CodeMirror 5 or a browser editor embedded in the native app.
@@ -250,8 +258,10 @@ A user opens a local directory as a workspace, or creates/opens a project with a
 
 **Acceptance criteria**
 - Opening an ordinary directory never requires an AveLoop manifest and never modifies the directory.
-- A workspace that contains a recognized native build-system descriptor opens as a project and reports that descriptor.
-- `ave.toml` is optional; when present it adds build/run settings and does not replace a native descriptor.
+- A workspace that contains a recognized native build-system descriptor opens as a project and reports that descriptor without claiming it can build through it.
+- A workspace may contain several projects with different descriptors, and a project may contain several languages and targets.
+- `ave.toml` is optional; when present it either overlays a native descriptor or, in a distinct standalone mode, defines AveLoop-managed targets.
+- No project or workspace exposes one authoritative language; languages are reported per source file.
 - The app can create a workspace, add an optional `ave.toml`, and reopen it.
 - Invalid or unsupported project metadata produces an actionable error.
 - File paths are handled correctly on all three target OSes.
@@ -348,7 +358,7 @@ Priority: **P0** = Alpha critical; **P1** = Alpha usability requirement; **P2** 
 
 | ID | Requirement | Priority |
 |---|---|---|
-| FR-001 | The application shall open any local directory as a workspace and shall create or open a project without requiring an AveLoop manifest. | P0 |
+| FR-001 | The application shall open any local directory as a workspace without requiring an AveLoop manifest, and shall discover zero or more projects within it. | P0 |
 | FR-002 | The application shall open, edit, and save C and C++ source files. | P0 |
 | FR-003 | The editor shall provide cursor movement, selection, text insertion/deletion, undo/redo, and clipboard operations. | P0 |
 | FR-004 | The editor shall display line numbers and syntax highlighting for C17 and C++20. | P0 |
@@ -356,8 +366,12 @@ Priority: **P0** = Alpha critical; **P1** = Alpha usability requirement; **P2** 
 | FR-006 | The editor shall distinguish the source revision used by a trace from the current buffer revision. | P0 |
 | FR-007 | The editor shall display execution source locations only when provided by the recorded session. | P0 |
 | FR-008 | Source changes shall mark the trace mapping stale. | P0 |
-| FR-009 | The application shall treat `ave.toml` as an optional overlay that adds build and run settings and shall never require it to browse or edit a workspace. | P0 |
-| FR-010 | The application shall recognize existing build-system descriptors (`CMakeLists.txt`, `Cargo.toml`, `go.mod`, and similar) and shall not modify, replace, or silently reinterpret them. | P0 |
+| FR-009 | The application shall treat `ave.toml` as optional and shall distinguish its overlay role (additional settings over a native descriptor) from its standalone role (AveLoop-managed targets when no native integration exists); native descriptor metadata remains authoritative for its own source and target graph. | P0 |
+| FR-010 | The application shall recognize multiple build-system descriptors per workspace and per project root (`CMakeLists.txt`, `Makefile`, `compile_commands.json`, `Cargo.toml`, `go.mod`, and other registered kinds), shall report recognition, integration, and build support separately, and shall never modify, replace, or silently reinterpret them. | P0 |
+| FR-011 | No workspace or project shall expose one authoritative language. The application shall associate language identity with individual source units. | P0 |
+| FR-012 | The application shall represent multiple build targets per project, each with source membership, language participation, dependencies, optional entry point, and build/run configuration. | P0 |
+| FR-013 | The application shall determine a source unit's language from an explicit override, then a registered extension mapping, and shall report ambiguous or unknown identities as such rather than guessing. | P0 |
+| FR-014 | The application shall keep language detection, build-system recognition, build integration, and language support as separate reported states. | P0 |
 
 ## 5.2 Build and execution
 
@@ -465,6 +479,12 @@ The specification defines concepts and invariants, not final Rust struct names.
 
 ## 6.1 Distinct concepts
 
+- **Workspace:** the user's opened working context. One or more root directories, exclusion rules, discovered projects, and unassociated files. A workspace has no language. Opening one never requires an AveLoop file and never modifies the directory.
+- **Project:** an identifiable project discovered within a workspace, owned by one or more descriptor attachments (native descriptor and/or `ave.toml`) at a project root. A project may contain several languages and several build targets and has no single authoritative language.
+- **Build Target:** a concrete build or execution unit inside a project. It owns source membership, language participation, build-system ownership, toolchain requirement, target dependencies, an entry point where applicable, and build/run configuration. Its sources may span several languages only when its build system and toolchain genuinely support that.
+- **Source File:** a file or language unit carrying its own language identity (explicit override, registered extension, ambiguous, or unknown) and zero or more target memberships. Zero target memberships means editable but not built.
+- **Language Integration:** a registered capability provider keyed by an extensible identifier. It declares file recognition, highlighting, parsing, editing, diagnostics, LSP, build integration, toolchain discovery, execution, debugging, runtime observation, and visualization individually.
+- **Build-System Provider:** a descriptor kind together with its recognition, integration, and build-support status. It is separate from any language: one descriptor may own targets in several languages, and one language may be built by several providers.
 - **Debug Session:** one launched process/debugger lifetime and its provenance.
 - **Debugger Observation:** raw data returned by the debugger at a stop.
 - **Execution Stop:** one navigable source-level/debugger stop.

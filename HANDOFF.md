@@ -4,17 +4,17 @@ Canonical continuity record for every agent working on this repository. Read thi
 
 ## Current State
 
-- **Last updated:** 2026-11-25 (budget separation: visualization vs recording policies; direction promoted to USER-CONFIRMED)
+- **Last updated:** 2026-11-25 (T022 model revision: mixed-language projects, multi-project workspaces, per-source language identity)
 - **Repository:** `SoufianoDev/aveloop` (`https://github.com/SoufianoDev/aveloop.git`)
 - **Project root:** `/home/soufiano/SoufianoDev/AveLoop`
 - **Active branch:** `dev` tracking `origin/feat/gpui-kit-fast`.
 - **Last verified HEAD:** `3ef98e9` (budget-separation document set); verify again before acting.
 - **`main` moved:** `origin/main` is `7953e08` (`Merge pull request #140`). It does not contain `589b7e2` or later. Integration into `main` is not authorized.
 - **Working tree:** owner edit in `src/presentation/theme.rs` (unstaged, leave alone) plus uncommitted runtime-visualization edits to `spec.md`, `plan.md`, `tasks.md`, `complete.md`, and this file.
-- **Active task:** T022 reopened under the redefined workspace/project + optional-overlay contract. The committed `src/domain/project/manifest.rs` (`591e09c`) predates the definition and must be revised to it.
+- **Active task:** T022 reopened under the revised workspace/project/build-target/source-language + two-role `ave.toml` contract. The committed `src/domain/project/manifest.rs` (`591e09c`) encodes one project-wide language, one entry source, and overlay-only `ave.toml`; it must be revised before T022 can complete.
 - **Current phase:** Phase 3 code is green (T016–T021 complete); T022 is open again because its definition changed.
 - **Overall status:** T001–T021 complete as work items. T022's earlier completion is `SUPERSEDED` by the architecture review. Product CI is green on Linux x86_64, Windows x86_64, and macOS arm64.
-- **Current objective:** revise the project model to workspace-first with an optional `ave.toml` overlay.
+- **Current objective:** revise the project model to workspace → projects → targets → sources, with per-source language identity and two-role `ave.toml`. Implementation is intentionally not started; see **T022 Implementation Impact** below.
 - **Budget separation (USER-CONFIRMED):** visualization budgets govern what is displayed and never delete, alter, or truncate recorded data or relabel a complete recording; recording budgets govern what is captured and retained, are resolved by a declared stop/pause/continue policy, identify the recorded interval and missing observations, and distinguish an intentional stop from an interrupted recording. Neither may be reported as the other. `spec.md` §6.6, FR-096–FR-099; `plan.md` §4.5, §4.7, §4.9 + the §4 flowchart; `tasks.md` T038, T047, T050, T072.
 - **Runtime-visualization architecture (USER-CONFIRMED):** now recorded in `spec.md` §1.3, §2.1 E, §2.2 items 14–15, §6.1, §6.5, US-06, FR-093–FR-098; `plan.md` §4 (observation → normalization → history → shared visualization engine); `tasks.md` T036/T037/T038/T044/T046/T047/T050 revised plus new T072. No engine code was written and no task was marked complete on documentation grounds.
 
@@ -106,6 +106,7 @@ Confirmed during this session (2026-11-22T23:47–23:50Z):
 - **2026-11-23 (local) — Stop after the T001 kickoff report.** Do not begin T001 implementation in this operation.
 - **2026-11-23 — GPUI Kit & Fast commit authorization.** User explicitly authorized staging and committing GPUI Kit and GPUI Fast integration onto branch `feat/gpui-kit-fast`. No PR, no push, no merge to `main`.
 - **2026-11-24 — Runtime-visualization product direction.** Guided (detailed, step-oriented) and scoped (selective, expandable) visualization are two presentation strategies over one normalized observation, history, and visualization architecture; they must never become separate engines. Real-world software is a primary target; small-program-only positioning is rejected. AveLoop may never claim to visualize every object or the entire memory graph; capability claims follow what the selected backend and language adapter can reliably observe. Authority: `spec.md` §1.3, §2.1 E, §2.2, §6.5; `plan.md` §4; `tasks.md` T036–T050, T072.
+- **2026-11-25 — Workspace/project model requirements.** A user must be able to open an ordinary directory without an AveLoop manifest; existing native descriptors are respected rather than unnecessarily replaced; a project must not be restricted to one programming language; a workspace must be able to contain multiple projects; project discovery, language support, compilation, debugging, and runtime observation are separate capabilities; the architecture stays extensible without implementing every future language. C17/C++20 remain the only Alpha languages. Authority: `spec.md` §1.3, §2.1 A, §6.1, US-01, FR-001, FR-009–FR-014; `plan.md` §5; `tasks.md` T022–T030.
 - **2026-11-25 — Visualization and recording budgets are independent.** A visualization budget may scope, aggregate, or truncate only the rendered view, never recorded events, snapshots, or the trace, and never marks a complete recording incomplete. A recording budget resolves through a declared stop/pause/continue policy, informs the user, identifies the recorded interval and missing observations, never silently discards recorded data, and never presents a partial trace as complete. An intentional stop is distinguishable from an interrupted recording. Authority: `spec.md` §6.6 and FR-096–FR-099; `plan.md` §4.9 and the §4 flowchart; `tasks.md` T038, T047, T050, T072.
 
 ### AGENT-PROPOSED
@@ -146,6 +147,8 @@ Confirmed during this session (2026-11-22T23:47–23:50Z):
 - Clang/LLVM 23.1.4 as a mandatory cross-platform toolchain.
 - Bundled toolchain distribution.
 - NFR-007 wording "DAP response" → "debugger-protocol response".
+- "A project carries one language identifier" and "`ave.toml` is an overlay only". Replaced by per-source language identity and the two-role `ave.toml` contract (`plan.md` §5.6, §5.8; `spec.md` FR-009, FR-011–FR-014).
+- The `591e09c` `Manifest` shape (single `language`, single `entry`, flat source list) as the project contract.
 
 ## Baseline (pre-handoff, reported by the preceding agent)
 
@@ -210,6 +213,39 @@ Verified this session: `f259ead` exists locally and on the remote, the tree is c
   M3 variant names, build the execution timeline and pointer graph, stress-test the
   editor.
 - **Integration:** `origin/main` lacks `589b7e2` and later; no merge authorized.
+
+## T022 Implementation Impact
+
+AGENT-PROPOSED inventory of the committed implementation that contradicts the revised model. Nothing here is implemented; the source is intentionally untouched in this pass.
+
+`src/domain/project/manifest.rs` (`591e09c`) encodes the superseded contract:
+
+| Existing | Required change |
+|---|---|
+| `Manifest.language: Language` | remove; language identity moves to `Target` and `SourceUnit` |
+| `enum Language { C, Cpp }` | `LanguageId` validated against the language registry; `c` and `cpp` become registry entries, not a closed enum |
+| `Manifest.entry: PathBuf` | `Target.entry: Option<PathBuf>`; libraries have none |
+| flat `sources`, `include_dirs`, `defines`, `compiler_args`, `linker_args`, `program_args`, `working_directory` | per-`Target` fields |
+| `Manifest.name` | `Project.name` plus `Target.name`; `Manifest.version` becomes the project-format version |
+| — | add an explicit `mode: Overlay | Standalone` |
+| `validate_paths` | validate project-level fields and each target's fields |
+| `src/domain/project/mod.rs` re-exports `Language, Manifest, ManifestError, SUPPORTED_FORMAT_VERSION` | re-export `LanguageId` and the new types; `Language` removed |
+
+New domain types: `Workspace`, `Project`, `ProjectRoot`, `DescriptorAttachment`, `DescriptorKind`, `DescriptorStatus` (Recognized/Integrated/Build-capable/Unavailable), `Target`, `TargetKind`, `SourceUnit`, `LanguageId`, `LanguageCapability`.
+
+Consumers: none outside `src/domain/project/mod.rs` and `tests/manifest_tests.rs` (verified by grep), so the application and infrastructure layers are not yet coupled to the old shape.
+
+`tests/manifest_tests.rs` (7 tests):
+
+- Rewrite `parses_minimal_manifest` for `mode` plus one target with no project language.
+- Rewrite `parses_full_manifest` for two targets with different languages and per-target fields.
+- Preserve `rejects_unsupported_version`.
+- Preserve and extend `rejects_absolute_paths` and `rejects_paths_escaping_project_root` to target-scoped fields.
+- Preserve `rejects_unknown_keys`; add a project-level `language` key as a rejected unknown key.
+- `rejects_unknown_language` changes meaning: an unregistered identifier in a target language hint is rejected; add ambiguous (`.h`) and unknown source-identity cases.
+- Add: per-source language override, overlay-mode `[[target]]` rejection, standalone mode rejected when it would shadow an integrated native descriptor, deterministic multi-project discovery.
+
+No `Cargo.toml`, dependency, or CI change is implied by the model revision.
 
 ## Files Changed
 
@@ -293,6 +329,10 @@ Verified this session: `f259ead` exists locally and on the remote, the tree is c
 | #85 / #109 | T050 canonical / duplicate | OPEN | Canonical scope and criteria updated twice (budget independence); #109 linked by comment only |
 | #141 | Canonical T072 | OPEN | Created 2026-11-24; criteria refined 2026-11-25 for independent budget policies |
 | #118 / #133 | T066 canonical / duplicate | OPEN | #133 marked superseded, not closed |
+| #22 | Canonical T022 | OPEN | Scope and criteria rewritten 2026-11-25 for the multi-project/mixed-language model; superseded language-identifier bullet replaced; task line MATCH |
+| #23 | Canonical T023 | OPEN | Scope/criteria updated: deterministic discovery, descriptor statuses, unassociated files |
+| #28 | Canonical T028 | OPEN | Criteria extended: multi-project workspace and mixed-language project verification |
+| #30 | Canonical T030 | OPEN | Scope moved from project configuration to the resolved build target; task line MATCH |
 | #75 / #93 / #129 / #134 / #79 | Earlier reconciliations | — | Unchanged this session |
 
 URLs: `https://github.com/SoufianoDev/aveloop/issues/<n>`.
@@ -1292,6 +1332,18 @@ Entries H0001–H0099 record the project and review sessions. Entry timestamps a
   - Commit `3ef98e9`; pushed `5c1d3d7..3ef98e9` to `dev` → `origin/feat/gpui-kit-fast`; staged only `spec.md`, `plan.md`, `tasks.md`, `complete.md`, `HANDOFF.md` (owner's `src/presentation/theme.rs` left unstaged, `.planning/` never staged)
   - Evidence: CI run on head `3ef98e9` — Linux x86_64, Windows x86_64, and macOS arm64 all `success`
   - Next action unchanged: T022 — workspace and project model revision.
+
+- [H0129] [2026-11-25] [ARCH] USER-CONFIRMED requirements, AGENT-PROPOSED model: mixed-language projects, multi-project workspaces, per-source language identity, two-role `ave.toml`.
+  - Session: OpenCode session (AI agent: opencode), branch `dev` → `origin/feat/gpui-kit-fast`, HEAD `6c94fcd` before this pass
+  - Provenance: the nine product requirements (general-purpose multi-language IDE; C17/C++20 Alpha only; Rust/Go as future targets; open any directory without a manifest; respect native descriptors; a project is not restricted to one language; a workspace may hold multiple projects; discovery/language/build/debug/observation are separate capabilities; extensible without implementing future languages) are USER-CONFIRMED by the task brief. Every concrete modeling choice below is AGENT-PROPOSED and not yet approved: no separate `Module` entity, the four descriptor statuses, the explicit `ave.toml` `mode`, the Alpha capability matrix, the default exclusion list, and the bounded-scan reporting.
+  - Model: Workspace (roots, exclusions, unassociated files, no language) → Project (root plus descriptor attachments, no language, N targets) → Build Target (owner attachment plus name, source membership, language participation, toolchain requirement, dependencies, optional entry, build/run configuration) → Source Unit (path plus language identity: explicit override, registered extension, ambiguous, or unknown; 0..N target memberships).
+  - Spec changes: §1.3 identity paragraph plus recognition-is-not-integration paragraph; §2.1 A bullets for multi-project discovery, multiple descriptors, language-agnostic projects, multi-target projects, two-role `ave.toml`; §2.3 excludes non-C/C++ language integration; §6.1 defines Workspace, Project, Build Target, Source File, Language Integration, Build-System Provider; US-01 acceptance extended; FR-001, FR-009, FR-010 rewritten; FR-011–FR-014 added; traceability now `Project/source FR-001–014 | T022–T028`.
+  - Plan changes: §5 fully replaced by §5.1 three independent identities with the required Mermaid conceptual flowchart, §5.2 workspace, §5.3 nine deterministic discovery rules, §5.4 project, §5.5 build target with the Alpha honesty rule (native descriptors recognized but not parsed, so zero enumerated native targets), §5.6 source language identity, §5.7 descriptor status table, §5.8 the two `ave.toml` roles with shared semantics, §5.9 twelve-capability registry with the Alpha matrix, §5.10 responsibility table, §5.11 the Module decision. Phase 3/4 work lists and the Phase 4 exit gate updated.
+  - Task changes: T022 rewritten to the full model and two-role contract; T023 to deterministic discovery, descriptor statuses, and unassociated files; T028 to multi-project and mixed-language verification; T030 to build from the resolved target instead of the project overlay. No new task ID was created because T022 owns the model, T023 the use cases, and T030 the build resolution.
+  - GitHub sync (resolved by the `Spec Kit task` field): #22/T022, #23/T023, #28/T028, #30/T030 updated and all four canonical task lines verified string-identical to `tasks.md`. #22's superseded bullet ("generic types carry a language identifier") was replaced; #28 had no Authoritative references line, so one was added. Nothing closed; no duplicate created.
+  - Implementation conflicts recorded, not fixed: `Manifest.language`, the closed `Language` enum, the single `Manifest.entry`, the flat target fields, and the overlay-only assumptions. The exact impact list is in **T022 Implementation Impact**.
+  - Not done on purpose: no Rust/Go implementation, no toolchain or dependency change, no GPUI fork, no plugin framework, no native-descriptor replacement, no source edit, no task marked complete, no push to `main`, no PR or merge.
+  - Next action unchanged: T022 implementation start from the revised contract.
 
 ## Resume Instructions
 
