@@ -1343,6 +1343,9 @@ Entries H0001–H0099 record the project and review sessions. Entry timestamps a
   - GitHub sync (resolved by the `Spec Kit task` field): #22/T022, #23/T023, #28/T028, #30/T030 updated and all four canonical task lines verified string-identical to `tasks.md`. #22's superseded bullet ("generic types carry a language identifier") was replaced; #28 had no Authoritative references line, so one was added. Nothing closed; no duplicate created.
   - Implementation conflicts recorded, not fixed: `Manifest.language`, the closed `Language` enum, the single `Manifest.entry`, the flat target fields, and the overlay-only assumptions. The exact impact list is in **T022 Implementation Impact**.
   - Not done on purpose: no Rust/Go implementation, no toolchain or dependency change, no GPUI fork, no plugin framework, no native-descriptor replacement, no source edit, no task marked complete, no push to `main`, no PR or merge.
+  - Commit `45024a7`; pushed `6c94fcd..45024a7` to `dev` → `origin/feat/gpui-kit-fast`; staged only `spec.md`, `plan.md`, `tasks.md`, `complete.md`, `HANDOFF.md` (owner's `src/presentation/theme.rs` left unstaged, `.planning/` never staged)
+  - Evidence: CI run `45622830662` (head `45024a7`) — Linux x86_64, Windows x86_64, and macOS arm64 all `success`
+  - Validation: `git diff --check` clean; `complete.md` regenerated and byte-identical to the three-source concatenation; `git status --short` shows only the owner's `src/presentation/theme.rs`; no Rust source changed, so no local test run was required for this pass
   - Next action unchanged: T022 implementation start from the revised contract.
 
 ## Resume Instructions
