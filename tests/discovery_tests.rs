@@ -12,8 +12,6 @@ use aveloop::domain::{
     ConfigMode, DescriptorKind, DescriptorStatus, LanguageId, LanguageIdentity, LanguageRegistry,
 };
 
-const ROOT: &str = "/ws";
-
 #[derive(Default)]
 struct FakeSource {
     dirs: BTreeMap<PathBuf, Vec<DirEntry>>,
@@ -26,19 +24,19 @@ impl FakeSource {
     }
 
     fn file(mut self, path: &str, contents: &str) -> Self {
-        let path = Path::new(path);
-        self.register(path, EntryKind::File);
-        self.files.insert(path.to_path_buf(), contents.to_string());
+        let path = p(path);
+        self.register(&path, EntryKind::File);
+        self.files.insert(path, contents.to_string());
         self
     }
 
     fn dir(mut self, path: &str) -> Self {
-        self.register(Path::new(path), EntryKind::Directory);
+        self.register(&p(path), EntryKind::Directory);
         self
     }
 
     fn symlink(mut self, path: &str) -> Self {
-        self.register(Path::new(path), EntryKind::Symlink);
+        self.register(&p(path), EntryKind::Symlink);
         self
     }
 
@@ -84,8 +82,18 @@ fn registry() -> LanguageRegistry {
     LanguageRegistry::alpha()
 }
 
+/// The fake tree's logical names, translated to a platform-absolute path.
+fn p(path: &str) -> PathBuf {
+    let relative = path.trim_start_matches('/');
+    if cfg!(windows) {
+        PathBuf::from("C:\\").join(relative.replace('/', "\\"))
+    } else {
+        Path::new("/").join(relative)
+    }
+}
+
 fn root() -> Vec<PathBuf> {
-    vec![PathBuf::from(ROOT)]
+    vec![p("/ws")]
 }
 
 fn standalone(name: &str, target: &str, sources: &str) -> String {
@@ -105,10 +113,7 @@ fn opens_a_workspace_without_any_manifest() {
     assert!(discovery.workspace.projects().is_empty());
     assert_eq!(
         discovery.workspace.unassociated(),
-        [
-            PathBuf::from("/ws/notes.md"),
-            PathBuf::from("/ws/src/main.c")
-        ]
+        [p("/ws/notes.md"), p("/ws/src/main.c")]
     );
     assert!(discovery.problems.is_empty());
     assert!(discovery.incomplete.is_none());
@@ -131,7 +136,7 @@ fn associates_files_with_the_nearest_project_root() {
     assert_eq!(projects.len(), 1);
     let project = &projects[0];
     assert_eq!(project.name, "app");
-    assert_eq!(project.root, PathBuf::from("/ws/app"));
+    assert_eq!(project.root, p("/ws/app"));
     assert_eq!(project.config_mode, Some(ConfigMode::Standalone));
     assert_eq!(
         project
@@ -142,10 +147,7 @@ fn associates_files_with_the_nearest_project_root() {
         ["README.md", "src/main.c"]
     );
     assert!(project.target("app").is_some());
-    assert_eq!(
-        discovery.workspace.unassociated(),
-        [PathBuf::from("/ws/loose.c")]
-    );
+    assert_eq!(discovery.workspace.unassociated(), [p("/ws/loose.c")]);
     assert!(discovery.problems.is_empty());
 }
 
@@ -245,8 +247,8 @@ fn a_nested_descriptor_becomes_a_child_project() {
 
     let projects = discovery.workspace.projects();
     assert_eq!(projects.len(), 2);
-    assert_eq!(projects[0].root, PathBuf::from("/ws"));
-    assert_eq!(projects[1].root, PathBuf::from("/ws/native"));
+    assert_eq!(projects[0].root, p("/ws"));
+    assert_eq!(projects[1].root, p("/ws/native"));
     assert_eq!(projects[0].sources[0].path, PathBuf::from("src/top.c"));
     assert_eq!(projects[1].sources[0].path, PathBuf::from("src/main.c"));
     assert!(discovery.workspace.unassociated().is_empty());
@@ -299,7 +301,7 @@ fn reports_skipped_symlinks() {
     let discovery = open_workspace(&source, &registry(), root(), Vec::new()).expect("opens");
 
     assert!(discovery.problems.contains(&Problem::SkippedSymlink {
-        path: PathBuf::from("/ws/linked")
+        path: p("/ws/linked")
     }));
 }
 
@@ -311,7 +313,7 @@ fn reports_unreadable_directories() {
 
     assert!(discovery.problems.iter().any(|problem| matches!(
         problem,
-        Problem::Unreadable { path, .. } if path == Path::new("/ws/broken")
+        Problem::Unreadable { path, .. } if *path == p("/ws/broken")
     )));
 }
 
@@ -335,7 +337,7 @@ fn reports_incomplete_discovery_at_the_depth_bound() {
 
     let incomplete = discovery.incomplete.expect("depth bound reported");
     assert_eq!(incomplete.reason, Bound::Depth);
-    assert_eq!(incomplete.root, PathBuf::from("/ws"));
+    assert_eq!(incomplete.root, p("/ws"));
 }
 
 #[test]
@@ -386,11 +388,8 @@ fn reports_conflicting_source_claims_with_both_candidates() {
             _ => None,
         })
         .expect("conflict reported");
-    assert_eq!(conflict.0, PathBuf::from("/ws/native/src/main.c"));
-    assert_eq!(
-        conflict.1,
-        [PathBuf::from("/ws"), PathBuf::from("/ws/native")]
-    );
+    assert_eq!(conflict.0, p("/ws/native/src/main.c"));
+    assert_eq!(conflict.1, [p("/ws"), p("/ws/native")]);
 }
 
 #[test]
@@ -400,7 +399,7 @@ fn open_project_is_a_single_root_workspace() {
         .file("/ws/app/main.c", "int main(void) { return 0; }")
         .file("/ws/elsewhere/main.c", "int other;");
 
-    let discovery = open_project(&source, &registry(), PathBuf::from("/ws/app")).expect("opens");
+    let discovery = open_project(&source, &registry(), p("/ws/app")).expect("opens");
 
     assert_eq!(discovery.workspace.projects().len(), 1);
     assert!(discovery.workspace.unassociated().is_empty());
