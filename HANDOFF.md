@@ -1429,6 +1429,10 @@ Entries H0001–H0099 record the project and review sessions. Entry timestamps a
   - No source change in this pass: the implementation is `e915969`, already verified by CI run `45631891239`.
   - Next action: T023 discovery. The model is frozen unless a new user decision supersedes it.
 
+- [H0134] [2026-11-25] [CI] Ratification commit verified on three operating systems.
+  - Run `45640677386`, head `e346e05`, conclusion `success`; jobs `success` on Linux x86_64, Windows x86_64, and macOS arm64.
+  - Maintenance observation (UNVERIFIED, no action taken): the run logs warn that `actions/checkout@v4` targets Node.js 20 and is forced onto Node.js 24. Pinning a newer checkout major is optional housekeeping, not a task in `tasks.md`.
+
 ## Resume Instructions
 
 1. Read repository-level agent instructions (`AGENTS.md`).
