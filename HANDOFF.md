@@ -4,34 +4,42 @@ Canonical continuity record for every agent working on this repository. Read thi
 
 ## Current State
 
-- **Last updated:** 2026-11-25 (T022 implementation: workspace/project/target/source model and two-role `ave.toml` contract landed, pending model ratification)
+- **Last updated:** 2026-11-25 (T022 ratified and complete; Issue #22 closed; next is T023 discovery)
 - **Repository:** `SoufianoDev/aveloop` (`https://github.com/SoufianoDev/aveloop.git`)
 - **Project root:** `/home/soufiano/SoufianoDev/AveLoop`
 - **Active branch:** `dev` tracking `origin/feat/gpui-kit-fast`.
 - **Last verified HEAD:** `e915969` (T022 implementation); CI run `45631891239` green on all three OSes.
 - **`main` moved:** `origin/main` is `7953e08` (`Merge pull request #140`). It does not contain `589b7e2` or later. Integration into `main` is not authorized.
 - **Working tree:** owner edit in `src/presentation/theme.rs` (unstaged, leave alone) plus the uncommitted T022 implementation (`src/domain/project/*`, `tests/*_tests.rs`, this file).
-- **Active task:** T022 — implemented to the revised contract and green locally; the checkbox stays open until the owner ratifies the AGENT-PROPOSED model choices listed in `plan.md` §5.
-- **Current phase:** Phase 3 code is green (T016–T021 complete); T022 is open again because its definition changed.
-- **Overall status:** T001–T021 complete as work items. T022 implemented, pushed, and green on three OSes; its checkbox and Issue #22 remain open pending model ratification. Product CI is green on Linux x86_64, Windows x86_64, and macOS arm64.
-- **Current objective:** ratify the model choices, then close T022 and start T023 (discovery and open-workspace use cases). The domain model itself is in place; see **T022 Implementation** below.
+- **Active task:** T023 [US1] — open-workspace and create/open-project use cases over the now-ratified model. Not started.
+- **Current phase:** Phase 3 complete (T016–T022). T023 opens Phase 4, User Story 1.
+- **Overall status:** T001–T022 complete as work items; Issue #22 closed. Product CI is green on Linux x86_64, Windows x86_64, and macOS arm64.
+- **Current objective:** implement T023 discovery — bounded scan over workspace roots, default exclusions, nearest-ancestor association, descriptor status reporting, and `ave.toml` loading through a port. The domain model is in place; see **T022 Implementation** below.
 - **Budget separation (USER-CONFIRMED):** visualization budgets govern what is displayed and never delete, alter, or truncate recorded data or relabel a complete recording; recording budgets govern what is captured and retained, are resolved by a declared stop/pause/continue policy, identify the recorded interval and missing observations, and distinguish an intentional stop from an interrupted recording. Neither may be reported as the other. `spec.md` §6.6, FR-096–FR-099; `plan.md` §4.5, §4.7, §4.9 + the §4 flowchart; `tasks.md` T038, T047, T050, T072.
 - **Runtime-visualization architecture (USER-CONFIRMED):** now recorded in `spec.md` §1.3, §2.1 E, §2.2 items 14–15, §6.1, §6.5, US-06, FR-093–FR-098; `plan.md` §4 (observation → normalization → history → shared visualization engine); `tasks.md` T036/T037/T038/T044/T046/T047/T050 revised plus new T072. No engine code was written and no task was marked complete on documentation grounds.
 
 ## Immediate Next Action
 
-**1. Ratify the AGENT-PROPOSED model choices** in `plan.md` §5 (no `Module` entity; explicit
-`ave.toml` `mode`; standalone allowed beside a recognized-but-unintegrated descriptor; the three
-descriptor statuses; Rust/Go files as unknown extensions in Alpha; discovery bounds deferred;
-`.h` ambiguous rather than inherited). Approving them is what closes T022.
+**T023 [US1] — implement open-workspace and create/open-project use cases.** Opening a workspace
+requires no manifest; discovery returns zero or more projects with deterministic association and
+reported conflicts; every recognized native descriptor is reported with its
+recognition/integration/build-support status rather than driven; `ave.toml` is read through a port
+in its overlay or standalone role.
 
-**2. Then T023** — open-workspace/discovery use cases: bounded scan over the workspace roots,
-default exclusions, nearest-ancestor association, descriptor status reporting, and `ave.toml`
-loading through a port.
+Boundaries for that pass: scan only the declared workspace roots with default exclusions
+(`.git`, `node_modules`, `target`, `build`, `dist`, `.venv`, `vendor`), associate files to the
+nearest project root, never modify a native descriptor, and never merge or shadow silently. The
+domain types in `src/domain/project/` already validate; T023 adds the use cases, the port, and the
+filesystem adapter — not a second model.
 
-T022 implementation is complete and green: `src/domain/project/{model,language,manifest,workspace}.rs`,
-40 tests passing, `cargo fmt` and `clippy -D warnings` clean. Do not rewrite the model without
-ratification; do not mark T022 complete without it either.
+**2026-11-25 — USER-CONFIRMED:** the seven model choices in `plan.md` §5 are ratified, closing T022.
+Recorded verbatim: (1) no separate `Module` entity — Workspace → Project → Build Target → Source
+Unit; (2) `ave.toml` `mode` is explicit and required (`overlay` | `standalone`); (3) standalone is
+allowed beside a recognized-but-unintegrated descriptor and rejected when it would shadow an
+integrated one; (4) three descriptor statuses, Recognized → Integrated → BuildCapable; (5) Rust/Go
+files are unknown extensions in Alpha, editable as plain text with no integration; (6) discovery
+bounds and exclusions are deferred to T023; (7) `.h` is ambiguous (`c` or `cpp`) and is never
+inherited from a sibling source.
 
 **2026-11-24 — USER-CONFIRMED:** "AveLoop is intended to be a general-purpose, multi-language
 IDE, not a C/C++-specific IDE." C and C++ are Alpha scope only; the architecture must admit
@@ -336,6 +344,8 @@ project sources, so a standalone project cannot declare a source that no target 
 | `src/domain/project/mod.rs`, `src/domain/mod.rs` | modified | Re-export the new domain surface | compiles |
 | `tests/manifest_tests.rs` | rewritten | Parse and project-assembly coverage | 17 passed |
 | `tests/project_model_tests.rs` | new | Registry, identity, validation, workspace coverage | 13 passed |
+| `specs/001-ave-loop-alpha/tasks.md` | modified | Mark T022 `[x]` after ratification | Verified |
+| `specs/001-ave-loop-alpha/complete.md` | modified | Regenerated from the three sources | Byte-identical to the concatenation rule |
 
 ## GitHub Activity
 
@@ -1411,6 +1421,13 @@ Entries H0001–H0099 record the project and review sessions. Entry timestamps a
   - Jobs all `success`: Linux x86_64, Windows x86_64, macOS arm64 — each running `cargo fmt --all -- --check`, `cargo clippy --lib --tests -- -D warnings`, `cargo build --lib --bin aveloop`, `cargo test --lib --tests`.
   - Pushed `b70d969..e915969` on `dev` → `origin/feat/gpui-kit-fast`; working tree keeps only the owner's `src/presentation/theme.rs` edit.
   - Remaining gate for T022: owner ratification of the seven AGENT-PROPOSED model choices in `plan.md` §5. On approval: mark T022 `[x]`, regenerate `complete.md`, sync Issue #22 by the `Spec Kit task` field, and close it.
+
+- [H0133] [2026-11-25] [TASK] T022 ratified, closed, and recorded.
+  - The owner ratified all seven model choices in `plan.md` §5 (recorded verbatim under User-Confirmed Decisions). This is the approval that AGENTS.md rule #4 required; the model is no longer AGENT-PROPOSED.
+  - `tasks.md` T022 marked `[x]`; `complete.md` regenerated from `spec.md` + `plan.md` + `tasks.md` with the documented rule (`"\n" + source + "\n\n"` per block) and verified to change exactly one line per file.
+  - Issue #22 retitled to the ratified task definition, its stale `manifest.rs at 591e09c` completion criterion replaced with the implemented requirement, its canonical task line set to `[x]`, an evidence comment posted (`#issuecomment-7166183202`), and the Issue closed.
+  - No source change in this pass: the implementation is `e915969`, already verified by CI run `45631891239`.
+  - Next action: T023 discovery. The model is frozen unless a new user decision supersedes it.
 
 ## Resume Instructions
 
