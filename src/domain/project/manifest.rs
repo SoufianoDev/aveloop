@@ -133,15 +133,7 @@ impl Manifest {
             .clone()
             .unwrap_or_else(|| default_project_name(&root));
 
-        let overrides: BTreeMap<String, LanguageId> = self
-            .languages
-            .iter()
-            .map(|(pattern, id)| {
-                LanguageId::new(id.clone())
-                    .map(|id| (pattern.clone(), id))
-                    .map_err(|error| ProjectError::InvalidLanguageId { id: error.value })
-            })
-            .collect::<Result<_, _>>()?;
+        let overrides = self.language_overrides()?;
 
         let targets: Vec<Target> = self
             .targets
@@ -186,6 +178,18 @@ impl Manifest {
         };
         project.validate(registry)?;
         Ok(project)
+    }
+
+    /// Explicit per-file language overrides, validated as language ids.
+    pub fn language_overrides(&self) -> Result<BTreeMap<String, LanguageId>, ProjectError> {
+        self.languages
+            .iter()
+            .map(|(pattern, id)| {
+                LanguageId::new(id.clone())
+                    .map(|id| (pattern.clone(), id))
+                    .map_err(|error| ProjectError::InvalidLanguageId { id: error.value })
+            })
+            .collect()
     }
 
     fn validate(&self) -> Result<(), ManifestError> {

@@ -4,33 +4,29 @@ Canonical continuity record for every agent working on this repository. Read thi
 
 ## Current State
 
-- **Last updated:** 2026-11-25 (T022 ratified and complete; Issue #22 closed; next is T023 discovery)
+- **Last updated:** 2026-11-25 (T023 discovery implemented locally and verified; pending commit, push, and three-OS CI)
 - **Repository:** `SoufianoDev/aveloop` (`https://github.com/SoufianoDev/aveloop.git`)
 - **Project root:** `/home/soufiano/SoufianoDev/AveLoop`
 - **Active branch:** `dev` tracking `origin/feat/gpui-kit-fast`.
-- **Last verified HEAD:** `e915969` (T022 implementation); CI run `45631891239` green on all three OSes.
+- **Last verified HEAD:** `729259a` (T022 ratification CI evidence); CI run `45640677386` green on all three OSes. The T023 implementation is not yet committed.
 - **`main` moved:** `origin/main` is `7953e08` (`Merge pull request #140`). It does not contain `589b7e2` or later. Integration into `main` is not authorized.
-- **Working tree:** owner edit in `src/presentation/theme.rs` (unstaged, leave alone) plus the uncommitted T022 implementation (`src/domain/project/*`, `tests/*_tests.rs`, this file).
-- **Active task:** T023 [US1] — open-workspace and create/open-project use cases over the now-ratified model. Not started.
-- **Current phase:** Phase 3 complete (T016–T022). T023 opens Phase 4, User Story 1.
-- **Overall status:** T001–T022 complete as work items; Issue #22 closed. Product CI is green on Linux x86_64, Windows x86_64, and macOS arm64.
-- **Current objective:** implement T023 discovery — bounded scan over workspace roots, default exclusions, nearest-ancestor association, descriptor status reporting, and `ave.toml` loading through a port. The domain model is in place; see **T022 Implementation** below.
+- **Working tree:** owner edit in `src/presentation/theme.rs` (unstaged, leave alone) plus the uncommitted T023 implementation (`src/application/`, `src/infrastructure/`, `src/lib.rs`, `src/domain/project/{model,manifest,workspace}.rs`, `tests/discovery*_tests.rs`, `specs/001-ave-loop-alpha/{tasks,complete}.md`, this file).
+- **Active task:** T024 [US1] — native GPUI workspace composition for the editor, visualization, inspector, transport, and output regions. Not started.
+- **Current phase:** Phase 4, User Story 1. T023 is implemented and locally verified; T024 is next.
+- **Overall status:** T001–T023 complete as work items; Issue #23 closed. Product CI is green on Linux x86_64, Windows x86_64, and macOS arm64 through `729259a`.
+- **Current objective:** T024 workspace composition over the T023 discovery result. See **T023 Implementation** below for the API the UI consumes.
 - **Budget separation (USER-CONFIRMED):** visualization budgets govern what is displayed and never delete, alter, or truncate recorded data or relabel a complete recording; recording budgets govern what is captured and retained, are resolved by a declared stop/pause/continue policy, identify the recorded interval and missing observations, and distinguish an intentional stop from an interrupted recording. Neither may be reported as the other. `spec.md` §6.6, FR-096–FR-099; `plan.md` §4.5, §4.7, §4.9 + the §4 flowchart; `tasks.md` T038, T047, T050, T072.
 - **Runtime-visualization architecture (USER-CONFIRMED):** now recorded in `spec.md` §1.3, §2.1 E, §2.2 items 14–15, §6.1, §6.5, US-06, FR-093–FR-098; `plan.md` §4 (observation → normalization → history → shared visualization engine); `tasks.md` T036/T037/T038/T044/T046/T047/T050 revised plus new T072. No engine code was written and no task was marked complete on documentation grounds.
 
 ## Immediate Next Action
 
-**T023 [US1] — implement open-workspace and create/open-project use cases.** Opening a workspace
-requires no manifest; discovery returns zero or more projects with deterministic association and
-reported conflicts; every recognized native descriptor is reported with its
-recognition/integration/build-support status rather than driven; `ave.toml` is read through a port
-in its overlay or standalone role.
+**T024 [US1] — implement native GPUI workspace composition.** Compose the editor, visualization,
+inspector, transport, and output regions in the native application over the discovery result that
+T023 now returns. No ratification gate applies; the model is frozen.
 
-Boundaries for that pass: scan only the declared workspace roots with default exclusions
-(`.git`, `node_modules`, `target`, `build`, `dist`, `.venv`, `vendor`), associate files to the
-nearest project root, never modify a native descriptor, and never merge or shadow silently. The
-domain types in `src/domain/project/` already validate; T023 adds the use cases, the port, and the
-filesystem adapter — not a second model.
+Boundaries for that pass: presentation only — consume `application::discovery::open_workspace`
+through the `ProjectSource` port, never call `std::fs` from the UI, never re-derive project
+association in the view layer, and keep `src/presentation/theme.rs` owner changes intact.
 
 **2026-11-25 — USER-CONFIRMED:** the seven model choices in `plan.md` §5 are ratified, closing T022.
 Recorded verbatim: (1) no separate `Module` entity — Workspace → Project → Build Target → Source
@@ -208,13 +204,14 @@ Verified this session: `f259ead` exists locally and on the remote, the tree is c
 | T017 complete | Live Windows debugger session with the detected pair: breakpoint at `probe.c:4`, three steps to line 7, `$1 = 42`, `$2 = {value = 7, pad = 0}`, `#0 main () at probe.c:7`, both streams, normal exit | `.github/workflows/t017-live-debugger.yml`; run 45305339035 |
 | T018 complete | Live macOS LLDB session: steps across lines 4→7, `(int) local_int = 42`, `(Child) (value = 7, pad = 0)`, `frame #0`, both streams, `Process exited with status = 0` | `.github/workflows/t017-live-debugger.yml`; run 45305339035 |
 | T019 complete | GPUI window opened and exited cleanly on `windows-2022` and `macos-latest` (`AVELOOP_PROBE_EXIT=1`, `t008_verify`) | `.github/workflows/t019-gpui-launch.yml`; run 45304616214 |
+| T023 complete | Application discovery use cases + `ProjectSource` port + `std::fs` adapter; 55 tests across 14 suites; `tasks.md` T023 checked; `complete.md` regenerated one line |
 | Verification scripts relocated | Probes moved from `src/bin/` to `verification/T0XX/`; four explicit `[[bin]]` targets; CI path filters and recorded paths updated | commit `0f2d6e4`; HANDOFF H0100 |
 
 ## Active and Pending Work
 
 - **Phase 2:** complete; gate met with residuals recorded in
   `docs/feasibility/t016-t019-gate-closure.md`.
-- **Phase 3:** not started; requires explicit authorization.
+- **Phase 3:** complete (T016–T022). **Phase 4:** in progress — T023 implemented, T024 next.
 - **Residual 1:** the MSVC + CDB inspection path is not verified end to end. CDB writes
   prompts and `dv`/`dx`/`k` output to the console buffer, which redirection on
   `windows-2022` does not capture, and the child's own output reached the captured file
@@ -289,6 +286,38 @@ Known model limits: `Token`-level inspection of native descriptors does not exis
 attachment is only ever `Recognized` in Alpha; `Manifest::project` unions target sources into
 project sources, so a standalone project cannot declare a source that no target owns.
 
+## T023 Implementation
+
+Landed 2026-11-25 in `src/application/` and `src/infrastructure/`:
+
+| File | Content |
+|---|---|
+| `src/application/ports.rs` | `ProjectSource` (canonicalize, entries, read_text), `DirEntry`, `EntryKind`, `SourceError` — the only filesystem-shaped API the use cases see |
+| `src/application/discovery.rs` | `open_workspace` / `open_workspace_with` / `open_project`, `Discovery`, `Problem`, `Incomplete`, `Bound`, `DiscoveryBounds`, `DiscoveryError`, `DEFAULT_EXCLUSIONS`; bounded scan, exclusions, nearest-ancestor association, descriptor statuses, conflict reporting |
+| `src/infrastructure/fs_source.rs` | `FileSystemSource` — read-only `std::fs` adapter; reports symlinks instead of following them |
+| `src/domain/project/model.rs` | `DescriptorKind::ALL` and `from_file_name` (single-sourced descriptor detection) |
+| `src/domain/project/workspace.rs` | `unassociated` files with `add_unassociated` / `unassociated()` |
+| `src/domain/project/manifest.rs` | `language_overrides()` extracted so discovery and `Manifest::project` resolve overrides identically |
+
+Discovery contract now enforced: no manifest is required and nothing is written; roots are
+canonicalized, deduplicated, and nested-collapsed; the default exclusion list plus user
+project-relative exclusions are never descended; a directory holding one or more descriptors is one
+project with one attachment per descriptor (`ave.toml` → Integrated in overlay mode / BuildCapable
+in standalone mode, native descriptors → Recognized only); a file belongs to the nearest enclosing
+project root; files with no enclosing project are workspace-unassociated; symlinks are skipped and
+reported; exceeding the depth or entry bound stops the scan and reports `Incomplete` instead of
+returning a silently truncated tree; a malformed `ave.toml`, an unreadable path, or an invalid
+project is reported without dropping the project; two projects claiming the same source are
+reported with both candidates.
+
+Verified locally: `cargo test --lib --tests` = 55 passed across 14 suites (was 40 across 12);
+`cargo fmt --all -- --check`; `cargo clippy --lib --tests -- -D warnings`;
+`cargo build --lib --bin aveloop`.
+
+Deliberately not implemented in T023: native target enumeration (native attachments stay
+`Recognized`), glob matching for `[languages]` overrides (exact paths only, `shortcut:` comment),
+build-command construction (T030), and any write path — discovery is read-only.
+
 ## Files Changed
 
 | Path | Change | Purpose | Verification |
@@ -346,6 +375,11 @@ project sources, so a standalone project cannot declare a source that no target 
 | `tests/project_model_tests.rs` | new | Registry, identity, validation, workspace coverage | 13 passed |
 | `specs/001-ave-loop-alpha/tasks.md` | modified | Mark T022 `[x]` after ratification | Verified |
 | `specs/001-ave-loop-alpha/complete.md` | modified | Regenerated from the three sources | Byte-identical to the concatenation rule |
+| `src/application/{mod,ports,discovery}.rs` | new | T023 use cases and the `ProjectSource` port | 16 discovery tests |
+| `src/infrastructure/{mod,fs_source}.rs` | new | Read-only `std::fs` adapter | Real-directory adapter test |
+| `tests/discovery_tests.rs`, `tests/discovery_fs_tests.rs` | new | In-memory fake source coverage plus adapter smoke test | 16 passed |
+| `src/domain/project/{model,workspace,manifest}.rs`, `src/lib.rs` | modified | Descriptor lookup, workspace unassociated files, shared overrides, module wiring | `cargo test --lib --tests` = 55 |
+| `specs/001-ave-loop-alpha/tasks.md` | modified | Mark T023 `[x]` | Verified |
 
 ## GitHub Activity
 
@@ -380,8 +414,8 @@ project sources, so a standalone project cannot declare a source that no target 
 | #85 / #109 | T050 canonical / duplicate | OPEN | Canonical scope and criteria updated twice (budget independence); #109 linked by comment only |
 | #141 | Canonical T072 | OPEN | Created 2026-11-24; criteria refined 2026-11-25 for independent budget policies |
 | #118 / #133 | T066 canonical / duplicate | OPEN | #133 marked superseded, not closed |
-| #22 | Canonical T022 | OPEN | Scope and criteria rewritten 2026-11-25 for the multi-project/mixed-language model; superseded language-identifier bullet replaced; task line MATCH |
-| #23 | Canonical T023 | OPEN | Scope/criteria updated: deterministic discovery, descriptor statuses, unassociated files |
+| #22 | Canonical T022 | CLOSED | Scope and criteria rewritten for the multi-project/mixed-language model; evidence comment; closed after ratification |
+| #23 | Canonical T023 | CLOSED | Deterministic discovery, descriptor statuses, unassociated files; canonical task line set to `[x]`; evidence comment |
 | #28 | Canonical T028 | OPEN | Criteria extended: multi-project workspace and mixed-language project verification |
 | #30 | Canonical T030 | OPEN | Scope moved from project configuration to the resolved build target; task line MATCH |
 | #75 / #93 / #129 / #134 / #79 | Earlier reconciliations | — | Unchanged this session |
@@ -493,6 +527,12 @@ URLs: `https://github.com/SoufianoDev/aveloop/issues/<n>`.
 | T015 matrix correction | PASS — T005–T007/T008/T010/T011 rows now state COMPILE / NOT EXECUTED / PARTIAL / FORMAT ONLY; CI workflow inspected to confirm what actually ran | H0099 |
 | T015 `complete.md` regeneration | PASS — all three marker blocks equal to their sources | H0099 |
 | Issue #15 evidence comment | PASS — comment posted; issue remains OPEN | H0099 |
+| T023 discovery tests | PASS — `cargo test --lib --tests` = 55 passed across 14 suites (was 40 across 12) | H0135 |
+| T023 formatting and lint | PASS — `cargo fmt --all -- --check`; `cargo clippy --lib --tests -- -D warnings` | H0135 |
+| T023 build | PASS — `cargo build --lib --bin aveloop` | H0135 |
+| T023 `complete.md` regeneration | PASS — the documented rule reproduces the file exactly; one-line diff (T023 checkbox) | H0135 |
+| Issue #23 sync | PASS — canonical task line set to `[x]`, evidence comment posted, Issue closed | H0135 |
+| Disk headroom during T023 | PASS — 14 GB free before the build, 12 GB after; no cleanup needed | H0135 |
 
 ## Failed Attempts
 
@@ -1432,6 +1472,16 @@ Entries H0001–H0099 record the project and review sessions. Entry timestamps a
 - [H0134] [2026-11-25] [CI] Ratification commit verified on three operating systems.
   - Run `45640677386`, head `e346e05`, conclusion `success`; jobs `success` on Linux x86_64, Windows x86_64, and macOS arm64.
   - Maintenance observation (UNVERIFIED, no action taken): the run logs warn that `actions/checkout@v4` targets Node.js 20 and is forced onto Node.js 24. Pinning a newer checkout major is optional housekeeping, not a task in `tasks.md`.
+
+- [H0135] [2026-11-25] [CODE] T023 discovery use cases, port, and adapter.
+  - Authorization: the owner's instruction "next + (monitor or follow space availability)" authorized the reported next action (T023) and asked for disk headroom to be watched. No new model decision was made; the ratified T022 model is unchanged.
+  - Delivered: `src/application/ports.rs` (`ProjectSource`, `DirEntry`, `EntryKind`, `SourceError`), `src/application/discovery.rs` (`open_workspace`, `open_workspace_with`, `open_project`, `Discovery`, `Problem`, `Incomplete`, `Bound`, `DiscoveryBounds`, `DiscoveryError`, `DEFAULT_EXCLUSIONS`), `src/infrastructure/fs_source.rs` (`FileSystemSource`), `src/lib.rs` module wiring, `DescriptorKind::ALL`/`from_file_name`, `Workspace::unassociated`/`add_unassociated`, `Manifest::language_overrides` extracted and reused.
+  - Contract behaviours now enforced: opening requires no manifest and writes nothing; roots are canonicalized, deduplicated, and nested-collapsed; the 11 default exclusions plus user project-relative exclusions are never descended; a directory with one or more descriptors is one project with one attachment per descriptor (`ave.toml` Integrated/BuildCapable by mode, native Recognized only); files belong to the nearest enclosing project root, and files with no enclosing project are workspace-unassociated; symlinks are skipped and reported; exceeding the depth or entry bound stops the scan and reports `Incomplete` (never a silently truncated tree); malformed `ave.toml`, unreadable paths, and invalid projects are reported without dropping the project; two projects claiming the same source are reported with both candidates.
+  - Verification: `cargo test --lib --tests` = 55 passed across 14 suites (was 40 across 12); `cargo fmt --all -- --check`; `cargo clippy --lib --tests -- -D warnings`; `cargo build --lib --bin aveloop`. The architecture test still passes: `domain` imports no UI, debugger, filesystem, or process API; `std::fs` appears only in `src/infrastructure/`.
+  - `tasks.md` T023 marked `[x]`; `complete.md` regenerated with the documented rule and verified to change exactly one line. Issue #23's scope, prerequisites, and completion criteria already matched the task, so only the canonical task line was set to `[x]`, an evidence comment was posted, and the Issue was closed.
+  - Not done on purpose: no native target enumeration (native attachments stay `Recognized`), no glob matching for `[languages]` overrides (exact paths, `shortcut:` comment), no build-command construction (T030), no write path, no Rust/Go implementation, no dependency or CI change, no push to `main`, no PR.
+  - Disk: 14 GB free before the build, 12 GB after (95% used); no cleanup performed. `AveLoop/target` still holds the compiled dependency set, so subsequent builds reuse it.
+  - Next action: T024 native GPUI workspace composition over the T023 discovery result.
 
 ## Resume Instructions
 

@@ -19,6 +19,19 @@ pub enum DescriptorKind {
 }
 
 impl DescriptorKind {
+    pub const ALL: [Self; 6] = [
+        Self::AveToml,
+        Self::CMakeLists,
+        Self::Makefile,
+        Self::CompileCommands,
+        Self::CargoManifest,
+        Self::GoModule,
+    ];
+
+    pub fn from_file_name(name: &str) -> Option<Self> {
+        Self::ALL.into_iter().find(|kind| kind.file_name() == name)
+    }
+
     pub fn file_name(&self) -> &'static str {
         match self {
             Self::AveToml => "ave.toml",

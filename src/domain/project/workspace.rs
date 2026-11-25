@@ -10,6 +10,7 @@ pub struct Workspace {
     roots: Vec<PathBuf>,
     exclusions: Vec<PathBuf>,
     projects: Vec<Project>,
+    unassociated: Vec<PathBuf>,
 }
 
 impl Workspace {
@@ -64,6 +65,7 @@ impl Workspace {
             roots: collapsed,
             exclusions,
             projects: Vec::new(),
+            unassociated: Vec::new(),
         })
     }
 
@@ -77,6 +79,15 @@ impl Workspace {
 
     pub fn projects(&self) -> &[Project] {
         &self.projects
+    }
+
+    /// Files that belong to no project: editable, never attached to a nearby project.
+    pub fn unassociated(&self) -> &[PathBuf] {
+        &self.unassociated
+    }
+
+    pub fn add_unassociated(&mut self, path: PathBuf) {
+        self.unassociated.push(path);
     }
 
     pub fn add_project(&mut self, project: Project) -> Result<(), WorkspaceError> {
