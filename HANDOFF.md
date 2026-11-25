@@ -4,28 +4,34 @@ Canonical continuity record for every agent working on this repository. Read thi
 
 ## Current State
 
-- **Last updated:** 2026-11-25 (T022 model revision: mixed-language projects, multi-project workspaces, per-source language identity)
+- **Last updated:** 2026-11-25 (T022 implementation: workspace/project/target/source model and two-role `ave.toml` contract landed, pending model ratification)
 - **Repository:** `SoufianoDev/aveloop` (`https://github.com/SoufianoDev/aveloop.git`)
 - **Project root:** `/home/soufiano/SoufianoDev/AveLoop`
 - **Active branch:** `dev` tracking `origin/feat/gpui-kit-fast`.
-- **Last verified HEAD:** `3ef98e9` (budget-separation document set); verify again before acting.
+- **Last verified HEAD:** `b70d969` (T022 model revision + evidence); verify again before acting.
 - **`main` moved:** `origin/main` is `7953e08` (`Merge pull request #140`). It does not contain `589b7e2` or later. Integration into `main` is not authorized.
-- **Working tree:** owner edit in `src/presentation/theme.rs` (unstaged, leave alone) plus uncommitted runtime-visualization edits to `spec.md`, `plan.md`, `tasks.md`, `complete.md`, and this file.
-- **Active task:** T022 reopened under the revised workspace/project/build-target/source-language + two-role `ave.toml` contract. The committed `src/domain/project/manifest.rs` (`591e09c`) encodes one project-wide language, one entry source, and overlay-only `ave.toml`; it must be revised before T022 can complete.
+- **Working tree:** owner edit in `src/presentation/theme.rs` (unstaged, leave alone) plus the uncommitted T022 implementation (`src/domain/project/*`, `tests/*_tests.rs`, this file).
+- **Active task:** T022 — implemented to the revised contract and green locally; the checkbox stays open until the owner ratifies the AGENT-PROPOSED model choices listed in `plan.md` §5.
 - **Current phase:** Phase 3 code is green (T016–T021 complete); T022 is open again because its definition changed.
-- **Overall status:** T001–T021 complete as work items. T022's earlier completion is `SUPERSEDED` by the architecture review. Product CI is green on Linux x86_64, Windows x86_64, and macOS arm64.
-- **Current objective:** revise the project model to workspace → projects → targets → sources, with per-source language identity and two-role `ave.toml`. Implementation is intentionally not started; see **T022 Implementation Impact** below.
+- **Overall status:** T001–T021 complete as work items. T022 implemented and tested; its checkbox and Issue remain open pending ratification. Product CI is green on Linux x86_64, Windows x86_64, and macOS arm64.
+- **Current objective:** ratify the model choices, then close T022 and start T023 (discovery and open-workspace use cases). The domain model itself is in place; see **T022 Implementation** below.
 - **Budget separation (USER-CONFIRMED):** visualization budgets govern what is displayed and never delete, alter, or truncate recorded data or relabel a complete recording; recording budgets govern what is captured and retained, are resolved by a declared stop/pause/continue policy, identify the recorded interval and missing observations, and distinguish an intentional stop from an interrupted recording. Neither may be reported as the other. `spec.md` §6.6, FR-096–FR-099; `plan.md` §4.5, §4.7, §4.9 + the §4 flowchart; `tasks.md` T038, T047, T050, T072.
 - **Runtime-visualization architecture (USER-CONFIRMED):** now recorded in `spec.md` §1.3, §2.1 E, §2.2 items 14–15, §6.1, §6.5, US-06, FR-093–FR-098; `plan.md` §4 (observation → normalization → history → shared visualization engine); `tasks.md` T036/T037/T038/T044/T046/T047/T050 revised plus new T072. No engine code was written and no task was marked complete on documentation grounds.
 
 ## Immediate Next Action
 
-**Next task: T022 (redefined) — revise the workspace/project model and the optional `ave.toml`
-overlay contract.** The runtime-visualization documentation pass is finished and committed; it did
-not start T022 and did not implement any visualization code. Replace the closed `Language` enum and the "manifest is the project
-definition" framing in `src/domain/project/manifest.rs`, add the workspace/project descriptor
-model from `plan.md` §5, validate, mark `tasks.md`, regenerate `complete.md`, and synchronize
-canonical Issue #22 (AGENTS.md rule #12).
+**1. Ratify the AGENT-PROPOSED model choices** in `plan.md` §5 (no `Module` entity; explicit
+`ave.toml` `mode`; standalone allowed beside a recognized-but-unintegrated descriptor; the three
+descriptor statuses; Rust/Go files as unknown extensions in Alpha; discovery bounds deferred;
+`.h` ambiguous rather than inherited). Approving them is what closes T022.
+
+**2. Then T023** — open-workspace/discovery use cases: bounded scan over the workspace roots,
+default exclusions, nearest-ancestor association, descriptor status reporting, and `ave.toml`
+loading through a port.
+
+T022 implementation is complete and green: `src/domain/project/{model,language,manifest,workspace}.rs`,
+40 tests passing, `cargo fmt` and `clippy -D warnings` clean. Do not rewrite the model without
+ratification; do not mark T022 complete without it either.
 
 **2026-11-24 — USER-CONFIRMED:** "AveLoop is intended to be a general-purpose, multi-language
 IDE, not a C/C++-specific IDE." C and C++ are Alpha scope only; the architecture must admit
@@ -231,7 +237,12 @@ AGENT-PROPOSED inventory of the committed implementation that contradicts the re
 | `validate_paths` | validate project-level fields and each target's fields |
 | `src/domain/project/mod.rs` re-exports `Language, Manifest, ManifestError, SUPPORTED_FORMAT_VERSION` | re-export `LanguageId` and the new types; `Language` removed |
 
-New domain types: `Workspace`, `Project`, `ProjectRoot`, `DescriptorAttachment`, `DescriptorKind`, `DescriptorStatus` (Recognized/Integrated/Build-capable/Unavailable), `Target`, `TargetKind`, `SourceUnit`, `LanguageId`, `LanguageCapability`.
+Executed 2026-11-25. Two corrections against the original inventory: `DescriptorStatus` has three
+states (`Recognized`, `Integrated`, `BuildCapable`) — a fourth `Unavailable` state was an error in
+this list, since a recognized descriptor is never unavailable; and the aggregate types live in
+`src/domain/project/model.rs`, not `project.rs`, to avoid `clippy::module_inception`.
+
+New domain types: `Workspace`, `Project`, `DescriptorAttachment`, `DescriptorKind`, `DescriptorStatus` (Recognized/Integrated/BuildCapable), `Target`, `TargetKind`, `SourceUnit`, `LanguageId`, `LanguageIdentity`, `LanguageCapabilities`, `LanguageIntegration`, `LanguageRegistry`.
 
 Consumers: none outside `src/domain/project/mod.rs` and `tests/manifest_tests.rs` (verified by grep), so the application and infrastructure layers are not yet coupled to the old shape.
 
@@ -246,6 +257,29 @@ Consumers: none outside `src/domain/project/mod.rs` and `tests/manifest_tests.rs
 - Add: per-source language override, overlay-mode `[[target]]` rejection, standalone mode rejected when it would shadow an integrated native descriptor, deterministic multi-project discovery.
 
 No `Cargo.toml`, dependency, or CI change is implied by the model revision.
+
+## T022 Implementation
+
+Landed 2026-11-25 in `src/domain/project/`:
+
+| File | Content |
+|---|---|
+| `model.rs` | `Project`, `Target`, `TargetKind`, `SourceUnit`, `DescriptorKind`, `DescriptorStatus`, `DescriptorAttachment`, `ProjectError`; validation and derived queries (`target_languages`, `targets_for_source`) |
+| `language.rs` | `LanguageId` (validated, extensible), `LanguageIdentity` (Explicit/Registered/Ambiguous/Unknown), `LanguageCapabilities` (12 independent statuses), `LanguageIntegration`, `LanguageRegistry` with the Alpha registration and `.h` ambiguity |
+| `manifest.rs` | `Manifest`, `ConfigMode` (Overlay/Standalone), `ManifestTarget`, `ManifestError`; parsing, path rules, unknown-key and project-level-`language` rejection, and the file → `Project` bridge |
+| `workspace.rs` | `Workspace` (absolute roots, deduplicated and nested-collapsed, relative non-escaping exclusions, `add_project`, nearest-ancestor `project_for`), `WorkspaceError` |
+
+Verified locally: `cargo build --lib --bin aveloop`; `cargo test --lib --tests` = 40 passed across
+12 suites (previous total 17); `cargo fmt --all -- --check`; `cargo clippy --lib --tests -- -D warnings`.
+
+Deliberately not implemented in T022: directory scanning, descriptor detection in the filesystem,
+glob matching for `[languages]` overrides (exact paths only, marked with a `shortcut:` comment),
+target enumeration from native descriptors, compiler command construction (T030), and
+workspace-level unassociated files (a discovery outcome in T023).
+
+Known model limits: `Token`-level inspection of native descriptors does not exist, so a native
+attachment is only ever `Recognized` in Alpha; `Manifest::project` unions target sources into
+project sources, so a standalone project cannot declare a source that no target owns.
 
 ## Files Changed
 
@@ -295,6 +329,13 @@ No `Cargo.toml`, dependency, or CI change is implied by the model revision.
 | `specs/001-ave-loop-alpha/tasks.md` | modified | Mark T016–T019 `[x]` | Committed `617d49e` |
 | `.planning/2026-11-22-aveloop-continuity-t001-kickoff/*` | untracked, ignored | Local planning files | Not tracked by design |
 | `specs/001-ave-loop-alpha/{spec,plan,tasks,complete}.md` | committed in `f259ead` | Authoritative Alpha baseline | Verified clean |
+| `src/domain/project/model.rs` | new | Project/Target/SourceUnit/descriptor model and validation | 40 tests green; clippy clean |
+| `src/domain/project/language.rs` | new | Extensible language ids, identity resolution, capability registry | Alpha matrix test |
+| `src/domain/project/workspace.rs` | new | Workspace roots, exclusions, nearest-ancestor association | 5 workspace tests |
+| `src/domain/project/manifest.rs` | rewritten | Two-role `ave.toml` contract, path/unknown-key validation | 17 manifest tests |
+| `src/domain/project/mod.rs`, `src/domain/mod.rs` | modified | Re-export the new domain surface | compiles |
+| `tests/manifest_tests.rs` | rewritten | Parse and project-assembly coverage | 17 passed |
+| `tests/project_model_tests.rs` | new | Registry, identity, validation, workspace coverage | 13 passed |
 
 ## GitHub Activity
 
@@ -1347,6 +1388,16 @@ Entries H0001–H0099 record the project and review sessions. Entry timestamps a
   - Evidence: CI run `45622830662` (head `45024a7`) — Linux x86_64, Windows x86_64, and macOS arm64 all `success`
   - Validation: `git diff --check` clean; `complete.md` regenerated and byte-identical to the three-source concatenation; `git status --short` shows only the owner's `src/presentation/theme.rs`; no Rust source changed, so no local test run was required for this pass
   - Next action unchanged: T022 implementation start from the revised contract.
+
+- [H0130] [2026-11-25] [CODE] T022 implementation: workspace/project/build-target/source model and two-role `ave.toml`.
+  - Session: OpenCode session (AI agent: opencode), branch `dev` → `origin/feat/gpui-kit-fast`, HEAD `b70d969` before this pass
+  - Authorization: the user's single-word instruction "next" authorized the reported next action (T022 implementation). It does not ratify the AGENT-PROPOSED model choices; T022's checkbox and Issue #22 stay open until it does.
+  - Delivered: `src/domain/project/model.rs` (Project, Target, TargetKind, SourceUnit, DescriptorKind, DescriptorStatus, DescriptorAttachment, ProjectError), `language.rs` (LanguageId, LanguageIdentity, LanguageCapabilities with 12 independent statuses, LanguageIntegration, LanguageRegistry with the Alpha registration and `.h` ambiguity), `manifest.rs` (Manifest, ConfigMode, ManifestTarget, parsing + path rules + unknown-key and project-level-`language` rejection + file→Project bridge), `workspace.rs` (absolute roots, dedupe + nested collapse, exclusions, add_project, nearest-ancestor project_for).
+  - Contract behaviours now enforced: no project-wide language key; overlay mode cannot define targets; standalone is rejected when it would shadow an integrated native descriptor and allowed over recognized-only ones; per-source identity precedence explicit > registered extension > ambiguous > unknown; target language participation derived from membership; ambiguous `.h` resolved only by a target hint; duplicate target names, unknown sources, unknown/self dependencies, unregistered language ids and unknown selected targets rejected with actionable messages.
+  - Verification: `cargo build --lib --bin aveloop`; `cargo test --lib --tests` = 40 passed across 12 suites (was 17); `cargo fmt --all -- --check`; `cargo clippy --lib --tests -- -D warnings`. Architecture test still passes, so `domain` imports no UI, debugger, filesystem, or process API.
+  - Discrepancy corrected (rule 5): the inventory in H0129 promised `DescriptorStatus` with an `Unavailable` variant; the plan's own table has three statuses, so the third-state reading was implemented and the list corrected. `project.rs` was renamed to `model.rs` because `clippy::module_inception` rejects `project::project`.
+  - Not done on purpose: no directory scanning or descriptor detection (T023), no glob matching for overrides (exact paths only, `shortcut:` comment), no native target enumeration, no compiler command construction (T030), no task checked, no Issue body change (tasks.md unchanged this pass), no source outside `src/domain/project/` and the two test files.
+  - Environment note: the host root filesystem reached 949 MB free during the build and recovered to 1.6 GB; `target/` is 27 GB. No cleanup was performed.
 
 ## Resume Instructions
 
