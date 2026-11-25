@@ -142,9 +142,9 @@ fn associates_files_with_the_nearest_project_root() {
         project
             .sources
             .iter()
-            .map(|unit| unit.path.to_string_lossy().into_owned())
+            .map(|unit| unit.path.clone())
             .collect::<Vec<_>>(),
-        ["README.md", "src/main.c"]
+        [PathBuf::from("README.md"), PathBuf::from("src/main.c")]
     );
     assert!(project.target("app").is_some());
     assert_eq!(discovery.workspace.unassociated(), [p("/ws/loose.c")]);

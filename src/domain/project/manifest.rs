@@ -148,7 +148,7 @@ impl Manifest {
                     continue;
                 }
                 // shortcut: overrides match exact paths only; glob patterns arrive with discovery.
-                let explicit = overrides.get(&path.to_string_lossy().to_string()).cloned();
+                let explicit = overrides.get(path).cloned();
                 let language = LanguageIdentity::determine(path, explicit, registry);
                 sources.push(SourceUnit {
                     path: path.clone(),
@@ -180,13 +180,14 @@ impl Manifest {
         Ok(project)
     }
 
-    /// Explicit per-file language overrides, validated as language ids.
-    pub fn language_overrides(&self) -> Result<BTreeMap<String, LanguageId>, ProjectError> {
+    /// Explicit per-file language overrides, validated as language ids and keyed by path so
+    /// lookup is separator-insensitive across platforms.
+    pub fn language_overrides(&self) -> Result<BTreeMap<PathBuf, LanguageId>, ProjectError> {
         self.languages
             .iter()
-            .map(|(pattern, id)| {
+            .map(|(path, id)| {
                 LanguageId::new(id.clone())
-                    .map(|id| (pattern.clone(), id))
+                    .map(|id| (PathBuf::from(path), id))
                     .map_err(|error| ProjectError::InvalidLanguageId { id: error.value })
             })
             .collect()

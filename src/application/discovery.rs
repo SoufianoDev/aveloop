@@ -285,9 +285,7 @@ fn build_project(
                 .unwrap_or(path)
                 .to_path_buf();
             // shortcut: overrides match exact project-relative paths; globs follow later.
-            let explicit = overrides
-                .get(&relative.to_string_lossy().to_string())
-                .cloned();
+            let explicit = overrides.get(&relative).cloned();
             let language = LanguageIdentity::determine(&relative, explicit, registry);
             SourceUnit {
                 path: relative,
