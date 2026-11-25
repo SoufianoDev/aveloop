@@ -71,6 +71,8 @@ AveLoop is not a general-purpose visual programming language, cloud IDE, or repl
 
 Workspace management, language integration, build-system handling, and debugger backends are separate, extensible responsibilities. Alpha implements only C17 and C++20; adding another language must not require redesigning the workspace, project, or project-configuration model.
 
+Runtime execution visualization is AveLoop's central product capability. AveLoop makes actual program execution — progression, stack frames, variables, objects, pointers, references, and memory relationships — observable and navigable. It serves both teaching-scale examples and real, complex programs from one normalized runtime-observation model: small, controlled sessions may present detailed step-oriented views, while large sessions use scoped, selective, expandable views. The same observation, history, and normalization model feeds both; there is no separate educational engine. Accuracy outranks visual completeness: no visualization may present an inference as an observation.
+
 ## 1.4 Intended users
 
 1. Learners who need to understand how source statements affect runtime state.
@@ -144,6 +146,10 @@ The Alpha is successful only if this workflow works on Linux, Windows, and macOS
 - Interior pointer offsets when both pointer and target range can be established.
 - Aliasing when multiple inspected references resolve to the same observed target.
 - Observable memory objects reachable from inspected variables.
+- Expandable pointer/object relationship graph with verified nodes, edges, and directional arrows.
+- Scope selection for visualization: selected frame, function, thread, variable, pointer, object, memory region, or execution event.
+- On-demand expansion of related objects, with branch collapse and cancellation of stale expansion requests.
+- Explicit coverage and budget disclosure for any visualization that is scoped, filtered, or truncated.
 - Explicit unavailable/optimized-out/unknown states.
 
 ### F. Trace and event inspection
@@ -184,6 +190,8 @@ These are deliberate scope boundaries, not unfinished promises:
 11. **No remote/cloud execution, collaboration, plugin marketplace, AI features, or integrated Git hosting.**
 12. **No hardened security sandbox claim.** Alpha launches local programs with the user's OS permissions. It applies explicit launch consent, working-directory controls, timeout/cancellation, and process-tree termination where supported, but it is not a security boundary against hostile code.
 13. **No bundled or automatically installed toolchain.** AveLoop neither bundles nor downloads a compiler, debugger, or LLVM distribution. Missing components are reported with official installation guidance; the user performs any installation.
+14. **No artificial small-program ceiling.** Recording limits exist and are configurable, accounted, and reported, but no fixed step count or program size defines the product. A large program that cannot be wholly visualized at once remains fully debuggable through scoped visualization.
+15. **No claim of a complete relationship graph.** Any node/edge set is a view over observed, derived, or explicitly labelled inferred relationships, not a claim that all process memory has been discovered.
 
 ## 2.3 Out of scope
 
@@ -303,6 +311,10 @@ A user inspects stack frames, variables, aggregates, pointers, and observable me
 - Frame, variable, and object identities are stable within the session where possible.
 - Null, unavailable, optimized-out, unresolved, and known values are distinguishable.
 - Pointer links are rendered only when a target can be resolved.
+- References, aliases, and interior offsets are labelled by provenance class; inferred relationships are never shown as verified.
+- Scoping the view to a frame, function, object, or memory region changes what is displayed, not what was recorded.
+- Expanding a graph node retrieves additional state on demand and a stale request cannot overwrite a newer selection.
+- A scoped or truncated view is visibly distinct from an incomplete recording.
 - Heap visualizations explicitly state that they are debugger-observable/reachable objects, not a complete process heap.
 
 ## US-07 — Inspect trace and output
@@ -411,6 +423,12 @@ Priority: **P0** = Alpha critical; **P1** = Alpha usability requirement; **P2** 
 | FR-090 | The application shall not label an unresolved pointer as dangling without evidence of target lifetime termination. | P0 |
 | FR-091 | The application shall distinguish known, null, uninitialized, unavailable, optimized-out, invalid, unresolved, and unknown states where the backend provides that distinction. | P0 |
 | FR-092 | The UI shall disclose backend capability/coverage limitations. | P0 |
+| FR-093 | The application shall let the user scope runtime visualization to a selected frame, function, thread, variable, pointer, object, memory region, or execution event. | P0 |
+| FR-094 | The application shall render relationships as an expandable graph with verified nodes and directional edges, retrieving additional state on demand and cancelling stale expansion requests. | P0 |
+| FR-095 | Detailed and scoped visualization shall consume the same normalized observation and history model; no separate visualization engine shall exist for small programs. | P0 |
+| FR-096 | A scoped, filtered, or truncated visualization shall be visually distinguishable from an incomplete recording, and its coverage or budget shall be disclosed. | P0 |
+| FR-097 | Runtime recording shall impose no fixed small-program step ceiling; recording limits shall be configurable, accounted, and reported, and a partial recording shall be labelled as partial. | P0 |
+| FR-098 | Each language integration shall declare which runtime concepts it can observe, and concepts it cannot observe shall be reported as unavailable rather than inferred. | P0 |
 
 ## 5.6 Navigation and visualization
 
@@ -461,6 +479,15 @@ The specification defines concepts and invariants, not final Rust struct names.
 
 A debugger observation is not automatically a complete memory snapshot. A trace event is not automatically a new state. A derived event must retain provenance to the observations from which it was derived.
 
+Every runtime datum carries one provenance class:
+- **Observed** — returned by the backend for the recorded stop.
+- **Derived** — computed from observations by a deterministic, documented rule.
+- **Inferred** — produced by a heuristic; labelled inferred in the UI and never presented as a verified relationship.
+- **Unavailable** — the backend or the debug information does not provide it.
+- **Unreconstructable** — it existed at runtime but cannot be recovered from the recording.
+
+Derived or inferred data must never overwrite or masquerade as observed data.
+
 ## 6.2 Identity and lifetime
 
 - Session IDs are unique per debug session.
@@ -505,6 +532,14 @@ It must not claim complete visibility into:
 - Memory not reachable/inspectable through the debugger.
 - Object lifetime events not observed by the capture mechanism.
 - C++ object lifetime details erased by optimization or unavailable debug information.
+
+## 6.5 Language observation adapters
+
+Runtime observation is language-specific even when the normalized model is shared. Each language integration supplies an observation adapter that declares which concepts it can observe reliably: frames, locals, aggregates, arrays, pointers, references, object identity, allocation/deallocation events, and thread relationships.
+
+- A concept the adapter cannot observe is reported as unavailable for that language/backend combination; it is not rendered as empty, inferred, or silently omitted.
+- Universal assumptions about pointers, object identity, or lifetimes are not allowed to override language semantics.
+- Alpha declares adapter capabilities for C17 and C++20 only. Rust (ownership, borrowing, slices) and Go (slices, maps, interfaces, goroutines, channels) require new adapters and are post-Alpha.
 
 ---
 
@@ -1110,58 +1145,159 @@ Dependency-level details (exact Cargo features, version pins, Rust MSRV) live in
 
 ---
 
-## 4. Execution architecture
+## 4. Runtime observation and visualization architecture
+
+One pipeline serves both small, controlled sessions and large real programs. The difference between the two experiences is visualization scope and detail, not a second execution or rendering engine.
+
+```mermaid
+flowchart TB
+    PROGRAM["Running program<br/>C17 / C++20 in Alpha"]
+    BACKEND["Debugger backends<br/>GDB DAP or GDB/MI, lldb-dap, Windows backend"]
+    ADAPTER["Language observation adapters<br/>declare observable concepts"]
+    NORMALIZER["Normalized runtime state<br/>session, process, thread, event, location, frame,<br/>variable, type, value, address, region, object identity,<br/>pointer and reference relations"]
+    HISTORY["Execution history<br/>stop records, snapshots, checkpoints, diffs, provenance"]
+    ENGINE["Shared visualization engine"]
+    ROUTER{"Visualization scope and available data"}
+    GUIDED["Guided / detailed view<br/>step-oriented, small controlled sessions"]
+    SCOPED["Scoped / selective view<br/>frame, function, thread, object, pointer, region, event"]
+    GRAPH["Visual memory and relationship graph<br/>nodes, pointers, references, directional arrows, expandable"]
+    INSPECTOR["Stack / heap / variable inspector"]
+    NAV["Execution timeline<br/>previous and next recorded states"]
+
+    PROGRAM --> BACKEND
+    BACKEND --> NORMALIZER
+    BACKEND --> ADAPTER
+    ADAPTER --> NORMALIZER
+    NORMALIZER --> HISTORY
+    HISTORY --> ENGINE
+    ENGINE --> ROUTER
+    ROUTER -->|"small scope, manageable state"| GUIDED
+    ROUTER -->|"large scope or complex state"| SCOPED
+    GUIDED --> GRAPH
+    GUIDED --> INSPECTOR
+    SCOPED --> GRAPH
+    SCOPED --> INSPECTOR
+    GRAPH --> NAV
+    INSPECTOR --> NAV
+```
+
+This is a conceptual data-flow diagram, not a module or directory tree.
 
 ### 4.1 Responsibilities
 
-1. **Toolchain discovery:** locate the platform C/C++ compiler, the matching debugger adapter, linker, and platform prerequisites; report versions and capabilities.
+1. **Toolchain discovery:** locate the platform compiler, matching debugger adapter, linker, and prerequisites; report versions and capabilities.
 2. **Build adapter:** produce a deterministic debug build from project configuration and source revision.
-3. **Debug session adapter:** launch/attach the process through the selected debugger backend (GDB DAP or GDB/MI on Linux, `lldb-dap` on macOS, the compiler-matched debugger on Windows), negotiate capabilities, send step/continue/terminate requests, and parse protocol responses.
-4. **Capture coordinator:** convert debugger stops and output into ordered raw observations.
-5. **Trace store:** persist bounded session data and source/build provenance.
-6. **State resolver:** reconstruct a deterministic selected state from recorded observations/checkpoints.
-7. **Runtime normalizer:** map debugger-specific values into language-neutral domain values while preserving language/capability metadata.
-8. **Presentation:** render the resolved state without making debugger requests directly from panels.
+3. **Debug session adapter:** launch/attach through the selected backend, negotiate capabilities, send step/continue/terminate requests, and parse protocol responses. DAP and GDB/MI structures stay inside infrastructure.
+4. **Language observation adapter:** translate backend responses into language-meaningful observations and declare which concepts the language/backend pair can observe.
+5. **Normalizer:** map observations into the normalized runtime-state model while preserving provenance and language/capability metadata.
+6. **History store:** persist ordered stops, snapshots, checkpoints, diffs, and source/build/session provenance within recorded budgets.
+7. **Visualization engine:** build view models from normalized state, route scope, schedule lazy expansion, and publish immutable state to panels.
+8. **Presentation:** render the resolved state. Panels never query the debugger directly and never read backend protocol types.
 
-### 4.2 Capture granularity
+### 4.2 Observation layer
 
-Alpha uses source-level debugger stops. A stop record captures:
-- Session ID and monotonically ordered stop ID.
+Alpha records source-level debugger stops. Backend interfaces are capability-based, not assumed uniform: each backend reports which of frames, scopes, variables, memory reads, registers, threads, module/source mapping, function entry/exit, and reverse execution it supports for the current session.
+
+No capability is inferred from the backend's name or version. A capability that is absent is reported as unavailable, not emulated with guesses.
+
+### 4.3 Normalized runtime state
+
+The normalizer represents, where observed:
+
+- Execution session, process, thread, execution event, and source location.
+- Stack frame, variable, type information, and runtime value.
+- Memory address and memory region.
+- Object identity, established only under documented session rules.
+- Pointer relationship, reference relationship, and alias relationship.
+- Allocation and deallocation events, only when observed.
+
+The model is language-neutral in shape and language-aware in meaning. It contains no GPUI, DAP, GDB/MI, or filesystem types. Unknown, unavailable, and unsupported are distinct states, not empty values.
+
+### 4.4 Provenance classes
+
+Every datum and every relationship carries one class:
+
+| Class | Meaning | Rendering rule |
+|---|---|---|
+| Observed | Returned by the backend for the recorded stop | Normal |
+| Derived | Computed from observations by a deterministic, documented rule | Normal, with rule available on inspection |
+| Inferred | Produced by a heuristic | Explicitly labelled; never described as verified |
+| Unavailable | Not provided by the backend or debug information | Shown as unavailable, with reason |
+| Unreconstructable | Existed at runtime but cannot be recovered from the recording | Shown as unreconstructable |
+
+Derived and inferred data never overwrite observed data. A relationship with no established provenance is not drawn.
+
+### 4.5 Execution history and snapshots
+
+Keep these concepts distinct: raw observation, stop record, derived event/diff, snapshot/checkpoint, and resolved selected state.
+
+- Stops are recorded in their real order and never reordered or fabricated.
+- A checkpoint is stored at a chosen interval or when needed to bound reconstruction cost.
+- The Alpha implementation may store complete stop observations for a bounded trace and optimize only after measuring.
+- Recording bounds are configured, accounted (memory/disk), and reported. Reaching a bound produces a partial recording; it is never silently trimmed to look complete.
+- Capture is not a claim of reverse execution.
+
+### 4.6 Capture granularity
+
+A stop record captures:
+- Session and monotonically ordered stop ID.
 - Thread identity and selected frame when available.
 - Source location when available.
 - Available stack frames.
 - Available variables and child values within configured inspection depth.
 - Output records and ordering metadata available at that time.
-- Raw observation provenance and capture limitations.
+- Observation provenance and capture limitations.
 
-The capture layer must bound recursive expansion and avoid unbounded evaluation of arbitrary expressions.
+The capture layer bounds recursive expansion and never evaluates arbitrary expressions.
 
-### 4.3 Trace model
+### 4.7 Visualization engine
 
-Keep these concepts distinct:
-- Raw debugger observation.
-- Stop record.
-- Derived event/diff.
-- Checkpoint.
-- Resolved selected execution state.
+The engine consumes normalized state and history, never debugger protocols. It:
 
-A checkpoint is stored at a chosen interval or when needed for bounded reconstruction. The initial implementation may store complete stop observations for a conservative bounded trace, then optimize only after measuring. The plan does not require a sophisticated event-sourcing engine before a working vertical slice.
+1. Resolves the visualization scope from the selected inspection context (frame, function, thread, variable, pointer, object, memory region, or event) plus available data.
+2. Selects guided detail for small, manageable state and scoped detail for large or complex state. Both use the same renderers and the same normalized data.
+3. Builds nodes and edges for the requested scope only.
+4. Schedules on-demand expansion, cancelling requests that a newer selection has made stale.
+5. Publishes one immutable view per selected stop so every panel shows the same state.
+6. Reports coverage: what is shown, what is expandable, what is unavailable, and whether the recording itself is partial.
 
-### 4.4 Reverse navigation
+Depth limits, node budgets, and aggregation thresholds belong to visualization policy. They change what is displayed, never what was recorded, and the UI labels the difference.
 
-Previous/seek selects a prior recorded stop and resolves its state from the trace. It never asks LLDB to reverse the running process. The UI must label the session as recorded/paused when appropriate and prevent a stale live debugger response from overwriting a historical selected state.
+### 4.8 Relationship graph
 
-### 4.5 Memory visualization policy
+- **Nodes:** frames, variables, aggregate members, arrays, objects, memory regions, and unresolved references.
+- **Edges:** points-to, references, member-of, element-of, interior-offset, and alias.
+- An edge is drawn only from an observed relation, a documented derivation, or an explicitly labelled inference.
+- Object identity follows documented session rules; address equality alone is not identity. Address reuse after a verified deallocation does not silently preserve identity.
+- Null, uninitialized, invalid, unresolved, unavailable, optimized-out, and unknown values render as distinct node states, not empty objects.
 
-The runtime model distinguishes:
-- Debugger-observed values.
-- Resolved target objects.
-- Symbolic identities.
-- Actual addresses.
-- Unresolved references.
-- Verified lifetime events.
+### 4.9 Scalability and resource policy
 
-The Heap panel is an **observable object view**, not a process-wide allocator map. Lifecycle labels are emitted only from verified capture evidence. The first vertical slice should prioritize variables, frames, aggregates, pointers, and null values; allocation instrumentation is not a prerequisite for falsely claiming full heap support.
+Real programs require selective inspection, not restricted capability.
+
+- Scope selection narrows the graph before rendering; it never disables debugging.
+- Object graphs expand on demand; nothing is eagerly traversed to the end of a pointer graph.
+- Rendering is virtualized and incremental: only visible nodes are laid out, and updates are applied as diffs.
+- Heavy inspection runs off the UI thread; results that no longer match the current selection are discarded.
+- Snapshots use structural sharing so unchanged subtrees are not duplicated.
+- Budgets (nodes, edges, depth, bytes, time) are explicit, configurable, and surfaced in the UI when they affect the view.
+
+### 4.10 Language observation adapters
+
+C and C++ are Alpha adapters. Rust and Go are post-Alpha adapters, not model changes.
+
+- Each adapter declares its observable concepts and its known limitations. Concepts it cannot observe are reported as unavailable.
+- C: raw pointers, stack/static storage, heap blocks when observable, structs, unions, arrays, pointer arithmetic.
+- C++: pointers and references, classes and inheritance, object lifetime, containers, smart pointers, RAII, dynamic dispatch where debug information supports it.
+- Debugger pretty-printers and language runtime metadata are adapter inputs, not core-model assumptions.
+
+### 4.11 Reverse navigation
+
+Previous/seek selects a prior recorded stop and resolves its state from the history store. It never asks the backend to reverse the running process. GDB's reverse execution requires target support and is not assumed; where a backend supports it, it remains an optional backend capability, not an AveLoop requirement. The UI labels the session as recorded when showing historical states and prevents stale live responses from overwriting them.
+
+### 4.12 Honesty constraints
+
+The Heap panel is an **observable object view**, not a process-wide allocator map. Lifecycle labels come only from verified capture evidence. The first vertical slice prioritizes variables, frames, aggregates, pointers, null and unresolved values; allocation instrumentation is not a prerequisite for claiming heap support, and the UI states the coverage limit.
 
 ---
 
@@ -1308,31 +1444,33 @@ Work:
 Work:
 - Capture ordered stops and observations.
 - Persist source/build/session provenance.
-- Normalize frames, variables, values, and source locations.
-- Store bounded trace records/checkpoints.
+- Normalize frames, variables, values, and source locations through a language observation adapter that declares its observable concepts.
+- Store bounded trace records, checkpoints, and diffs; label a recording that hit its bound as partial.
 - Reconstruct any recorded selected stop.
-- Handle missing/partial/malformed debugger data.
+- Handle missing/partial/malformed debugger data with provenance classes.
 - Prevent old-session async messages from mutating the active trace.
 
-**Exit gate:** trace replay and selected-state identity tests pass; Previous/seek work without reverse debugger support.
+**Exit gate:** trace replay and selected-state identity tests pass; Previous/seek work without reverse debugger support; a partial recording is distinguishable from a complete one.
 
 ### Phase 7 — Runtime visualizations and synchronized workspace
 
 **Outcome:** the distinctive AveLoop experience is usable.
 
 Work:
+- Shared visualization engine: scope routing, incremental graph construction, on-demand expansion, stale-request cancellation, virtualization, and disclosed budgets.
 - Stack visualization.
 - Variables inspector.
 - Arrays/structures/class member inspection.
-- Heap observable-object view.
-- Pointer/null/alias/interior-offset visualization when provable.
+- Heap observable-object view with explicit coverage limits.
+- Pointer/null/alias/interior-offset visualization when provable, with provenance labels.
+- Expandable pointer/object relationship graph.
 - Trace inspector and timeline.
 - Output console.
 - Atomic selected-state publication.
 - Material 3 component states and Night Owl mapping.
 - Keyboard shortcuts and workspace resizing.
 
-**Exit gate:** every panel displays the same selected stop ID under forward, backward, seek, playback, session replacement, and reconstruction failure tests.
+**Exit gate:** every panel displays the same selected stop ID under forward, backward, seek, playback, session replacement, and reconstruction failure tests; a scoped view of a large session stays responsive, expands on demand, and is visibly distinguishable from a partial recording.
 
 ### Phase 8 — Cross-platform validation and Alpha hardening
 
@@ -1595,9 +1733,9 @@ All compiler and debugger verification uses toolchains already installed on each
 # Phase 6 — User Story 3: Debug sessions, trace capture, and historical navigation
 
 - [ ] T035 [US3] Implement debugger transport and session lifecycle for the selected backend (GDB DAP or GDB/MI on Linux, `lldb-dap` on macOS, the compiler-matched Windows debugger), including initialize, capability negotiation, launch, configuration, and termination.
-- [ ] T036 [US3] Implement source-level breakpoint/step operations and bounded retrieval of stack frames, scopes, variables, and aggregate children.
-- [ ] T037 [US3] Capture stdout/stderr and ordered debugger observations while preserving source, build, session, thread, and frame provenance.
-- [ ] T038 [US3] Implement trace records, derived events, bounded storage, and checkpoints without conflating observations, events, and snapshots.
+- [ ] T036 [US3] Implement source-level breakpoint/step operations and bounded, on-demand retrieval of stack frames, scopes, variables, and aggregate children for a selected frame or thread.
+- [ ] T037 [US3] Capture stdout/stderr and ordered debugger observations and normalize them through a language observation adapter that preserves source, build, session, thread, and frame provenance and declares which runtime concepts it can observe.
+- [ ] T038 [US3] Implement trace records, snapshots, checkpoints, and diffs with explicit storage accounting; label a recording that reached its bound as partial, without conflating observations, events, snapshots, and visualization scope.
 - [ ] T039 [US3] Implement deterministic selected-state reconstruction from recorded trace data.
 - [ ] T040 [US3] Implement first/previous/next/last, seeking, play/pause, and playback speed over recorded stops.
 - [ ] T041 [US3] Implement cancellation, process-tree cleanup, protocol timeouts, malformed-response handling, and stale-session message rejection.
@@ -1610,15 +1748,16 @@ All compiler and debugger verification uses toolchains already installed on each
 # Phase 7 — User Story 4: Runtime inspection and synchronized visualization
 
 - [ ] T043 [US4] Implement the authoritative selected-state owner and atomic publication contract consumed by all runtime panels.
-- [ ] T044 [US4] Implement Stack and Variables views from resolved frames, scopes, and debugger observations.
+- [ ] T044 [US4] Implement Stack and Variables views from resolved frames, scopes, and debugger observations, with frame/thread/function scope selection for the visualization.
 - [ ] T045 [US4] Implement arrays, structures, C++ class/struct members, and explicit known/unavailable/optimized-out value states.
-- [ ] T046 [US4] Implement pointer and reference visualization: null, verified targets, aliases, and interior offsets only when supported by evidence.
-- [ ] T047 [US4] Implement the Heap observable-object view, with explicit coverage limits and verified allocation/deallocation labels only.
+- [ ] T046 [US4] Implement the expandable pointer/reference/object relationship graph with verified nodes, directional edges, aliases, and interior offsets, drawing each edge only from an observed or documented derivation and labelling any inference.
+- [ ] T047 [US4] Implement the Heap observable-object view with on-demand expansion of reachable objects, explicit coverage limits, and verified allocation/deallocation labels only.
 - [ ] T048 [US4] Implement unresolved/unknown pointer states and prevent unsupported dangling-pointer or complete-heap claims.
 - [ ] T049 [US4] Add invariant tests proving that source, Stack, Variables, Heap, Pointer, Trace, Timeline, and attributable Output show the same selected stop.
-- [ ] T050 [US4] Verify synchronization during forward/backward navigation, seek, playback, session replacement, missing data, and reconstruction failure.
+- [ ] T050 [US4] Verify synchronization during forward/backward navigation, seek, playback, session replacement, missing data, and reconstruction failure; verify that scoping a large session changes the view without changing the recording and that a scoped or truncated view cannot be mistaken for a partial recording.
+- [ ] T072 [US4] Implement the shared runtime visualization engine: scope routing, incremental graph construction, on-demand expansion scheduling, cancellation of stale inspection requests, virtualized rendering, and transparent visualization budgets. Existing tasks cover observation (T035–T038), individual views (T044–T048), and verification (T049–T050) but none owns the engine that connects normalized state to scoped views.
 
-**Acceptance:** runtime visualizations are truthful, synchronized, and explicit about incomplete debugger visibility.
+**Acceptance:** runtime visualizations are truthful, synchronized, scale from guided detail to scoped views over the same model, and are explicit about incomplete debugger visibility.
 
 ---
 
@@ -1672,7 +1811,7 @@ All compiler and debugger verification uses toolchains already installed on each
 | Build/execute FR-020–028 | T029–T034 |
 | Trace FR-040–050 | T035–T042 |
 | Selected state FR-060–065 | T039–T050 |
-| Runtime FR-080–092 | T043–T050 |
+| Runtime FR-080–098 | T043–T050, T072 |
 | Navigation/visualization FR-100–106 | T040, T043–T055 |
 | Output FR-120–123 | T037, T052–T055 |
 | Safety FR-140–145 | T033, T041, T066, T068 |

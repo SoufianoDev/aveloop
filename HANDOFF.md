@@ -4,22 +4,24 @@ Canonical continuity record for every agent working on this repository. Read thi
 
 ## Current State
 
-- **Last updated:** 2026-11-24 (architecture review: multi-language workspace/project model; T022 reopened)
+- **Last updated:** 2026-11-24 (runtime-visualization architecture: specification, plan, tasks, and Issues expanded; T072 added)
 - **Repository:** `SoufianoDev/aveloop` (`https://github.com/SoufianoDev/aveloop.git`)
 - **Project root:** `/home/soufiano/SoufianoDev/AveLoop`
 - **Active branch:** `dev` tracking `origin/feat/gpui-kit-fast`.
-- **Last verified HEAD:** `a58f8f5` (T022 evidence commit); verify again before acting.
+- **Last verified HEAD:** `5291e00` (T022 evidence commit); verify again before acting.
 - **`main` moved:** `origin/main` is `7953e08` (`Merge pull request #140`). It does not contain `589b7e2` or later. Integration into `main` is not authorized.
-- **Working tree:** owner edit in `src/presentation/theme.rs` (unstaged, leave alone) plus the in-progress architecture-review edits to `spec.md`, `plan.md`, `tasks.md`, `complete.md`, and this file.
+- **Working tree:** owner edit in `src/presentation/theme.rs` (unstaged, leave alone) plus uncommitted runtime-visualization edits to `spec.md`, `plan.md`, `tasks.md`, `complete.md`, and this file.
 - **Active task:** T022 reopened under the redefined workspace/project + optional-overlay contract. The committed `src/domain/project/manifest.rs` (`591e09c`) predates the definition and must be revised to it.
 - **Current phase:** Phase 3 code is green (T016–T021 complete); T022 is open again because its definition changed.
 - **Overall status:** T001–T021 complete as work items. T022's earlier completion is `SUPERSEDED` by the architecture review. Product CI is green on Linux x86_64, Windows x86_64, and macOS arm64.
 - **Current objective:** revise the project model to workspace-first with an optional `ave.toml` overlay.
+- **Runtime-visualization architecture:** now recorded in `spec.md` §1.3, §2.1 E, §2.2 items 14–15, §6.1, §6.5, US-06, FR-093–FR-098; `plan.md` §4 (observation → normalization → history → shared visualization engine); `tasks.md` T036/T037/T038/T044/T046/T047/T050 revised plus new T072. No engine code was written and no task was marked complete on documentation grounds.
 
 ## Immediate Next Action
 
 **Next task: T022 (redefined) — revise the workspace/project model and the optional `ave.toml`
-overlay contract.** Replace the closed `Language` enum and the "manifest is the project
+overlay contract.** The runtime-visualization documentation pass is finished and committed; it did
+not start T022 and did not implement any visualization code. Replace the closed `Language` enum and the "manifest is the project
 definition" framing in `src/domain/project/manifest.rs`, add the workspace/project descriptor
 model from `plan.md` §5, validate, mark `tasks.md`, regenerate `complete.md`, and synchronize
 canonical Issue #22 (AGENTS.md rule #12).
@@ -116,6 +118,10 @@ Confirmed during this session (2026-11-22T23:47–23:50Z):
 - Skill install path and version.
 - Host storage: 3.5 GB available (3,735,973,888 bytes) on `/dev/nvme0n1p2` mounted at `/`, 99% used (218 GB / 233 GB).
 - Host memory: 1.08 GB available RAM (1,078,071,296 bytes) out of 6.9 GiB (5.8 GiB used); swap 5.6 GiB used out of 7.4 GiB (1.8 GiB free).
+- CLion Memory view (JetBrains official help, page version 2026.3, last updated 2024-10-11): raw-memory hex view opened from a pointer or non-pointer variable, initial 256-byte region from that address, jump between pointers, change highlighting while stepping, memory editing. The equivalent `jetbrains.com/help/idea/memory-view.html` URL returns 404, so Memory view is CLion-specific.
+- CLion documentation index also lists Register view, Hexadecimal view, Parallel stacks view, Live watches, Watchpoints, Core dump debug, and a DAP support page. Presence in the index is not evidence of a specific behavior; each claim used is limited to what the linked page states.
+- GDB reverse execution is target-dependent: "not all target environments can support reverse execution" (`sourceware.org/gdb/current/onlinedocs/gdb.html/Reverse-Execution.html`).
+- Python Tutor (homepage) visualizes variables, objects, pointers, and stack frames for Python, Java, C, C++, and JavaScript. Its published code path stops after 1000 steps with "Python Tutor is not designed to handle long-running code" (tool stop message reproduced in a university course page; the primary docs/FAQ page was not retrievable).
 - Installed toolchains: `cargo 1.96.0` and `rustc 1.96.0` at `~/.cargo/bin`; `gcc 14.2.0` and `gdb 16.2` at `/usr/bin`.
 
 ### UNVERIFIED
@@ -127,6 +133,10 @@ Confirmed during this session (2026-11-22T23:47–23:50Z):
 - Install sizes on macOS and Windows.
 - GDB/LLDB runtime RSS.
 - Whether the planning skill's `PreCompact` hook is wired in this OpenCode environment.
+- Python Tutor's officially documented limits. The 1000-step stop message is the tool's own wording reproduced by third-party course material; `pythontutor.com` docs/FAQ URLs returned 404 and the FAQ link resolves to a Google Doc that did not render.
+- Whether `lldb-dap` on Apple Command Line Tools exposes the same memory-read and variable-paging behavior as the DAP specification describes.
+- Any CLion "object/reference visualizer" beyond the documented Memory view, registers, and hex views; no such feature page was found.
+- Windows debugger equivalents of the documented GDB/LLDB observation set.
 
 ### SUPERSEDED
 
@@ -271,6 +281,14 @@ Verified this session: `f259ead` exists locally and on the remote, the tree is c
 | #14 | T014 | OPEN | Evidence comment posted; evaluation complete, runtime UI unverified |
 | #15 | T015 | OPEN | Evidence comment posted; gate verdict NOT met, decision options listed |
 | PR #140 | `feat/gpui-kit-fast` → `main` | MERGED | Merged by someone other than this session; produced `7953e08` containing `4bf809c` |
+| #53 / #77 | T036 canonical / duplicate | OPEN | Canonical scope and criteria updated; #77 linked by comment only |
+| #55 / #79 | T037 canonical / duplicate | OPEN | Canonical scope and criteria updated; #79 linked by comment only |
+| #57 / #82 | T038 canonical / duplicate | OPEN | Canonical scope and criteria updated; #82 linked by comment only |
+| #74 / #97 | T044 canonical / duplicate | OPEN | Canonical scope and criteria updated; #97 linked by comment only |
+| #78 / #101 | T046 canonical / duplicate | OPEN | Canonical scope and criteria updated; #101 linked by comment only |
+| #80 / #103 | T047 canonical / duplicate | OPEN | Canonical scope and criteria updated; #103 linked by comment only |
+| #85 / #109 | T050 canonical / duplicate | OPEN | Canonical scope and criteria updated; #109 linked by comment only |
+| #141 | Canonical T072 | OPEN | Created this session (shared runtime visualization engine) |
 | #118 / #133 | T066 canonical / duplicate | OPEN | #133 marked superseded, not closed |
 | #75 / #93 / #129 / #134 / #79 | Earlier reconciliations | — | Unchanged this session |
 
@@ -1243,6 +1261,19 @@ Entries H0001–H0099 record the project and review sessions. Entry timestamps a
   - Evidence: CI run `45455892960` (head `544a264`) — Linux, Windows, and macOS arm64 all `success`
   - Issue verification: each canonical task line in #22/#23/#28/#30 was compared as a whole string against `tasks.md` and matched; all issues remain OPEN
   - State change: no task is marked complete. T022 is the next task under its redefined contract.
+
+- [H0127] [2026-11-24] [ARCH] USER-CONFIRMED + AGENT-PROPOSED: runtime-visualization architecture expanded across spec, plan, tasks, and Issues.
+  - Session: OpenCode session (AI agent: opencode), branch `dev` → `origin/feat/gpui-kit-fast`, HEAD `5291e00` before this pass
+  - Provenance: the product intent (visualization is central, must serve real programs, accuracy over completeness, one observation model) is USER-CONFIRMED by the task brief. The concrete Alpha commitment below is AGENT-PROPOSED and not yet approved by the owner.
+  - Alpha commitment proposed: guided detailed view + scope selection (frame, function, thread, variable, pointer, object, memory region, event) + expandable pointer/object graph with lazy expansion and stale-request cancellation + disclosed budgets. Whole-program heap graphs, instrumentation-based allocation tracking, and reverse execution remain post-Alpha.
+  - Spec changes: §1.3 runtime-visualization positioning (one normalized model, no separate educational engine); §2.1 E graph/scope/expansion/budget bullets; §2.2 limits 14 (no artificial small-program ceiling) and 15 (no complete-graph claim); §6.1 five provenance classes; new §6.5 language observation adapters; US-06 acceptance extended; FR-093 scope selection, FR-094 expandable graph + lazy cancellation, FR-095 one shared model, FR-096 filtered ≠ truncated, FR-097 no fixed step ceiling, FR-098 adapter concept declaration.
+  - Plan changes: §4 replaced with the observation → adapter → normalization → history → shared visualization engine flow (mermaid conceptual diagram) plus 4.1 responsibilities, 4.2 observation layer, 4.3 normalized state, 4.4 provenance table, 4.5 history/snapshots, 4.6 capture granularity, 4.7 visualization engine, 4.8 relationship graph, 4.9 scalability/resource policy, 4.10 language adapters, 4.11 reverse navigation, 4.12 honesty constraints. Phase 6 and Phase 7 work lists and exit gates updated; Phase 7 gate now requires a responsive scoped view distinguishable from a partial recording.
+  - Task changes: T036 bounded on-demand retrieval by frame/thread; T037 normalization through a language observation adapter that declares observable concepts; T038 snapshots/checkpoints/diffs with accounting and partial labelling; T044 scope selection; T046 expandable verified-edge graph; T047 on-demand expansion; T050 scoped/large-session verification. New T072 (shared visualization engine) because no existing task owned scope routing, incremental graph construction, expansion scheduling, cancellation, virtualisation, and budgets. Traceability row now `Runtime FR-080–098 → T043–T050, T072`.
+  - GitHub sync (resolved by the `Spec Kit task` field): #53/T036, #55/T037, #57/T038, #74/T044, #78/T046, #80/T047, #85/T050 updated; T072 created as #141. All canonical task lines verified string-identical to `tasks.md`. Duplicates #77, #79, #82, #97, #101, #103, #109 linked by comment only; none closed. The unique duplicate criterion ("single authoritative selected-state contract") was carried into #74/#78/#80/#85.
+  - Evidence used for capability claims: GDB manual on reverse execution (target-dependent, not universal); CLion Memory view page (hex, 256-byte initial region, pointer jump, change highlighting, editing; 2024-10-11); CLion doc index for register/hex/parallel-stack/live-watch/core-dump/DAP pages; Python Tutor homepage for variables/objects/pointers/stack frames and its 1000-step stop message (third-party reproduction, see UNVERIFIED).
+  - Research limits recorded honestly: Python Tutor's primary docs/FAQ were not retrievable; no CLion object-visualizer feature page was found; no backend was tried live in this pass.
+  - Not done on purpose: no visualization engine code, no Cargo dependency change, no instrumentation framework, no Rust/Go implementation, no new execution engine, no task marked complete, no push to `main`, no PR/merge, no CI workflow change.
+  - Validation: `git diff --check` clean; `complete.md` regenerated from `spec.md`, `plan.md`, and `tasks.md`; `git status --short` shows only the four spec files, this file, and the owner's `src/presentation/theme.rs`; no Rust code changed, so no test run was required for this pass.
 
 ## Resume Instructions
 

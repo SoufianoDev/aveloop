@@ -64,6 +64,8 @@ AveLoop is not a general-purpose visual programming language, cloud IDE, or repl
 
 Workspace management, language integration, build-system handling, and debugger backends are separate, extensible responsibilities. Alpha implements only C17 and C++20; adding another language must not require redesigning the workspace, project, or project-configuration model.
 
+Runtime execution visualization is AveLoop's central product capability. AveLoop makes actual program execution — progression, stack frames, variables, objects, pointers, references, and memory relationships — observable and navigable. It serves both teaching-scale examples and real, complex programs from one normalized runtime-observation model: small, controlled sessions may present detailed step-oriented views, while large sessions use scoped, selective, expandable views. The same observation, history, and normalization model feeds both; there is no separate educational engine. Accuracy outranks visual completeness: no visualization may present an inference as an observation.
+
 ## 1.4 Intended users
 
 1. Learners who need to understand how source statements affect runtime state.
@@ -137,6 +139,10 @@ The Alpha is successful only if this workflow works on Linux, Windows, and macOS
 - Interior pointer offsets when both pointer and target range can be established.
 - Aliasing when multiple inspected references resolve to the same observed target.
 - Observable memory objects reachable from inspected variables.
+- Expandable pointer/object relationship graph with verified nodes, edges, and directional arrows.
+- Scope selection for visualization: selected frame, function, thread, variable, pointer, object, memory region, or execution event.
+- On-demand expansion of related objects, with branch collapse and cancellation of stale expansion requests.
+- Explicit coverage and budget disclosure for any visualization that is scoped, filtered, or truncated.
 - Explicit unavailable/optimized-out/unknown states.
 
 ### F. Trace and event inspection
@@ -177,6 +183,8 @@ These are deliberate scope boundaries, not unfinished promises:
 11. **No remote/cloud execution, collaboration, plugin marketplace, AI features, or integrated Git hosting.**
 12. **No hardened security sandbox claim.** Alpha launches local programs with the user's OS permissions. It applies explicit launch consent, working-directory controls, timeout/cancellation, and process-tree termination where supported, but it is not a security boundary against hostile code.
 13. **No bundled or automatically installed toolchain.** AveLoop neither bundles nor downloads a compiler, debugger, or LLVM distribution. Missing components are reported with official installation guidance; the user performs any installation.
+14. **No artificial small-program ceiling.** Recording limits exist and are configurable, accounted, and reported, but no fixed step count or program size defines the product. A large program that cannot be wholly visualized at once remains fully debuggable through scoped visualization.
+15. **No claim of a complete relationship graph.** Any node/edge set is a view over observed, derived, or explicitly labelled inferred relationships, not a claim that all process memory has been discovered.
 
 ## 2.3 Out of scope
 
@@ -296,6 +304,10 @@ A user inspects stack frames, variables, aggregates, pointers, and observable me
 - Frame, variable, and object identities are stable within the session where possible.
 - Null, unavailable, optimized-out, unresolved, and known values are distinguishable.
 - Pointer links are rendered only when a target can be resolved.
+- References, aliases, and interior offsets are labelled by provenance class; inferred relationships are never shown as verified.
+- Scoping the view to a frame, function, object, or memory region changes what is displayed, not what was recorded.
+- Expanding a graph node retrieves additional state on demand and a stale request cannot overwrite a newer selection.
+- A scoped or truncated view is visibly distinct from an incomplete recording.
 - Heap visualizations explicitly state that they are debugger-observable/reachable objects, not a complete process heap.
 
 ## US-07 — Inspect trace and output
@@ -404,6 +416,12 @@ Priority: **P0** = Alpha critical; **P1** = Alpha usability requirement; **P2** 
 | FR-090 | The application shall not label an unresolved pointer as dangling without evidence of target lifetime termination. | P0 |
 | FR-091 | The application shall distinguish known, null, uninitialized, unavailable, optimized-out, invalid, unresolved, and unknown states where the backend provides that distinction. | P0 |
 | FR-092 | The UI shall disclose backend capability/coverage limitations. | P0 |
+| FR-093 | The application shall let the user scope runtime visualization to a selected frame, function, thread, variable, pointer, object, memory region, or execution event. | P0 |
+| FR-094 | The application shall render relationships as an expandable graph with verified nodes and directional edges, retrieving additional state on demand and cancelling stale expansion requests. | P0 |
+| FR-095 | Detailed and scoped visualization shall consume the same normalized observation and history model; no separate visualization engine shall exist for small programs. | P0 |
+| FR-096 | A scoped, filtered, or truncated visualization shall be visually distinguishable from an incomplete recording, and its coverage or budget shall be disclosed. | P0 |
+| FR-097 | Runtime recording shall impose no fixed small-program step ceiling; recording limits shall be configurable, accounted, and reported, and a partial recording shall be labelled as partial. | P0 |
+| FR-098 | Each language integration shall declare which runtime concepts it can observe, and concepts it cannot observe shall be reported as unavailable rather than inferred. | P0 |
 
 ## 5.6 Navigation and visualization
 
@@ -454,6 +472,15 @@ The specification defines concepts and invariants, not final Rust struct names.
 
 A debugger observation is not automatically a complete memory snapshot. A trace event is not automatically a new state. A derived event must retain provenance to the observations from which it was derived.
 
+Every runtime datum carries one provenance class:
+- **Observed** — returned by the backend for the recorded stop.
+- **Derived** — computed from observations by a deterministic, documented rule.
+- **Inferred** — produced by a heuristic; labelled inferred in the UI and never presented as a verified relationship.
+- **Unavailable** — the backend or the debug information does not provide it.
+- **Unreconstructable** — it existed at runtime but cannot be recovered from the recording.
+
+Derived or inferred data must never overwrite or masquerade as observed data.
+
 ## 6.2 Identity and lifetime
 
 - Session IDs are unique per debug session.
@@ -498,6 +525,14 @@ It must not claim complete visibility into:
 - Memory not reachable/inspectable through the debugger.
 - Object lifetime events not observed by the capture mechanism.
 - C++ object lifetime details erased by optimization or unavailable debug information.
+
+## 6.5 Language observation adapters
+
+Runtime observation is language-specific even when the normalized model is shared. Each language integration supplies an observation adapter that declares which concepts it can observe reliably: frames, locals, aggregates, arrays, pointers, references, object identity, allocation/deallocation events, and thread relationships.
+
+- A concept the adapter cannot observe is reported as unavailable for that language/backend combination; it is not rendered as empty, inferred, or silently omitted.
+- Universal assumptions about pointers, object identity, or lifetimes are not allowed to override language semantics.
+- Alpha declares adapter capabilities for C17 and C++20 only. Rust (ownership, borrowing, slices) and Go (slices, maps, interfaces, goroutines, channels) require new adapters and are post-Alpha.
 
 ---
 

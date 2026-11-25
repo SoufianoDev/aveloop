@@ -100,9 +100,9 @@ All compiler and debugger verification uses toolchains already installed on each
 # Phase 6 — User Story 3: Debug sessions, trace capture, and historical navigation
 
 - [ ] T035 [US3] Implement debugger transport and session lifecycle for the selected backend (GDB DAP or GDB/MI on Linux, `lldb-dap` on macOS, the compiler-matched Windows debugger), including initialize, capability negotiation, launch, configuration, and termination.
-- [ ] T036 [US3] Implement source-level breakpoint/step operations and bounded retrieval of stack frames, scopes, variables, and aggregate children.
-- [ ] T037 [US3] Capture stdout/stderr and ordered debugger observations while preserving source, build, session, thread, and frame provenance.
-- [ ] T038 [US3] Implement trace records, derived events, bounded storage, and checkpoints without conflating observations, events, and snapshots.
+- [ ] T036 [US3] Implement source-level breakpoint/step operations and bounded, on-demand retrieval of stack frames, scopes, variables, and aggregate children for a selected frame or thread.
+- [ ] T037 [US3] Capture stdout/stderr and ordered debugger observations and normalize them through a language observation adapter that preserves source, build, session, thread, and frame provenance and declares which runtime concepts it can observe.
+- [ ] T038 [US3] Implement trace records, snapshots, checkpoints, and diffs with explicit storage accounting; label a recording that reached its bound as partial, without conflating observations, events, snapshots, and visualization scope.
 - [ ] T039 [US3] Implement deterministic selected-state reconstruction from recorded trace data.
 - [ ] T040 [US3] Implement first/previous/next/last, seeking, play/pause, and playback speed over recorded stops.
 - [ ] T041 [US3] Implement cancellation, process-tree cleanup, protocol timeouts, malformed-response handling, and stale-session message rejection.
@@ -115,15 +115,16 @@ All compiler and debugger verification uses toolchains already installed on each
 # Phase 7 — User Story 4: Runtime inspection and synchronized visualization
 
 - [ ] T043 [US4] Implement the authoritative selected-state owner and atomic publication contract consumed by all runtime panels.
-- [ ] T044 [US4] Implement Stack and Variables views from resolved frames, scopes, and debugger observations.
+- [ ] T044 [US4] Implement Stack and Variables views from resolved frames, scopes, and debugger observations, with frame/thread/function scope selection for the visualization.
 - [ ] T045 [US4] Implement arrays, structures, C++ class/struct members, and explicit known/unavailable/optimized-out value states.
-- [ ] T046 [US4] Implement pointer and reference visualization: null, verified targets, aliases, and interior offsets only when supported by evidence.
-- [ ] T047 [US4] Implement the Heap observable-object view, with explicit coverage limits and verified allocation/deallocation labels only.
+- [ ] T046 [US4] Implement the expandable pointer/reference/object relationship graph with verified nodes, directional edges, aliases, and interior offsets, drawing each edge only from an observed or documented derivation and labelling any inference.
+- [ ] T047 [US4] Implement the Heap observable-object view with on-demand expansion of reachable objects, explicit coverage limits, and verified allocation/deallocation labels only.
 - [ ] T048 [US4] Implement unresolved/unknown pointer states and prevent unsupported dangling-pointer or complete-heap claims.
 - [ ] T049 [US4] Add invariant tests proving that source, Stack, Variables, Heap, Pointer, Trace, Timeline, and attributable Output show the same selected stop.
-- [ ] T050 [US4] Verify synchronization during forward/backward navigation, seek, playback, session replacement, missing data, and reconstruction failure.
+- [ ] T050 [US4] Verify synchronization during forward/backward navigation, seek, playback, session replacement, missing data, and reconstruction failure; verify that scoping a large session changes the view without changing the recording and that a scoped or truncated view cannot be mistaken for a partial recording.
+- [ ] T072 [US4] Implement the shared runtime visualization engine: scope routing, incremental graph construction, on-demand expansion scheduling, cancellation of stale inspection requests, virtualized rendering, and transparent visualization budgets. Existing tasks cover observation (T035–T038), individual views (T044–T048), and verification (T049–T050) but none owns the engine that connects normalized state to scoped views.
 
-**Acceptance:** runtime visualizations are truthful, synchronized, and explicit about incomplete debugger visibility.
+**Acceptance:** runtime visualizations are truthful, synchronized, scale from guided detail to scoped views over the same model, and are explicit about incomplete debugger visibility.
 
 ---
 
@@ -177,7 +178,7 @@ All compiler and debugger verification uses toolchains already installed on each
 | Build/execute FR-020–028 | T029–T034 |
 | Trace FR-040–050 | T035–T042 |
 | Selected state FR-060–065 | T039–T050 |
-| Runtime FR-080–092 | T043–T050 |
+| Runtime FR-080–098 | T043–T050, T072 |
 | Navigation/visualization FR-100–106 | T040, T043–T055 |
 | Output FR-120–123 | T037, T052–T055 |
 | Safety FR-140–145 | T033, T041, T066, T068 |
