@@ -8,7 +8,7 @@ Canonical continuity record for every agent working on this repository. Read thi
 - **Repository:** `SoufianoDev/aveloop` (`https://github.com/SoufianoDev/aveloop.git`)
 - **Project root:** `/home/soufiano/SoufianoDev/AveLoop`
 - **Active branch:** `dev` tracking `origin/feat/gpui-kit-fast`.
-- **Last verified HEAD:** `b4682e7` (runtime-visualization document set); verify again before acting.
+- **Last verified HEAD:** `3ef98e9` (budget-separation document set); verify again before acting.
 - **`main` moved:** `origin/main` is `7953e08` (`Merge pull request #140`). It does not contain `589b7e2` or later. Integration into `main` is not authorized.
 - **Working tree:** owner edit in `src/presentation/theme.rs` (unstaged, leave alone) plus uncommitted runtime-visualization edits to `spec.md`, `plan.md`, `tasks.md`, `complete.md`, and this file.
 - **Active task:** T022 reopened under the redefined workspace/project + optional-overlay contract. The committed `src/domain/project/manifest.rs` (`591e09c`) predates the definition and must be revised to it.
@@ -1289,6 +1289,8 @@ Entries H0001–H0099 record the project and review sessions. Entry timestamps a
   - Task changes: T038 recording-budget policy; T047 visualization budget limited to display; T050 verifies budget independence in both directions; T072 owns both policies. Traceability row now `Runtime FR-080–099 → T043–T050, T072`.
   - GitHub sync (by `Spec Kit task`): #57/T038, #80/T047, #85/T050, #141/T072 scopes, criteria, and references updated; all canonical task lines verified string-identical to `tasks.md`. Existing valid criteria preserved; superseded duplicates #77/#79/#82/#97/#101/#103/#109 remain open and linked; nothing closed.
   - Not done on purpose: no visualization engine, no instrumentation, no Cargo change, no Rust/Go expansion, no task marked complete, no unrelated source edits, no push to `main`.
+  - Commit `3ef98e9`; pushed `5c1d3d7..3ef98e9` to `dev` → `origin/feat/gpui-kit-fast`; staged only `spec.md`, `plan.md`, `tasks.md`, `complete.md`, `HANDOFF.md` (owner's `src/presentation/theme.rs` left unstaged, `.planning/` never staged)
+  - Evidence: CI run on head `3ef98e9` — Linux x86_64, Windows x86_64, and macOS arm64 all `success`
   - Next action unchanged: T022 — workspace and project model revision.
 
 ## Resume Instructions
