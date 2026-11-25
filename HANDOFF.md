@@ -4,13 +4,13 @@ Canonical continuity record for every agent working on this repository. Read thi
 
 ## Current State
 
-- **Last updated:** 2026-11-25 (T023 discovery implemented locally and verified; pending commit, push, and three-OS CI)
+- **Last updated:** 2026-11-25 (T023 discovery complete; Issue #23 closed; three-OS CI green on `d99417c`)
 - **Repository:** `SoufianoDev/aveloop` (`https://github.com/SoufianoDev/aveloop.git`)
 - **Project root:** `/home/soufiano/SoufianoDev/AveLoop`
 - **Active branch:** `dev` tracking `origin/feat/gpui-kit-fast`.
-- **Last verified HEAD:** `729259a` (T022 ratification CI evidence); CI run `45640677386` green on all three OSes. The T023 implementation is not yet committed.
+- **Last verified HEAD:** `d99417c` (T023 discovery plus its two CI fixes); CI run `45649710573` green on all three OSes.
 - **`main` moved:** `origin/main` is `7953e08` (`Merge pull request #140`). It does not contain `589b7e2` or later. Integration into `main` is not authorized.
-- **Working tree:** owner edit in `src/presentation/theme.rs` (unstaged, leave alone) plus the uncommitted T023 implementation (`src/application/`, `src/infrastructure/`, `src/lib.rs`, `src/domain/project/{model,manifest,workspace}.rs`, `tests/discovery*_tests.rs`, `specs/001-ave-loop-alpha/{tasks,complete}.md`, this file).
+- **Working tree:** owner edit in `src/presentation/theme.rs` (unstaged, leave alone). The T023 implementation is committed as `c44f55d`, `3859795`, and `d99417c`.
 - **Active task:** T024 [US1] — native GPUI workspace composition for the editor, visualization, inspector, transport, and output regions. Not started.
 - **Current phase:** Phase 4, User Story 1. T023 is implemented and locally verified; T024 is next.
 - **Overall status:** T001–T023 complete as work items; Issue #23 closed. Product CI is green on Linux x86_64, Windows x86_64, and macOS arm64 through `729259a`.
@@ -528,6 +528,8 @@ URLs: `https://github.com/SoufianoDev/aveloop/issues/<n>`.
 | T015 `complete.md` regeneration | PASS — all three marker blocks equal to their sources | H0099 |
 | Issue #15 evidence comment | PASS — comment posted; issue remains OPEN | H0099 |
 | T023 discovery tests | PASS — `cargo test --lib --tests` = 55 passed across 14 suites (was 40 across 12) | H0135 |
+| T023 three-OS CI, first run | **FAIL (Windows)** — `c44f55d`: 14 discovery tests rejected the fixture root `/ws` as relative; then `3859795`: the `[languages]` override did not match `src\main.c`, and one assertion compared path strings | H0136 |
+| T023 three-OS CI, final | PASS — run `45649710573` on head `d99417c`; Linux x86_64, Windows x86_64, macOS arm64 all `success` | H0137 |
 | T023 formatting and lint | PASS — `cargo fmt --all -- --check`; `cargo clippy --lib --tests -- -D warnings` | H0135 |
 | T023 build | PASS — `cargo build --lib --bin aveloop` | H0135 |
 | T023 `complete.md` regeneration | PASS — the documented rule reproduces the file exactly; one-line diff (T023 checkbox) | H0135 |
@@ -545,6 +547,9 @@ URLs: `https://github.com/SoufianoDev/aveloop/issues/<n>`.
 | `cx.read_from_clipboard()` inside `cx.defer` on X11 | Panics `RefCell already borrowed` at `x11/client.rs:1904` | Read the clipboard before the event loop starts |
 | `pkill -f 'Xephyr :99'` | The pattern matched the running shell's own command line and killed it | Filter with `pgrep -x Xephyr` or avoid self-matching patterns |
 | Xephyr started in a separate shell command | Dies when that shell's process group ends | Start Xephyr in the same command as the test, or keep it in a background session |
+| Discovery tests with a `/ws` fixture root | Windows rejected it as `Workspace(RelativeRoot)`: `/ws` is not absolute there | Build fake roots from a platform-absolute base (`p()`), not POSIX literals |
+| String lookup for `[languages]` overrides | `"src/main.c"` never matched Windows `src\main.c` | Key override maps by `PathBuf`; Windows path equality ignores separator style |
+| Comparing source paths as `String` in tests | `src/main.c` vs `src\main.c` failed for the wrong reason | Compare `PathBuf`s, which are separator-insensitive |
 
 ## Unresolved Questions and Blockers
 
@@ -1473,6 +1478,13 @@ Entries H0001–H0099 record the project and review sessions. Entry timestamps a
   - Run `45640677386`, head `e346e05`, conclusion `success`; jobs `success` on Linux x86_64, Windows x86_64, and macOS arm64.
   - Maintenance observation (UNVERIFIED, no action taken): the run logs warn that `actions/checkout@v4` targets Node.js 20 and is forced onto Node.js 24. Pinning a newer checkout major is optional housekeeping, not a task in `tasks.md`.
 
+- [H0136] [2026-11-25] [FIX] Windows CI exposed a fixture error and one real discovery defect.
+  - `c44f55d` failed the Windows leg: 14 of 15 tests panicked with `Workspace(RelativeRoot { root: "/ws" })`. The fixture used POSIX-absolute paths, which are relative on Windows. Fixed by translating the fake tree's logical names through `p()` (`/ws` on Unix, `C:\ws` on Windows); no product change.
+  - `3859795` then failed two Windows tests. Real defect: `[languages]` overrides were looked up by `relative.to_string_lossy()`, so the manifest key `src/main.c` never matched the Windows path `src\main.c`. `Manifest::language_overrides` now returns `BTreeMap<PathBuf, LanguageId>` and both `Manifest::project` and discovery look up by path; Windows `Path` equality is separator-insensitive. The second failure was a test comparing source paths as strings; it now compares `PathBuf`s.
+  - Verified locally (`cargo fmt --all -- --check`, `cargo test --lib --tests` = 55, `cargo clippy --lib --tests -- -D warnings`, `cargo build --lib --bin aveloop`) before `d99417c`.
+  - Rule: a green Linux run does not cover cross-platform path handling. CI on the three OSes is the evidence, not the local run.
+  - Disk: 11 GB free after these builds (96% used).
+
 - [H0135] [2026-11-25] [CODE] T023 discovery use cases, port, and adapter.
   - Authorization: the owner's instruction "next + (monitor or follow space availability)" authorized the reported next action (T023) and asked for disk headroom to be watched. No new model decision was made; the ratified T022 model is unchanged.
   - Delivered: `src/application/ports.rs` (`ProjectSource`, `DirEntry`, `EntryKind`, `SourceError`), `src/application/discovery.rs` (`open_workspace`, `open_workspace_with`, `open_project`, `Discovery`, `Problem`, `Incomplete`, `Bound`, `DiscoveryBounds`, `DiscoveryError`, `DEFAULT_EXCLUSIONS`), `src/infrastructure/fs_source.rs` (`FileSystemSource`), `src/lib.rs` module wiring, `DescriptorKind::ALL`/`from_file_name`, `Workspace::unassociated`/`add_unassociated`, `Manifest::language_overrides` extracted and reused.
@@ -1482,6 +1494,12 @@ Entries H0001–H0099 record the project and review sessions. Entry timestamps a
   - Not done on purpose: no native target enumeration (native attachments stay `Recognized`), no glob matching for `[languages]` overrides (exact paths, `shortcut:` comment), no build-command construction (T030), no write path, no Rust/Go implementation, no dependency or CI change, no push to `main`, no PR.
   - Disk: 14 GB free before the build, 12 GB after (95% used); no cleanup performed. `AveLoop/target` still holds the compiled dependency set, so subsequent builds reuse it.
   - Next action: T024 native GPUI workspace composition over the T023 discovery result.
+
+- [H0137] [2026-11-25] [CI] T023 verified on three operating systems.
+  - Run `45649710573`, head `d99417c`, workflow `CI`, conclusion `success`; jobs `success` on Linux x86_64, Windows x86_64, and macOS arm64, each running `cargo fmt --all -- --check`, `cargo clippy --lib --tests -- -D warnings`, `cargo build --lib --bin aveloop`, `cargo test --lib --tests`.
+  - Chained commits on `dev` → `origin/feat/gpui-kit-fast`: `729259a..c44f55d` (T023), `c44f55d..3859795` (fixture root), `3859795..d99417c` (override path keying).
+  - Issue #23 is CLOSED with the implementation evidence comment; the Windows findings were posted as a follow-up comment.
+  - Gate for T023 is met. Next action: T024 native GPUI workspace composition.
 
 ## Resume Instructions
 
