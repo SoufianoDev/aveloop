@@ -8,12 +8,12 @@ Canonical continuity record for every agent working on this repository. Read thi
 - **Repository:** `SoufianoDev/aveloop` (`https://github.com/SoufianoDev/aveloop.git`)
 - **Project root:** `/home/soufiano/SoufianoDev/AveLoop`
 - **Active branch:** `dev` tracking `origin/feat/gpui-kit-fast`.
-- **Last verified HEAD:** `b70d969` (T022 model revision + evidence); verify again before acting.
+- **Last verified HEAD:** `e915969` (T022 implementation); CI run `45631891239` green on all three OSes.
 - **`main` moved:** `origin/main` is `7953e08` (`Merge pull request #140`). It does not contain `589b7e2` or later. Integration into `main` is not authorized.
 - **Working tree:** owner edit in `src/presentation/theme.rs` (unstaged, leave alone) plus the uncommitted T022 implementation (`src/domain/project/*`, `tests/*_tests.rs`, this file).
 - **Active task:** T022 — implemented to the revised contract and green locally; the checkbox stays open until the owner ratifies the AGENT-PROPOSED model choices listed in `plan.md` §5.
 - **Current phase:** Phase 3 code is green (T016–T021 complete); T022 is open again because its definition changed.
-- **Overall status:** T001–T021 complete as work items. T022 implemented and tested; its checkbox and Issue remain open pending ratification. Product CI is green on Linux x86_64, Windows x86_64, and macOS arm64.
+- **Overall status:** T001–T021 complete as work items. T022 implemented, pushed, and green on three OSes; its checkbox and Issue #22 remain open pending model ratification. Product CI is green on Linux x86_64, Windows x86_64, and macOS arm64.
 - **Current objective:** ratify the model choices, then close T022 and start T023 (discovery and open-workspace use cases). The domain model itself is in place; see **T022 Implementation** below.
 - **Budget separation (USER-CONFIRMED):** visualization budgets govern what is displayed and never delete, alter, or truncate recorded data or relabel a complete recording; recording budgets govern what is captured and retained, are resolved by a declared stop/pause/continue policy, identify the recorded interval and missing observations, and distinguish an intentional stop from an interrupted recording. Neither may be reported as the other. `spec.md` §6.6, FR-096–FR-099; `plan.md` §4.5, §4.7, §4.9 + the §4 flowchart; `tasks.md` T038, T047, T050, T072.
 - **Runtime-visualization architecture (USER-CONFIRMED):** now recorded in `spec.md` §1.3, §2.1 E, §2.2 items 14–15, §6.1, §6.5, US-06, FR-093–FR-098; `plan.md` §4 (observation → normalization → history → shared visualization engine); `tasks.md` T036/T037/T038/T044/T046/T047/T050 revised plus new T072. No engine code was written and no task was marked complete on documentation grounds.
@@ -1398,6 +1398,19 @@ Entries H0001–H0099 record the project and review sessions. Entry timestamps a
   - Discrepancy corrected (rule 5): the inventory in H0129 promised `DescriptorStatus` with an `Unavailable` variant; the plan's own table has three statuses, so the third-state reading was implemented and the list corrected. `project.rs` was renamed to `model.rs` because `clippy::module_inception` rejects `project::project`.
   - Not done on purpose: no directory scanning or descriptor detection (T023), no glob matching for overrides (exact paths only, `shortcut:` comment), no native target enumeration, no compiler command construction (T030), no task checked, no Issue body change (tasks.md unchanged this pass), no source outside `src/domain/project/` and the two test files.
   - Environment note: the host root filesystem reached 949 MB free during the build and recovered to 1.6 GB; `target/` is 27 GB. No cleanup was performed.
+
+- [H0131] [2026-11-25] [ENV] Safe disk reclamation during T022 verification.
+  - Trigger: the host root filesystem reported 949 MB free (100% used) while the T022 build ran; the volume was unusable for further builds.
+  - Removed, both regenerable build output: `~/.cache/test-kit-fast/target` (11 GiB Rust build artifacts, last written 2026-11-23) and `AveLoop/target/debug/incremental` (1.5 GiB).
+  - Result: 1.6 GB → 14 GB free (95% used). `AveLoop/target` still holds 25 GiB of compiled dependencies, so the next local build reuses them instead of recompiling the GPUI stack.
+  - Not touched: the owner's Trash (56 KiB), browser and IDE caches, `~/.cargo/registry` (1.8 GiB), any other repository's `target/`, and source or planning files.
+  - Consequence for the next agent: `cargo test` recompiles the `aveloop` crate once (incremental artifacts were dropped) but not its dependencies. Disk headroom is 14 GB, not comfortable for a second full toolchain checkout.
+
+- [H0132] [2026-11-25] [CI] T022 implementation verified on three operating systems.
+  - Run `45631891239`, head `e915969`, workflow `CI`, conclusion `success`.
+  - Jobs all `success`: Linux x86_64, Windows x86_64, macOS arm64 — each running `cargo fmt --all -- --check`, `cargo clippy --lib --tests -- -D warnings`, `cargo build --lib --bin aveloop`, `cargo test --lib --tests`.
+  - Pushed `b70d969..e915969` on `dev` → `origin/feat/gpui-kit-fast`; working tree keeps only the owner's `src/presentation/theme.rs` edit.
+  - Remaining gate for T022: owner ratification of the seven AGENT-PROPOSED model choices in `plan.md` §5. On approval: mark T022 `[x]`, regenerate `complete.md`, sync Issue #22 by the `Spec Kit task` field, and close it.
 
 ## Resume Instructions
 
