@@ -4,29 +4,38 @@ Canonical continuity record for every agent working on this repository. Read thi
 
 ## Current State
 
-- **Last updated:** 2026-11-25 (T023 discovery complete; Issue #23 closed; three-OS CI green on `d99417c`)
+- **Last updated:** 2026-11-26 (T024 workspace composition complete; Issue #24 closed; three-OS CI green on `58d0a5e`)
 - **Repository:** `SoufianoDev/aveloop` (`https://github.com/SoufianoDev/aveloop.git`)
 - **Project root:** `/home/soufiano/SoufianoDev/AveLoop`
 - **Active branch:** `dev` tracking `origin/feat/gpui-kit-fast`.
-- **Last verified HEAD:** `d99417c` (T023 discovery plus its two CI fixes); CI run `45649710573` green on all three OSes.
+- **Last verified HEAD:** `58d0a5e` (T024 five-region workspace composition); CI run `45829853894` green on all three OSes.
 - **`main` moved:** `origin/main` is `7953e08` (`Merge pull request #140`). It does not contain `589b7e2` or later. Integration into `main` is not authorized.
-- **Working tree:** owner edit in `src/presentation/theme.rs` (unstaged, leave alone). The T023 implementation is committed as `c44f55d`, `3859795`, and `d99417c`.
-- **Active task:** T024 [US1] — native GPUI workspace composition for the editor, visualization, inspector, transport, and output regions. Not started.
-- **Current phase:** Phase 4, User Story 1. T023 is implemented and locally verified; T024 is next.
-- **Overall status:** T001–T023 complete as work items; Issue #23 closed. Product CI is green on Linux x86_64, Windows x86_64, and macOS arm64 through `729259a`.
-- **Current objective:** T024 workspace composition over the T023 discovery result. See **T023 Implementation** below for the API the UI consumes.
+- **Working tree:** owner edit in `src/presentation/theme.rs` (unstaged, leave alone). The T024 implementation is committed as `58d0a5e`.
+- **Active task:** T025 [US1] — the bounded native editor (text input, cursor, selection, editing, undo/redo, clipboard, line numbers, save, unsaved state). Not started.
+- **Current phase:** Phase 4, User Story 1. T024 is implemented and verified on three OSes; T025 is next.
+- **Overall status:** T001–T024 complete as work items; Issue #24 closed. Product CI is green on Linux x86_64, Windows x86_64, and macOS arm64 through `58d0a5e`.
+- **Current objective:** T025 bounded native editor inside the region composed by T024. See **T024 Implementation** below for the layout the editor mounts into.
 - **Budget separation (USER-CONFIRMED):** visualization budgets govern what is displayed and never delete, alter, or truncate recorded data or relabel a complete recording; recording budgets govern what is captured and retained, are resolved by a declared stop/pause/continue policy, identify the recorded interval and missing observations, and distinguish an intentional stop from an interrupted recording. Neither may be reported as the other. `spec.md` §6.6, FR-096–FR-099; `plan.md` §4.5, §4.7, §4.9 + the §4 flowchart; `tasks.md` T038, T047, T050, T072.
 - **Runtime-visualization architecture (USER-CONFIRMED):** now recorded in `spec.md` §1.3, §2.1 E, §2.2 items 14–15, §6.1, §6.5, US-06, FR-093–FR-098; `plan.md` §4 (observation → normalization → history → shared visualization engine); `tasks.md` T036/T037/T038/T044/T046/T047/T050 revised plus new T072. No engine code was written and no task was marked complete on documentation grounds.
 
 ## Immediate Next Action
 
-**T024 [US1] — implement native GPUI workspace composition.** Compose the editor, visualization,
-inspector, transport, and output regions in the native application over the discovery result that
-T023 now returns. No ratification gate applies; the model is frozen.
+**T025 [US1] — implement the bounded native editor** in the Editor region that T024 composed.
+Text input, cursor, selection, editing, undo/redo, clipboard, line numbers, save, and unsaved
+state. No ratification gate applies; the model is frozen.
 
-Boundaries for that pass: presentation only — consume `application::discovery::open_workspace`
-through the `ProjectSource` port, never call `std::fs` from the UI, never re-derive project
-association in the view layer, and keep `src/presentation/theme.rs` owner changes intact.
+Boundaries for that pass: keep `src/presentation/theme.rs` owner changes intact; do not add
+Tree-sitter or syntax highlighting (T026); do not bind buffers to source revisions or compute
+trace staleness (T027); do not open a real workspace/project from the UI (T028 verifies that
+workflow, and discovery stays behind the `ProjectSource` port). Saving must not invent a
+workspace protocol: the editor saves the buffer it owns.
+
+**2026-11-26 — AGENT-PROPOSED (not user-confirmed):** T024 was scoped as layout composition only.
+The five regions are composed with region labels, the existing synthetic preview buffer and demo
+trace, and the shared theme tokens; discovery is **not** wired into the UI, because no later-task
+workflow owns opening a workspace from the application until T025–T028, and T028 is the task that
+verifies open/build-independent project workflow end to end. If the owner wants discovery in the
+UI earlier, this decision needs to be superseded explicitly.
 
 **2026-11-25 — USER-CONFIRMED:** the seven model choices in `plan.md` §5 are ratified, closing T022.
 Recorded verbatim: (1) no separate `Module` entity — Workspace → Project → Build Target → Source
@@ -205,13 +214,14 @@ Verified this session: `f259ead` exists locally and on the remote, the tree is c
 | T018 complete | Live macOS LLDB session: steps across lines 4→7, `(int) local_int = 42`, `(Child) (value = 7, pad = 0)`, `frame #0`, both streams, `Process exited with status = 0` | `.github/workflows/t017-live-debugger.yml`; run 45305339035 |
 | T019 complete | GPUI window opened and exited cleanly on `windows-2022` and `macos-latest` (`AVELOOP_PROBE_EXIT=1`, `t008_verify`) | `.github/workflows/t019-gpui-launch.yml`; run 45304616214 |
 | T023 complete | Application discovery use cases + `ProjectSource` port + `std::fs` adapter; 55 tests across 14 suites; `tasks.md` T023 checked; `complete.md` regenerated one line |
+| T024 complete | Native five-region workspace composition (Editor, Inspector, Transport, Visualization, Output) with region labels and shared theme tokens; 57 tests across 14 suites; `tasks.md` T024 checked; `complete.md` regenerated one line |
 | Verification scripts relocated | Probes moved from `src/bin/` to `verification/T0XX/`; four explicit `[[bin]]` targets; CI path filters and recorded paths updated | commit `0f2d6e4`; HANDOFF H0100 |
 
 ## Active and Pending Work
 
 - **Phase 2:** complete; gate met with residuals recorded in
   `docs/feasibility/t016-t019-gate-closure.md`.
-- **Phase 3:** complete (T016–T022). **Phase 4:** in progress — T023 implemented, T024 next.
+- **Phase 3:** complete (T016–T022). **Phase 4:** in progress — T024 implemented, T025 next.
 - **Residual 1:** the MSVC + CDB inspection path is not verified end to end. CDB writes
   prompts and `dv`/`dx`/`k` output to the console buffer, which redirection on
   `windows-2022` does not capture, and the child's own output reached the captured file
@@ -318,6 +328,30 @@ Deliberately not implemented in T023: native target enumeration (native attachme
 `Recognized`), glob matching for `[languages]` overrides (exact paths only, `shortcut:` comment),
 build-command construction (T030), and any write path — discovery is read-only.
 
+## T024 Implementation
+
+Landed 2026-11-26 in `src/presentation/workspace.rs`:
+
+| Piece | Content |
+|---|---|
+| `Region` | `Editor`, `Inspector`, `Transport`, `Visualization`, `Output`; `Region::ALL` and `label()`; `Workspace::regions()` exposes the composition order for tests |
+| Layout | header → editor (flex, scrolls) \| inspector (320 px) → transport strip (44 px) → visualization (flex) \| output (flex, 180 px) → `StatusBar` |
+| Editor region | labelled header with the buffer path, then the read-only demo line list (the editable buffer is T025) |
+| Inspector region | labelled header plus step / line / reason of the current demo stop |
+| Transport region | labelled strip with the stop counter and the two working demo buttons (Step Back / Step Forward) |
+| Visualization region | labelled header plus the recorded demo stop strip with the selected stop highlighted; the shared visualization engine stays Phase 7 work |
+| Output region | labelled header with an explicit empty state until program output capture exists (Phase 5) |
+
+Verified locally: `cargo test --lib --tests` = 57 passed across 14 suites (was 55); `cargo fmt
+--all -- --check`; `cargo clippy --lib --tests -- -D warnings`; `cargo build --lib --bin aveloop`;
+`timeout 8 ./target/debug/aveloop` on Wayland ran until the timeout killed it (`exit=124`), i.e. the
+window opened and stayed up without panicking.
+
+Deliberately not implemented in T024: editor input and editing (T025), syntax highlighting (T026),
+buffer/revision binding and trace staleness (T027), open-workspace from the UI (T028 verifies that
+workflow), and the visualization engine (Phase 7). The regions consume the existing synthetic
+preview buffer and demo trace; discovery is not wired into the view.
+
 ## Files Changed
 
 | Path | Change | Purpose | Verification |
@@ -380,6 +414,9 @@ build-command construction (T030), and any write path — discovery is read-only
 | `tests/discovery_tests.rs`, `tests/discovery_fs_tests.rs` | new | In-memory fake source coverage plus adapter smoke test | 16 passed |
 | `src/domain/project/{model,workspace,manifest}.rs`, `src/lib.rs` | modified | Descriptor lookup, workspace unassociated files, shared overrides, module wiring | `cargo test --lib --tests` = 55 |
 | `specs/001-ave-loop-alpha/tasks.md` | modified | Mark T023 `[x]` | Verified |
+| `src/presentation/workspace.rs` | rewritten | T024 five-region composition over the preview buffer and demo trace | 57 tests; Wayland launch smoke |
+| `tests/presentation_tests.rs` | modified | Region composition contract (five regions, five distinct labels) | 2 passed |
+| `specs/001-ave-loop-alpha/tasks.md` | modified | Mark T024 `[x]` | Verified |
 
 ## GitHub Activity
 
@@ -416,6 +453,7 @@ build-command construction (T030), and any write path — discovery is read-only
 | #118 / #133 | T066 canonical / duplicate | OPEN | #133 marked superseded, not closed |
 | #22 | Canonical T022 | CLOSED | Scope and criteria rewritten for the multi-project/mixed-language model; evidence comment; closed after ratification |
 | #23 | Canonical T023 | CLOSED | Deterministic discovery, descriptor statuses, unassociated files; canonical task line set to `[x]`; evidence comment |
+| #24 | Canonical T024 | CLOSED | Five-region native composition; canonical task line set to `[x]`; evidence comment |
 | #28 | Canonical T028 | OPEN | Criteria extended: multi-project workspace and mixed-language project verification |
 | #30 | Canonical T030 | OPEN | Scope moved from project configuration to the resolved build target; task line MATCH |
 | #75 / #93 / #129 / #134 / #79 | Earlier reconciliations | — | Unchanged this session |
@@ -535,6 +573,11 @@ URLs: `https://github.com/SoufianoDev/aveloop/issues/<n>`.
 | T023 `complete.md` regeneration | PASS — the documented rule reproduces the file exactly; one-line diff (T023 checkbox) | H0135 |
 | Issue #23 sync | PASS — canonical task line set to `[x]`, evidence comment posted, Issue closed | H0135 |
 | Disk headroom during T023 | PASS — 14 GB free before the build, 12 GB after; no cleanup needed | H0135 |
+| T024 composition tests | PASS — `cargo test --lib --tests` = 57 passed across 14 suites (was 55); region test asserts five regions in order with five distinct labels | H0138 |
+| T024 formatting, lint, build | PASS — `cargo fmt --all -- --check`; `cargo clippy --lib --tests -- -D warnings`; `cargo build --lib --bin aveloop` | H0138 |
+| T024 launch smoke | PASS (Linux only) — `timeout 8 ./target/debug/aveloop` under Wayland exited 124, meaning the window stayed up until killed; no panic | H0138 |
+| T024 `complete.md` regeneration | PASS — the documented three-newline rule reproduces the pre-edit file byte-identically; post-edit diff is exactly the T024 line | H0138 |
+| Disk headroom during T024 | PASS — 10 GB free after the build (96% used); no cleanup, `target/` left intact | H0138 |
 
 ## Failed Attempts
 
@@ -1500,6 +1543,23 @@ Entries H0001–H0099 record the project and review sessions. Entry timestamps a
   - Chained commits on `dev` → `origin/feat/gpui-kit-fast`: `729259a..c44f55d` (T023), `c44f55d..3859795` (fixture root), `3859795..d99417c` (override path keying).
   - Issue #23 is CLOSED with the implementation evidence comment; the Windows findings were posted as a follow-up comment.
   - Gate for T023 is met. Next action: T024 native GPUI workspace composition.
+
+- [H0138] [2026-11-26] [CODE] T024 native five-region workspace composition.
+  - Authorization: the owner's instruction "next" authorized the reported next action (T024). No model decision was made; the ratified T022 model and the T023 discovery contract are unchanged.
+  - Delivered: `src/presentation/workspace.rs` rewritten around a `Region` enum (`Editor`, `Inspector`, `Transport`, `Visualization`, `Output`, `ALL`, `label()`) and `Workspace::regions()`; layout is header → editor (scrolls) | inspector (320 px) → transport strip (44 px) → visualization | output (180 px) → `StatusBar`. Each region carries a label from `Region::label()`; the editor shows the preview buffer lines, the inspector the current demo stop, the transport the stop counter plus the two working Step Back / Step Forward buttons, the visualization the recorded stop strip with the selected stop highlighted, and the output an explicit empty state.
+  - Test: `tests/presentation_tests.rs` gained `test_workspace_composes_the_five_regions` (order and five distinct labels); the initial-state test is unchanged. Total 57 passed across 14 suites.
+  - Verification: `cargo fmt --all -- --check`; `cargo clippy --lib --tests -- -D warnings`; `cargo build --lib --bin aveloop`; `timeout 8 ./target/debug/aveloop` under Wayland exited 124 (window stayed up, no panic). Local CI-equivalent checks are Linux-only evidence; cross-platform evidence is the H0139 run.
+  - `tasks.md` T024 marked `[x]`; `complete.md` regenerated after first proving the documented rule reproduces the pre-edit file byte-identically (three newlines between blocks, not two); post-edit diff is exactly the T024 line.
+  - Scope decision recorded above as AGENT-PROPOSED: composition only, discovery not wired into the view; no editor input (T025), no syntax highlighting (T026), no buffer/revision binding (T027), no visualization engine (Phase 7).
+  - Not staged: `src/presentation/theme.rs` (owner's edit), `.planning/`.
+  - Disk: 10 GB free after the build (96% used); only the incremental build reused `target/`, nothing deleted.
+  - Next action: T025 bounded native editor.
+
+- [H0139] [2026-11-26] [CI] T024 verified on three operating systems.
+  - Run `45829853894`, head `58d0a5e`, workflow `CI`, conclusion `success`; jobs `success` on Linux x86_64, Windows x86_64, and macOS arm64, each running `cargo fmt --all -- --check`, `cargo clippy --lib --tests -- -D warnings`, `cargo build --lib --bin aveloop`, `cargo test --lib --tests`.
+  - Chained commits on `dev` → `origin/feat/gpui-kit-fast`: `3278074..58d0a5e` (T024).
+  - Issue #24 canonical task line set to `[x]`, evidence comment posted, Issue closed.
+  - Gate for T024 is met. Next action: T025 bounded native editor.
 
 ## Resume Instructions
 
