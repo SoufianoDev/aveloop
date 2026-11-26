@@ -74,7 +74,7 @@ All compiler and debugger verification uses toolchains already installed on each
 # Phase 4 — User Story 1: Project workflow and native source editing
 
 - [x] T023 [US1] Implement open-workspace and create/open-project use cases with cross-platform path handling: opening a workspace requires no manifest, discovery returns zero or more projects with deterministic association and reported conflicts, each recognized native descriptor is reported with recognition/integration/build-support status rather than driven, and `ave.toml` is read through a port in its overlay or standalone role.
-- [ ] T024 [US1] Implement native GPUI workspace composition for editor, visualization, inspector, transport, and output regions.
+- [x] T024 [US1] Implement native GPUI workspace composition for editor, visualization, inspector, transport, and output regions.
 - [ ] T025 [US1] Implement the bounded native editor: text input, cursor, selection, editing, undo/redo, clipboard, line numbers, save, and unsaved state.
 - [ ] T026 [US1] Integrate Tree-sitter C/C++ parsing and syntax highlighting.
 - [ ] T027 [US1] Bind buffers to source revisions; preserve trace provenance and mark a trace stale when its source diverges.
