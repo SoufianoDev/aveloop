@@ -1,4 +1,7 @@
-use aveloop::presentation::{theme, workspace::Workspace};
+use aveloop::presentation::{
+    theme,
+    workspace::{self, Workspace},
+};
 use gpui_kit::*;
 
 fn main() {
@@ -11,6 +14,7 @@ fn main() {
 
     gpui_kit::application().run(|cx| {
         gpui_kit::init(cx);
+        workspace::bind_keys(cx);
         theme::apply_night_owl(cx);
 
         let _ = gpui_kit::open_window(
@@ -22,7 +26,7 @@ fn main() {
                 ..Default::default()
             },
             cx,
-            |_, cx| cx.new(|_| Workspace::new()),
+            |window, cx| cx.new(|cx| Workspace::new(window, cx)),
         )
         .expect("failed to open window");
     });

@@ -3,8 +3,9 @@
 use std::path::PathBuf;
 
 use aveloop::application::discovery::open_workspace;
+use aveloop::application::ports::ProjectWriter;
 use aveloop::domain::{ConfigMode, DescriptorKind, DescriptorStatus, LanguageRegistry};
-use aveloop::infrastructure::FileSystemSource;
+use aveloop::infrastructure::{FileSystemSource, FileSystemWriter};
 
 #[test]
 fn discovers_a_real_directory_and_skips_build_output() {
@@ -53,6 +54,29 @@ fn discovers_a_real_directory_and_skips_build_output() {
     );
     assert!(discovery.problems.is_empty());
     assert!(discovery.incomplete.is_none());
+
+    std::fs::remove_dir_all(&root).expect("cleanup");
+}
+
+#[test]
+fn writes_a_source_file_through_the_port() {
+    let root = std::env::temp_dir().join(format!("aveloop-writer-fs-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&root);
+    std::fs::create_dir_all(&root).expect("create root");
+    let file = root.join("main.c");
+
+    FileSystemWriter
+        .write_text(&file, "int main(void) { return 1; }")
+        .expect("writes");
+    assert_eq!(
+        std::fs::read_to_string(&file).expect("reads back"),
+        "int main(void) { return 1; }"
+    );
+
+    let error = FileSystemWriter
+        .write_text(&root, "not a file")
+        .expect_err("writing over a directory fails");
+    assert_eq!(error.path, root);
 
     std::fs::remove_dir_all(&root).expect("cleanup");
 }

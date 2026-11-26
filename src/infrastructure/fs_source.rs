@@ -2,7 +2,7 @@
 
 use std::path::{Path, PathBuf};
 
-use crate::application::ports::{DirEntry, EntryKind, ProjectSource, SourceError};
+use crate::application::ports::{DirEntry, EntryKind, ProjectSource, ProjectWriter, SourceError};
 
 /// Read-only `std::fs` view used by project discovery.
 #[derive(Debug, Default, Clone, Copy)]
@@ -37,5 +37,14 @@ impl ProjectSource for FileSystemSource {
 
     fn read_text(&self, file: &Path) -> Result<String, SourceError> {
         std::fs::read_to_string(file).map_err(|error| SourceError::new(file, error.to_string()))
+    }
+}
+
+#[derive(Debug, Default, Clone, Copy)]
+pub struct FileSystemWriter;
+
+impl ProjectWriter for FileSystemWriter {
+    fn write_text(&self, file: &Path, text: &str) -> Result<(), SourceError> {
+        std::fs::write(file, text).map_err(|error| SourceError::new(file, error.to_string()))
     }
 }

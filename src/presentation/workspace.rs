@@ -1,10 +1,31 @@
+use std::path::{Path, PathBuf};
+
 use gpui_kit::base::StyledExt;
 use gpui_kit::component::{
-    button::Button, scroll::ScrollableElement, status_bar::StatusBar, tag::Tag, ActiveTheme,
+    button::Button,
+    input::{Editor, EditorState, Input, InputEvent, InputState},
+    status_bar::StatusBar,
+    tag::Tag,
+    ActiveTheme, WindowExt,
 };
 use gpui_kit::*;
 
-use crate::domain::{ExecutionPoint, ExecutionTrace, SessionState, SourceBuffer, StopReason};
+use crate::application::ports::{ProjectSource, ProjectWriter};
+use crate::domain::{ExecutionPoint, ExecutionTrace, SessionState, StopReason};
+use crate::infrastructure::{FileSystemSource, FileSystemWriter};
+
+actions!(aveloop_workspace, [SaveDocument]);
+
+const KEY_CONTEXT: &str = "AveLoopWorkspace";
+
+#[cfg(not(target_os = "macos"))]
+const SAVE_KEY: &str = "ctrl-s";
+#[cfg(target_os = "macos")]
+const SAVE_KEY: &str = "cmd-s";
+
+pub fn bind_keys(cx: &mut App) {
+    cx.bind_keys([KeyBinding::new(SAVE_KEY, SaveDocument, Some(KEY_CONTEXT))]);
+}
 
 /// The five regions the Alpha workspace composes. Each one owns a later task; T024 only
 /// establishes the layout, the labels, and the shared theme surface.
@@ -38,19 +59,44 @@ impl Region {
 }
 
 pub struct Workspace {
-    buffer: SourceBuffer,
+    editor: Entity<EditorState>,
+    // Dropping the subscription would stop the header and status bar repainting on edits.
+    _editor_events: Subscription,
+    document: Document,
+    source: Box<dyn ProjectSource>,
+    writer: Box<dyn ProjectWriter>,
+    notice: Option<String>,
     demo_trace: ExecutionTrace,
     session_state: SessionState,
 }
 
-impl Default for Workspace {
-    fn default() -> Self {
-        Self::new()
-    }
+struct Document {
+    path: Option<PathBuf>,
+    saved: String,
+}
+
+#[derive(Clone, Copy)]
+enum FilePrompt {
+    Open,
+    SaveAs,
 }
 
 impl Workspace {
-    pub fn new() -> Self {
+    pub fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
+        Self::with_ports(
+            Box::new(FileSystemSource),
+            Box::new(FileSystemWriter),
+            window,
+            cx,
+        )
+    }
+
+    pub fn with_ports(
+        source: Box<dyn ProjectSource>,
+        writer: Box<dyn ProjectWriter>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Self {
         let initial_code = r#"#include <iostream>
 
 int main() {
@@ -61,7 +107,9 @@ int main() {
     std::cout << "Sum: " << sum << std::endl;
     return 0;
 }
-"#;
+"#
+        .to_string();
+
         // Synthetic fixture for the UI preview, independent of debugger sessions.
         let mut demo_trace = ExecutionTrace::new();
         demo_trace.push(ExecutionPoint {
@@ -114,15 +162,125 @@ int main() {
             reason: StopReason::Exited(0),
         });
 
+        let editor = cx.new(|cx| EditorState::new(window, cx).default_value(initial_code.clone()));
+
         Self {
-            buffer: SourceBuffer::new("main.cpp", initial_code),
+            _editor_events: cx.subscribe(&editor, |_, _, _: &InputEvent, cx| cx.notify()),
+            editor,
+            document: Document {
+                path: None,
+                saved: initial_code,
+            },
+            source,
+            writer,
+            notice: None,
             demo_trace,
             session_state: SessionState::Idle,
         }
     }
 
-    pub fn buffer(&self) -> &SourceBuffer {
-        &self.buffer
+    pub fn editor(&self) -> &Entity<EditorState> {
+        &self.editor
+    }
+
+    pub fn document_path(&self) -> Option<&Path> {
+        self.document.path.as_deref()
+    }
+
+    pub fn is_dirty(&self, cx: &App) -> bool {
+        self.editor.read(cx).value() != self.document.saved
+    }
+
+    pub fn open_path(&mut self, path: &Path, window: &mut Window, cx: &mut Context<Self>) {
+        match self.source.read_text(path) {
+            Ok(text) => self.set_document(Some(path.to_path_buf()), text, window, cx),
+            Err(error) => self.notice = Some(error.to_string()),
+        }
+        cx.notify();
+    }
+
+    pub fn save(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let Some(path) = self.document.path.clone() else {
+            self.open_prompt(FilePrompt::SaveAs, window, cx);
+            return;
+        };
+        self.write(&path, cx);
+    }
+
+    pub fn save_as(&mut self, path: &Path, cx: &mut Context<Self>) {
+        if path.as_os_str().is_empty() {
+            return;
+        }
+        self.write(path, cx);
+    }
+
+    fn write(&mut self, path: &Path, cx: &mut Context<Self>) {
+        let text = self.editor.read(cx).value().to_string();
+        match self.writer.write_text(path, &text) {
+            Ok(()) => {
+                self.document = Document {
+                    path: Some(path.to_path_buf()),
+                    saved: text,
+                };
+                self.notice = None;
+            }
+            Err(error) => self.notice = Some(error.to_string()),
+        }
+        cx.notify();
+    }
+
+    fn set_document(
+        &mut self,
+        path: Option<PathBuf>,
+        text: String,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let editor = cx.new(|cx| EditorState::new(window, cx).default_value(text.clone()));
+        self._editor_events = cx.subscribe(&editor, |_, _, _: &InputEvent, cx| cx.notify());
+        self.editor = editor;
+        self.document = Document { path, saved: text };
+        self.notice = None;
+    }
+
+    fn open_prompt(&mut self, mode: FilePrompt, window: &mut Window, cx: &mut Context<Self>) {
+        let seed = self
+            .document
+            .path
+            .as_ref()
+            .map(|path| path.display().to_string())
+            .unwrap_or_default();
+        let input = cx.new(|cx| InputState::new(window, cx).default_value(seed));
+        let workspace = cx.entity().downgrade();
+        let focused_once = std::cell::Cell::new(true);
+
+        window.open_dialog(cx, move |dialog, window, cx| {
+            if focused_once.replace(false) {
+                input.focus_handle(cx).focus(window, cx);
+            }
+            let field = input.clone();
+            let workspace = workspace.clone();
+            dialog
+                .title(match mode {
+                    FilePrompt::Open => "Open File",
+                    FilePrompt::SaveAs => "Save As",
+                })
+                .child(Input::new(&input).w_full())
+                .on_ok(move |_, window, cx| {
+                    let path = PathBuf::from(field.read(cx).value().trim());
+                    if path.as_os_str().is_empty() {
+                        return false;
+                    }
+                    let Some(workspace) = workspace.upgrade() else {
+                        return true;
+                    };
+                    workspace.update(cx, |workspace, cx| match mode {
+                        FilePrompt::Open => workspace.open_path(&path, window, cx),
+                        FilePrompt::SaveAs => workspace.save_as(&path, cx),
+                    });
+                    true
+                })
+        });
     }
 
     /// Returns the synthetic trace shown in the integration preview.
@@ -169,6 +327,14 @@ int main() {
     }
 
     fn editor_region(&self, cx: &mut Context<Self>) -> Div {
+        let dirty = self.is_dirty(cx);
+        let name = self
+            .document
+            .path
+            .as_ref()
+            .map(|path| path.display().to_string())
+            .unwrap_or_else(|| "untitled".to_string());
+
         div()
             .flex()
             .flex_col()
@@ -180,22 +346,59 @@ int main() {
             .child(
                 div()
                     .flex()
-                    .flex_col()
-                    .h(px(28.))
-                    .justify_center()
+                    .items_center()
+                    .justify_between()
+                    .h(px(36.))
                     .px(px(12.))
                     .border_b_1()
                     .border_color(cx.theme().border)
                     .child(
                         div()
-                            .text_xs()
-                            .font_bold()
-                            .text_color(cx.theme().muted_foreground)
-                            .child(format!(
-                                "{} · {}",
-                                Region::Editor.label(),
-                                self.buffer.file_path()
-                            )),
+                            .flex()
+                            .items_center()
+                            .gap(px(8.))
+                            .child(
+                                div()
+                                    .text_xs()
+                                    .font_bold()
+                                    .text_color(cx.theme().muted_foreground)
+                                    .child(Region::Editor.label()),
+                            )
+                            .child(
+                                div()
+                                    .text_xs()
+                                    .child(format!("{name}{}", if dirty { " ●" } else { "" })),
+                            ),
+                    )
+                    .child(
+                        div()
+                            .flex()
+                            .items_center()
+                            .gap(px(6.))
+                            .child(
+                                Button::new("btn-editor-open")
+                                    .outline()
+                                    .label("Open…")
+                                    .on_click(cx.listener(|this, _: &ClickEvent, window, cx| {
+                                        this.open_prompt(FilePrompt::Open, window, cx)
+                                    })),
+                            )
+                            .child(
+                                Button::new("btn-editor-save")
+                                    .outline()
+                                    .label("Save")
+                                    .on_click(cx.listener(|this, _: &ClickEvent, window, cx| {
+                                        this.save(window, cx)
+                                    })),
+                            )
+                            .child(
+                                Button::new("btn-editor-save-as")
+                                    .outline()
+                                    .label("Save As…")
+                                    .on_click(cx.listener(|this, _: &ClickEvent, window, cx| {
+                                        this.open_prompt(FilePrompt::SaveAs, window, cx)
+                                    })),
+                            ),
                     ),
             )
             .child(
@@ -203,38 +406,8 @@ int main() {
                     .flex()
                     .flex_col()
                     .flex_1()
-                    .p(px(12.))
-                    .overflow_y_scrollbar()
-                    .children(
-                        self.buffer
-                            .content()
-                            .lines()
-                            .enumerate()
-                            .map(|(idx, line_text)| {
-                                let line_no = (idx + 1) as u32;
-                                div()
-                                    .flex()
-                                    .items_center()
-                                    .w_full()
-                                    .px(px(4.))
-                                    .py(px(2.))
-                                    .rounded(px(4.))
-                                    .child(
-                                        div()
-                                            .w(px(32.))
-                                            .text_xs()
-                                            .text_color(cx.theme().muted_foreground)
-                                            .child(format!("{:>2}", line_no)),
-                                    )
-                                    .child(
-                                        div()
-                                            .flex_1()
-                                            .text_xs()
-                                            .font_family(cx.theme().mono_font_family.clone())
-                                            .child(line_text.to_string()),
-                                    )
-                            }),
-                    ),
+                    .min_h(px(0.))
+                    .child(Editor::new(&self.editor).bordered(false).h_full()),
             )
     }
 
@@ -420,6 +593,8 @@ impl Render for Workspace {
         let border_color = cx.theme().border;
 
         div()
+            .key_context(KEY_CONTEXT)
+            .on_action(cx.listener(|this, _: &SaveDocument, window, cx| this.save(window, cx)))
             .flex()
             .flex_col()
             .size_full()
@@ -466,8 +641,18 @@ impl Render for Workspace {
             )
             .child(
                 StatusBar::new()
-                    .left(format!("Demo file: {}", self.buffer.file_path()))
-                    .right("GPUI Fast | Night Owl | M3"),
+                    .left(
+                        self.document
+                            .path
+                            .as_ref()
+                            .map(|path| path.display().to_string())
+                            .unwrap_or_else(|| "untitled".to_string()),
+                    )
+                    .right(
+                        self.notice
+                            .clone()
+                            .unwrap_or_else(|| "GPUI Fast | Night Owl | M3".to_string()),
+                    ),
             )
     }
 }

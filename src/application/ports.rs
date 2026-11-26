@@ -33,6 +33,11 @@ pub trait ProjectSource {
     fn read_text(&self, file: &Path) -> Result<String, SourceError>;
 }
 
+/// Write access, used only when the user saves a document.
+pub trait ProjectWriter {
+    fn write_text(&self, file: &Path, text: &str) -> Result<(), SourceError>;
+}
+
 #[derive(Debug, Error, Clone, PartialEq, Eq)]
 #[error("`{path}`: {message}")]
 pub struct SourceError {
