@@ -4,31 +4,36 @@ Canonical continuity record for every agent working on this repository. Read thi
 
 ## Current State
 
-- **Last updated:** 2026-11-26 (T024 workspace composition complete; Issue #24 closed; three-OS CI green on `58d0a5e`)
+- **Last updated:** 2026-11-26 (T025 bounded native editor complete; Issue #25 closed; three-OS CI green on `ba43f37`)
 - **Repository:** `SoufianoDev/aveloop` (`https://github.com/SoufianoDev/aveloop.git`)
 - **Project root:** `/home/soufiano/SoufianoDev/AveLoop`
 - **Active branch:** `dev` tracking `origin/feat/gpui-kit-fast`.
-- **Last verified HEAD:** `58d0a5e` (T024 five-region workspace composition); CI run `45829853894` green on all three OSes.
+- **Last verified HEAD:** `ba43f37` (T025 editor integration); CI run `45835879528` green on all three OSes.
 - **`main` moved:** `origin/main` is `7953e08` (`Merge pull request #140`). It does not contain `589b7e2` or later. Integration into `main` is not authorized.
-- **Working tree:** owner edit in `src/presentation/theme.rs` (unstaged, leave alone). The T024 implementation is committed as `58d0a5e`.
-- **Active task:** T025 [US1] — the bounded native editor (text input, cursor, selection, editing, undo/redo, clipboard, line numbers, save, unsaved state). Not started.
-- **Current phase:** Phase 4, User Story 1. T024 is implemented and verified on three OSes; T025 is next.
-- **Overall status:** T001–T024 complete as work items; Issue #24 closed. Product CI is green on Linux x86_64, Windows x86_64, and macOS arm64 through `58d0a5e`.
-- **Current objective:** T025 bounded native editor inside the region composed by T024. See **T024 Implementation** below for the layout the editor mounts into.
+- **Working tree:** owner edit in `src/presentation/theme.rs` (unstaged, leave alone). The T025 implementation is committed as `ba43f37`.
+- **Active task:** T026 [US1] — Tree-sitter C/C++ parsing and syntax highlighting. Not started.
+- **Current phase:** Phase 4, User Story 1. T025 is implemented and verified on three OSes; T026 is next.
+- **Overall status:** T001–T025 complete as work items; Issue #25 closed. Product CI is green on Linux x86_64, Windows x86_64, and macOS arm64 through `ba43f37`.
+- **Current objective:** T026 on the editor mounted in the T024 region. See **T025 Implementation** below for the document/editor contract.
 - **Budget separation (USER-CONFIRMED):** visualization budgets govern what is displayed and never delete, alter, or truncate recorded data or relabel a complete recording; recording budgets govern what is captured and retained, are resolved by a declared stop/pause/continue policy, identify the recorded interval and missing observations, and distinguish an intentional stop from an interrupted recording. Neither may be reported as the other. `spec.md` §6.6, FR-096–FR-099; `plan.md` §4.5, §4.7, §4.9 + the §4 flowchart; `tasks.md` T038, T047, T050, T072.
 - **Runtime-visualization architecture (USER-CONFIRMED):** now recorded in `spec.md` §1.3, §2.1 E, §2.2 items 14–15, §6.1, §6.5, US-06, FR-093–FR-098; `plan.md` §4 (observation → normalization → history → shared visualization engine); `tasks.md` T036/T037/T038/T044/T046/T047/T050 revised plus new T072. No engine code was written and no task was marked complete on documentation grounds.
 
 ## Immediate Next Action
 
-**T025 [US1] — implement the bounded native editor** in the Editor region that T024 composed.
-Text input, cursor, selection, editing, undo/redo, clipboard, line numbers, save, and unsaved
-state. No ratification gate applies; the model is frozen.
+**T026 [US1] — integrate Tree-sitter C/C++ parsing and syntax highlighting** in the editor T025
+mounted. The editing engine is `gpui-kit` 0.10.0 `component::input::{Editor, EditorState}`; its
+`language(...)` hook plus the `gpui-component` tree-sitter feature are the integration point.
 
-Boundaries for that pass: keep `src/presentation/theme.rs` owner changes intact; do not add
-Tree-sitter or syntax highlighting (T026); do not bind buffers to source revisions or compute
-trace staleness (T027); do not open a real workspace/project from the UI (T028 verifies that
-workflow, and discovery stays behind the `ProjectSource` port). Saving must not invent a
-workspace protocol: the editor saves the buffer it owns.
+Boundaries for that pass: enable the grammars through the pinned stack instead of adding a second
+parser framework; do not bind buffers to source revisions or compute trace staleness (T027); do not
+open a real workspace/project from the UI (T028 verifies that workflow, and discovery stays behind
+the `ProjectSource` port).
+
+**2026-11-26 — AGENT-PROPOSED (not user-confirmed):** T025 added Open/Save As through the house
+`WindowExt::open_dialog` path prompt because the pinned stack has no native file dialog.
+Overwriting an existing file has no confirmation step, and the prompt is only exercised headlessly
+for the untitled-document guard. A native picker or an overwrite confirmation needs an explicit
+owner decision.
 
 **2026-11-26 — AGENT-PROPOSED (not user-confirmed):** T024 was scoped as layout composition only.
 The five regions are composed with region labels, the existing synthetic preview buffer and demo
@@ -215,13 +220,14 @@ Verified this session: `f259ead` exists locally and on the remote, the tree is c
 | T019 complete | GPUI window opened and exited cleanly on `windows-2022` and `macos-latest` (`AVELOOP_PROBE_EXIT=1`, `t008_verify`) | `.github/workflows/t019-gpui-launch.yml`; run 45304616214 |
 | T023 complete | Application discovery use cases + `ProjectSource` port + `std::fs` adapter; 55 tests across 14 suites; `tasks.md` T023 checked; `complete.md` regenerated one line |
 | T024 complete | Native five-region workspace composition (Editor, Inspector, Transport, Visualization, Output) with region labels and shared theme tokens; 57 tests across 14 suites; `tasks.md` T024 checked; `complete.md` regenerated one line |
+| T025 complete | `gpui-kit` `EditorState` mounted as the editing engine; document path/saved-text tracking, unsaved indicator from the live buffer, Open/Save/Save As through a path prompt, `ProjectWriter` port + `std::fs` adapter, `Ctrl+S`/`Cmd+S`; 60 tests across 15 suites; `tasks.md` T025 checked; `complete.md` regenerated one line |
 | Verification scripts relocated | Probes moved from `src/bin/` to `verification/T0XX/`; four explicit `[[bin]]` targets; CI path filters and recorded paths updated | commit `0f2d6e4`; HANDOFF H0100 |
 
 ## Active and Pending Work
 
 - **Phase 2:** complete; gate met with residuals recorded in
   `docs/feasibility/t016-t019-gate-closure.md`.
-- **Phase 3:** complete (T016–T022). **Phase 4:** in progress — T024 implemented, T025 next.
+- **Phase 3:** complete (T016–T022). **Phase 4:** in progress — T025 implemented, T026 next.
 - **Residual 1:** the MSVC + CDB inspection path is not verified end to end. CDB writes
   prompts and `dv`/`dx`/`k` output to the console buffer, which redirection on
   `windows-2022` does not capture, and the child's own output reached the captured file
@@ -352,6 +358,37 @@ buffer/revision binding and trace staleness (T027), open-workspace from the UI (
 workflow), and the visualization engine (Phase 7). The regions consume the existing synthetic
 preview buffer and demo trace; discovery is not wired into the view.
 
+## T025 Implementation
+
+Landed 2026-11-26 as `ba43f37`; T014 already recorded the reuse decision, T025 mounted the widget.
+
+| Piece | Content |
+|---|---|
+| Editing engine | `gpui_kit::component::input::{Editor, EditorState}` from the pinned `gpui-kit` 0.10.0. Text input, cursor, selection, undo/redo, clipboard, line numbers, indent guides, and search are the component's; no editing code was written |
+| Document | `Document { path: Option<PathBuf>, saved: String }` in the presentation layer; `Workspace::document_path()` |
+| Unsaved state | `Workspace::is_dirty(cx)` compares the live buffer to `saved`, so undo back to the saved text reports clean; the editor-region header shows `●` while dirty (FR-005) |
+| Lifecycle | Saving in place keeps the `EditorState`; opening a file creates a fresh one, so undo history belongs to the active document |
+| Open / Save As | In-app path prompt via `WindowExt::open_dialog` + `InputState`, pre-filled with the current path and focused on open. No native file dialog exists in the pinned stack |
+| Save | `Ctrl+S` (macOS `Cmd+S`) through `actions!(aveloop_workspace, [SaveDocument])` with key context `AveLoopWorkspace`, plus header buttons |
+| Untitled guard | The demo document has no path, so Save opens Save As instead of writing an implicit working-directory file; an empty path is rejected |
+| Write path | `ProjectWriter` port (`src/application/ports.rs`) and `FileSystemWriter` (`src/infrastructure/fs_source.rs`); presentation never calls `std::fs` |
+| T026 hook | The editor entity is the integration point (`EditorState::language`); grammar features remain disabled |
+
+Tests: `tests/editor_tests.rs` (open → clean, typing → dirty, undo → clean, save in place, Save As,
+empty path, failed open, untitled Save) and a real-filesystem writer test in
+`tests/discovery_fs_tests.rs`. `tests/presentation_tests.rs` now opens the workspace in a headless
+window because `Workspace::new` needs one.
+
+Verified locally: `cargo test --lib --tests` = 60 passed across 15 suites (was 57); `cargo fmt --all
+-- --check`; `cargo clippy --lib --tests -- -D warnings`; `cargo build --lib --bin aveloop`;
+`timeout 8 ./target/debug/aveloop` on Wayland exited 124 with the window up. Three-OS CI run
+`45835879528` green.
+
+Deliberately not implemented in T025: Tree-sitter grammars and highlighting (T026), LSP/language
+services (later), buffer/revision binding and trace staleness (T027), open-workspace from the UI
+(T028), and a native file picker or overwrite confirmation. The path prompt itself is only
+exercised headlessly for the untitled guard; the real dialog is launch-verified only.
+
 ## Files Changed
 
 | Path | Change | Purpose | Verification |
@@ -417,6 +454,15 @@ preview buffer and demo trace; discovery is not wired into the view.
 | `src/presentation/workspace.rs` | rewritten | T024 five-region composition over the preview buffer and demo trace | 57 tests; Wayland launch smoke |
 | `tests/presentation_tests.rs` | modified | Region composition contract (five regions, five distinct labels) | 2 passed |
 | `specs/001-ave-loop-alpha/tasks.md` | modified | Mark T024 `[x]` | Verified |
+| `src/application/ports.rs` | modified | Add the `ProjectWriter` write port | Editor save tests; clippy clean |
+| `src/infrastructure/fs_source.rs`, `src/infrastructure/mod.rs` | modified | `FileSystemWriter` adapter and re-export | Real-filesystem writer test |
+| `src/presentation/workspace.rs` | modified | Mount the `gpui-kit` editor; document open/save/Save As, dirty indicator, save action | 60 tests; Wayland launch smoke |
+| `src/main.rs` | modified | Pass the window to `Workspace::new`; bind `Ctrl+S`/`Cmd+S` | builds; launch smoke |
+| `tests/presentation_tests.rs` | modified | Initial-state test opens a headless window | 2 passed |
+| `tests/editor_tests.rs` | new | Open/edit/undo/save/Save As/untitled-save coverage over fake ports | 2 passed |
+| `tests/discovery_fs_tests.rs` | modified | Real-filesystem `FileSystemWriter` round trip and error case | 2 passed |
+| `specs/001-ave-loop-alpha/tasks.md` | modified | Mark T025 `[x]` | Verified |
+| `specs/001-ave-loop-alpha/complete.md` | modified | Regenerated with the verified rule; one-line diff | Verified |
 
 ## GitHub Activity
 
@@ -454,6 +500,7 @@ preview buffer and demo trace; discovery is not wired into the view.
 | #22 | Canonical T022 | CLOSED | Scope and criteria rewritten for the multi-project/mixed-language model; evidence comment; closed after ratification |
 | #23 | Canonical T023 | CLOSED | Deterministic discovery, descriptor statuses, unassociated files; canonical task line set to `[x]`; evidence comment |
 | #24 | Canonical T024 | CLOSED | Five-region native composition; canonical task line set to `[x]`; evidence comment |
+| #25 | Canonical T025 | CLOSED | `gpui-kit` editor integration, document open/save/Save As, dirty tracking; canonical task line set to `[x]`; evidence comment |
 | #28 | Canonical T028 | OPEN | Criteria extended: multi-project workspace and mixed-language project verification |
 | #30 | Canonical T030 | OPEN | Scope moved from project configuration to the resolved build target; task line MATCH |
 | #75 / #93 / #129 / #134 / #79 | Earlier reconciliations | — | Unchanged this session |
@@ -578,6 +625,12 @@ URLs: `https://github.com/SoufianoDev/aveloop/issues/<n>`.
 | T024 launch smoke | PASS (Linux only) — `timeout 8 ./target/debug/aveloop` under Wayland exited 124, meaning the window stayed up until killed; no panic | H0138 |
 | T024 `complete.md` regeneration | PASS — the documented three-newline rule reproduces the pre-edit file byte-identically; post-edit diff is exactly the T024 line | H0138 |
 | Disk headroom during T024 | PASS — 10 GB free after the build (96% used); no cleanup, `target/` left intact | H0138 |
+| T025 editor tests | PASS — `cargo test --lib --tests` = 60 passed across 15 suites (was 57); editor open/edit/undo/save/Save As/failed-open/untitled-save and real-filesystem writer coverage | H0140 |
+| T025 formatting, lint, build | PASS — `cargo fmt --all -- --check`; `cargo clippy --lib --tests -- -D warnings`; `cargo build --lib --bin aveloop` | H0140 |
+| T025 launch smoke | PASS (Linux only) — `timeout 8 ./target/debug/aveloop` under Wayland exited 124 with the window up and no panic | H0140 |
+| T025 `complete.md` regeneration | PASS — the documented rule reproduces the pre-edit file byte-identically; post-edit diff is exactly the T025 line | H0140 |
+| T025 three-OS CI | PASS — run `45835879528`, head `ba43f37`, all three jobs success | H0141 |
+| Disk headroom during T025 | PASS — 8.5 GB free after the build (97% used); no cleanup, `target/` left intact | H0140 |
 
 ## Failed Attempts
 
@@ -1560,6 +1613,25 @@ Entries H0001–H0099 record the project and review sessions. Entry timestamps a
   - Chained commits on `dev` → `origin/feat/gpui-kit-fast`: `3278074..58d0a5e` (T024).
   - Issue #24 canonical task line set to `[x]`, evidence comment posted, Issue closed.
   - Gate for T024 is met. Next action: T025 bounded native editor.
+
+- [H0140] [2026-11-26] [CODE] T025 bounded native editor mounted from `gpui-kit`.
+  - Authorization: the owner's instruction "next" plus an explicit USER-CONFIRMED note: reuse GPUI Kit's `Editor`/`EditorState` as the editing engine, do not reimplement text input, cursor, selection, undo/redo, clipboard, line numbers, or highlighting, and stay out of T026+ scope.
+  - API verified from the pinned crate sources before coding: `gpui_kit::component::input::{Editor, EditorState}`; `EditorState = InputBaseState<EditorMode>`; `EditorState::new(window, cx)` already enables line numbers, tab size 2 soft tabs, indent guides, and search; `Editor::new(&Entity<EditorState>)` is the styled element; `set_value` clears undo and emits no `Change`; `InputEvent::{Change, PressEnter, Focus, Blur}`; `gpui_kit::open_window` already wraps the view in `gpui_base::Root`, so dialogs work from the existing entry point; no native file dialog exists in `gpui-kit`, `gpui-base`, or `gpui-component`.
+  - Delivered: `ProjectWriter` port + `FileSystemWriter` (`std::fs::write`, errors mapped to `SourceError`); `Workspace` now owns `Entity<EditorState>` and `Document { path: Option<PathBuf>, saved: String }`; `is_dirty` compares the live buffer to `saved` so undo back to the saved text cleans the document; Open/Save As use `WindowExt::open_dialog` with a focused `InputState` path field; Save keeps the editor entity, opening creates a fresh one; the untitled demo document makes Save open Save As, and an empty path is rejected; `Ctrl+S`/`Cmd+S` bound via `actions!(aveloop_workspace, [SaveDocument])` in key context `AveLoopWorkspace`; header buttons Open…/Save/Save As…; dirty `●` in the editor header; errors in the status bar.
+  - Tests: new `tests/editor_tests.rs` drives a headless window over fake ports (open → clean, typing → dirty, undo → clean, save writes the live text, Save As adopts the new path, empty path writes nothing, failed open keeps the document, untitled Save writes nothing); `tests/discovery_fs_tests.rs` gained a real-filesystem writer round trip and a directory-write error case; `tests/presentation_tests.rs` initial-state test now opens a headless window because `Workspace::new` needs one. Total 60 passed across 15 suites (was 57).
+  - Verification: `cargo fmt --all -- --check`; `cargo clippy --lib --tests -- -D warnings`; `cargo build --lib --bin aveloop`; `timeout 8 ./target/debug/aveloop` under Wayland exited 124 (window stayed up, no panic). Local checks are Linux-only; cross-platform evidence is H0141.
+  - `tasks.md` T025 marked `[x]`; `complete.md` regenerated after proving the documented rule reproduces the pre-edit file byte-identically; post-edit diff is exactly the T025 line.
+  - Deliberately not done: Tree-sitter grammar features and highlighting (T026), LSP/language services, buffer/revision binding and trace staleness (T027), open-workspace from the UI (T028), native file picker, overwrite confirmation, and any new dependency.
+  - Carried limits: the path prompt is exercised headlessly only for the untitled guard and is launch-verified otherwise; there is no overwrite confirmation; the editor widget's large-file and IME behaviour remains the T014 follow-up stress item.
+  - Not staged: `src/presentation/theme.rs` (owner's edit), `.planning/`.
+  - Disk: 8.5 GB free after the build (97% used); nothing deleted.
+  - Next action: T026 Tree-sitter C/C++ parsing and syntax highlighting.
+
+- [H0141] [2026-11-26] [CI] T025 verified on three operating systems.
+  - Run `45835879528`, head `ba43f37`, workflow `CI`, conclusion `success`; jobs `success` on Linux x86_64, Windows x86_64, and macOS arm64, each running `cargo fmt --all -- --check`, `cargo clippy --lib --tests -- -D warnings`, `cargo build --lib --bin aveloop`, `cargo test --lib --tests`.
+  - Push: `f27861e..ba43f37 dev -> feat/gpui-kit-fast`.
+  - Issue #25 canonical task line set to `[x]`, evidence comment posted, Issue closed.
+  - Gate for T025 is met. Next action: T026 Tree-sitter C/C++ parsing and syntax highlighting.
 
 ## Resume Instructions
 
